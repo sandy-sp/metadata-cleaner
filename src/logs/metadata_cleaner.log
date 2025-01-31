@@ -123,3 +123,30 @@
 2025-01-31 14:57:07,318 - INFO - Metadata removed successfully: test_batch_output/test_document.pdf
 2025-01-31 14:57:07,318 - INFO - Processing file: test_batch/test_image.jpg
 2025-01-31 14:57:07,321 - INFO - Metadata removed successfully: test_batch_output/test_image.jpg
+2025-01-31 15:11:29,601 - INFO - Processing folder: test_folder
+2025-01-31 15:11:29,611 - INFO - Processing file: test_folder/test.docx
+2025-01-31 15:11:32,109 - INFO - Metadata removed successfully: test_folder/test_cleaned.docx
+2025-01-31 15:11:32,109 - INFO - Processing file: test_folder/test.jpg
+2025-01-31 15:11:34,855 - INFO - Metadata removed successfully: test_folder/test_cleaned.jpg
+2025-01-31 15:11:34,855 - INFO - Processing file: test_folder/test.mp3
+2025-01-31 15:11:34,856 - INFO - Metadata removed successfully: test_folder/test.mp3
+2025-01-31 15:11:34,856 - INFO - Processing file: test_folder/test.pdf
+2025-01-31 15:11:37,107 - INFO - Metadata removed successfully: test_folder/test_cleaned.pdf
+2025-01-31 15:11:37,108 - INFO - Processing file: test_folder/test.mp4
+2025-01-31 15:11:57,243 - INFO - Metadata removed successfully: test_folder/test_cleaned.mp4
+2025-01-31 15:11:57,243 - ERROR - CLI Error: name 'click' is not defined
+2025-01-31 15:17:46,218 - INFO - Processing folder: test_folder
+2025-01-31 15:17:46,232 - INFO - Processing file: test_folder/test.docx
+2025-01-31 15:17:48,737 - INFO - Metadata removed successfully: test_folder/test_cleaned.docx
+2025-01-31 15:17:48,737 - INFO - Processing file: test_folder/test.jpg
+2025-01-31 15:17:51,481 - INFO - Metadata removed successfully: test_folder/test_cleaned.jpg
+2025-01-31 15:17:51,481 - INFO - Processing file: test_folder/test.mp3
+2025-01-31 15:17:51,481 - INFO - Metadata removed successfully: test_folder/test.mp3
+2025-01-31 15:17:51,481 - INFO - Processing file: test_folder/test.pdf
+2025-01-31 15:17:53,737 - INFO - Metadata removed successfully: test_folder/test_cleaned.pdf
+2025-01-31 15:17:53,737 - INFO - Processing file: test_folder/test.mp4
+2025-01-31 15:18:13,668 - INFO - Metadata removed successfully: test_folder/test_cleaned.mp4
+2025-01-31 15:18:13,668 - INFO - 
+📊 **Summary Report:**
+2025-01-31 15:18:13,668 - INFO - ✅ Successfully processed: 5 files
+2025-01-31 15:18:13,668 - INFO - ❌ Failed to process: 0 files

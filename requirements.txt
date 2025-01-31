@@ -8,3 +8,4 @@ python-docx==1.1.2
 typing_extensions==4.12.2
 libmediainfo0v5
 ffmpeg
+tqdm
