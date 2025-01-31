@@ -4,6 +4,8 @@ from src.file_handlers.pdf_handler import remove_pdf_metadata
 from src.file_handlers.docx_handler import remove_docx_metadata
 from src.file_handlers.audio_handler import remove_audio_metadata
 from src.file_handlers.video_handler import remove_video_metadata
+from src.logs.logger import setup_logger
+
 
 def remove_metadata(file_path, output_path=None):
     """Detects file type and removes metadata accordingly."""
