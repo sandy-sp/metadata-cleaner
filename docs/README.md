@@ -1,3 +1,5 @@
+# 📄 README.md
+
 # Metadata Cleaner 🧹🔍
 *A CLI tool to remove metadata from images, PDFs, DOCX, audio, and video files.*
 
