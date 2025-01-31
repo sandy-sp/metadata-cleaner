@@ -12,3 +12,49 @@
 2025-01-31 13:58:25,965 - ERROR - Error processing file test_document.pdf: Cannot read an empty file
 2025-01-31 13:58:25,966 - INFO - Processing file: test_video.mp4 (Type: .mp4)
 2025-01-31 13:58:25,966 - INFO - Metadata removed successfully. Cleaned file saved at: test_video.mp4
+2025-01-31 14:10:10,860 - INFO - Processing folder: test_folder
+2025-01-31 14:10:10,861 - INFO - Processing file: test_folder/test.docx
+2025-01-31 14:10:13,334 - INFO - Metadata removed successfully: cleaned_folder/test.docx
+2025-01-31 14:10:13,334 - INFO - Processing file: test_folder/test.jpg
+2025-01-31 14:10:16,065 - INFO - Metadata removed successfully: cleaned_folder/test.jpg
+2025-01-31 14:10:16,065 - INFO - Processing file: test_folder/test.mp3
+2025-01-31 14:10:16,066 - INFO - Metadata removed successfully: test_folder/test.mp3
+2025-01-31 14:10:16,066 - INFO - Processing file: test_folder/test.pdf
+2025-01-31 14:10:18,319 - INFO - Metadata removed successfully: cleaned_folder/test.pdf
+2025-01-31 14:10:18,320 - INFO - Processing file: test_folder/test.mp4
+2025-01-31 14:10:18,320 - INFO - Metadata removed successfully: test_folder/test.mp4
+2025-01-31 14:14:01,237 - INFO - Processing folder: test_folder
+2025-01-31 14:14:01,237 - INFO - Processing file: test_folder/test.docx
+2025-01-31 14:14:03,709 - INFO - Metadata removed successfully: cleaned_folder/test.docx
+2025-01-31 14:14:03,709 - INFO - Processing file: test_folder/test.jpg
+2025-01-31 14:14:06,450 - INFO - Metadata removed successfully: cleaned_folder/test.jpg
+2025-01-31 14:14:06,450 - INFO - Processing file: test_folder/test.mp3
+2025-01-31 14:14:06,450 - INFO - Metadata removed successfully: test_folder/test.mp3
+2025-01-31 14:14:06,450 - INFO - Processing file: test_folder/test.pdf
+2025-01-31 14:14:08,708 - INFO - Metadata removed successfully: cleaned_folder/test.pdf
+2025-01-31 14:14:08,708 - INFO - Processing file: test_folder/test.mp4
+2025-01-31 14:14:08,708 - INFO - Metadata removed successfully: test_folder/test.mp4
+2025-01-31 14:16:56,202 - INFO - Processing folder: test_folder
+2025-01-31 14:16:56,202 - INFO - Processing file: test_folder/test.docx
+2025-01-31 14:16:58,667 - INFO - Metadata removed successfully: cleaned_folder/test.docx
+2025-01-31 14:16:58,667 - INFO - Processing file: test_folder/test.jpg
+2025-01-31 14:17:01,403 - INFO - Metadata removed successfully: cleaned_folder/test.jpg
+2025-01-31 14:17:01,403 - INFO - Processing file: test_folder/test.mp3
+2025-01-31 14:17:01,404 - INFO - Metadata removed successfully: test_folder/test.mp3
+2025-01-31 14:17:01,404 - INFO - Processing file: test_folder/test.pdf
+2025-01-31 14:17:03,662 - INFO - Metadata removed successfully: cleaned_folder/test.pdf
+2025-01-31 14:17:03,662 - INFO - Processing file: test_folder/test.mp4
+2025-01-31 14:17:03,663 - INFO - Metadata removed successfully: test_folder/test.mp4
+2025-01-31 14:17:19,322 - INFO - Processing file: test_batch/test_audio.mp3
+2025-01-31 14:17:19,323 - INFO - Metadata removed successfully: test_batch/test_audio.mp3
+2025-01-31 14:17:19,323 - INFO - Processing file: test_batch/test_document.docx
+2025-01-31 14:17:19,323 - ERROR - Error processing file test_batch/test_document.docx: Package not found at 'test_batch/test_document.docx'
+2025-01-31 14:17:19,323 - ERROR - Skipping test_document.docx: Package not found at 'test_batch/test_document.docx'
+2025-01-31 14:17:19,323 - INFO - Processing file: test_batch/test_video.mp4
+2025-01-31 14:17:19,323 - INFO - Metadata removed successfully: test_batch/test_video.mp4
+2025-01-31 14:17:19,323 - INFO - Processing file: test_batch/test_document.pdf
+2025-01-31 14:17:19,323 - ERROR - Error processing file test_batch/test_document.pdf: Cannot read an empty file
+2025-01-31 14:17:19,323 - ERROR - Skipping test_document.pdf: Cannot read an empty file
+2025-01-31 14:17:19,323 - INFO - Processing file: test_batch/test_image.jpg
+2025-01-31 14:17:19,353 - ERROR - Error processing file test_batch/test_image.jpg: cannot identify image file 'test_batch/test_image.jpg'
+2025-01-31 14:17:19,353 - ERROR - Skipping test_image.jpg: cannot identify image file 'test_batch/test_image.jpg'

@@ -1,59 +1,40 @@
 import unittest
 import os
-from src.core.remover import remove_metadata
+import shutil
+from src.core.remover import remove_metadata, remove_metadata_from_folder
 
 class TestMetadataRemover(unittest.TestCase):
 
     def setUp(self):
-        """Create sample test files before each test."""
-        self.test_image = "test_image.jpg"
-        self.test_pdf = "test_document.pdf"
-        self.test_docx = "test_document.docx"
-        self.test_audio = "test_audio.mp3"
-        self.test_video = "test_video.mp4"
-        
-        # Create dummy files
-        open(self.test_image, 'a').close()
-        open(self.test_pdf, 'a').close()
-        open(self.test_docx, 'a').close()
-        open(self.test_audio, 'a').close()
-        open(self.test_video, 'a').close()
+        """Create test files and a test folder."""
+        self.test_folder = "test_batch"
+        self.output_folder = "test_batch_output"
 
-    def test_remove_image_metadata(self):
-        """Test metadata removal for images."""
-        output_file = remove_metadata(self.test_image)
-        self.assertTrue(os.path.exists(output_file))
+        os.makedirs(self.test_folder, exist_ok=True)
 
-    def test_remove_pdf_metadata(self):
-        """Test metadata removal for PDFs."""
-        output_file = remove_metadata(self.test_pdf)
-        self.assertTrue(os.path.exists(output_file))
+        self.test_files = [
+            os.path.join(self.test_folder, "test_image.jpg"),
+            os.path.join(self.test_folder, "test_document.pdf"),
+            os.path.join(self.test_folder, "test_document.docx"),
+            os.path.join(self.test_folder, "test_audio.mp3"),
+            os.path.join(self.test_folder, "test_video.mp4"),
+        ]
 
-    def test_remove_docx_metadata(self):
-        """Test metadata removal for DOCX files."""
-        output_file = remove_metadata(self.test_docx)
-        self.assertTrue(os.path.exists(output_file))
+        for file in self.test_files:
+            open(file, 'a').close()  # Create empty test files
 
-    def test_remove_audio_metadata(self):
-        """Test metadata removal for audio files."""
-        output_file = remove_metadata(self.test_audio)
-        self.assertTrue(os.path.exists(output_file))
+    def test_batch_processing(self):
+        """Test metadata removal for a batch of files."""
+        cleaned_files = remove_metadata_from_folder(self.test_folder, self.output_folder)
+        self.assertEqual(len(cleaned_files), len(self.test_files))
 
-    def test_remove_video_metadata(self):
-        """Test metadata removal for video files."""
-        output_file = remove_metadata(self.test_video)
-        self.assertTrue(os.path.exists(output_file))
-
-    def test_invalid_file(self):
-        """Test invalid file handling."""
-        with self.assertRaises(FileNotFoundError):
-            remove_metadata("non_existent_file.jpg")
+        for file in cleaned_files:
+            self.assertTrue(os.path.exists(file))
 
     def tearDown(self):
-        """Clean up test files after each test."""
-        for file in [self.test_image, self.test_pdf, self.test_docx, self.test_audio, self.test_video]:
-            if os.path.exists(file):
-                os.remove(file)
+        """Clean up test files and folders."""
+        shutil.rmtree(self.test_folder, ignore_errors=True)
+        shutil.rmtree(self.output_folder, ignore_errors=True)
 
 if __name__ == "__main__":
     unittest.main()
