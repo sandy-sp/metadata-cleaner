@@ -5,7 +5,7 @@ import os
 import shutil
 from docx import Document
 from PyPDF2 import PdfWriter
-from src.core.remover import remove_metadata, remove_metadata_from_folder
+from src.remover import remove_metadata, remove_metadata_from_folder
 
 class TestMetadataRemover(unittest.TestCase):
 

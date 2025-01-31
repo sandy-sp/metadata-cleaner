@@ -1,11 +1,7 @@
-click==8.1.8
-lxml==5.3.0
-mutagen==1.47.0
-pillow==11.1.0
-pymediainfo==6.1.0
-pypdf==5.2.0
-python-docx==1.1.2
-typing_extensions==4.12.2
-libmediainfo0v5
-ffmpeg
+click
+pillow
+pypdf
+python-docx
+mutagen
+pymediainfo
 tqdm

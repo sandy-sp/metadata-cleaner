@@ -1,7 +1,7 @@
 import click
 import os
 from src.logs.logger import logger
-from src.core.remover import remove_metadata, remove_metadata_from_folder
+from src.remover import remove_metadata, remove_metadata_from_folder
 
 @click.command()
 @click.option('--file', '-f', type=click.Path(exists=True), help="Path to the file to clean metadata from.")
