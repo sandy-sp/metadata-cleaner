@@ -1,3 +1,14 @@
 2025-01-31 13:36:09,781 - INFO - CLI called with file: test.docx, output: cleaned_test.docx
 2025-01-31 13:36:09,781 - INFO - Processing file: test.docx (Type: .docx)
 2025-01-31 13:36:12,277 - INFO - Metadata removed successfully. Cleaned file saved at: cleaned_test.docx
+2025-01-31 13:58:25,932 - ERROR - File not found: non_existent_file.jpg
+2025-01-31 13:58:25,932 - INFO - Processing file: test_audio.mp3 (Type: .mp3)
+2025-01-31 13:58:25,933 - INFO - Metadata removed successfully. Cleaned file saved at: test_audio.mp3
+2025-01-31 13:58:25,933 - INFO - Processing file: test_document.docx (Type: .docx)
+2025-01-31 13:58:25,933 - ERROR - Error processing file test_document.docx: Package not found at 'test_document.docx'
+2025-01-31 13:58:25,934 - INFO - Processing file: test_image.jpg (Type: .jpg)
+2025-01-31 13:58:25,964 - ERROR - Error processing file test_image.jpg: cannot identify image file 'test_image.jpg'
+2025-01-31 13:58:25,965 - INFO - Processing file: test_document.pdf (Type: .pdf)
+2025-01-31 13:58:25,965 - ERROR - Error processing file test_document.pdf: Cannot read an empty file
+2025-01-31 13:58:25,966 - INFO - Processing file: test_video.mp4 (Type: .mp4)
+2025-01-31 13:58:25,966 - INFO - Metadata removed successfully. Cleaned file saved at: test_video.mp4
