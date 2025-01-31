@@ -1,17 +1,16 @@
 import click
+from src.core.remover import remove_metadata
 
 @click.command()
-@click.option('--file', '-f', type=click.Path(exists=True), help="Path to the file to clean metadata from.")
+@click.option('--file', '-f', type=click.Path(exists=True), required=True, help="Path to the file to clean metadata from.")
 @click.option('--output', '-o', type=click.Path(), help="Path to save the cleaned file.")
 def main(file, output):
-    """Simple CLI for metadata removal."""
-    if not file:
-        click.echo("Please provide a file path using --file or -f.")
-        return
-
-    click.echo(f"Processing file: {file}")
-    if output:
-        click.echo(f"Output will be saved to: {output}")
+    """CLI for metadata removal."""
+    try:
+        cleaned_file = remove_metadata(file, output)
+        click.echo(f"Metadata removed. Cleaned file saved at: {cleaned_file}")
+    except Exception as e:
+        click.echo(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
