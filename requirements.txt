@@ -1,0 +1,5 @@
+pillow
+pypdf2
+mutagen
+pymediainfo
+python-docx
