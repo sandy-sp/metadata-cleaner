@@ -1,24 +1,26 @@
 # 📄 **USAGE.md**  
-*A detailed guide on how to use Metadata Cleaner effectively.*
+---
+# 📄 Metadata Cleaner - Usage Guide 🧹🔍  
+*A detailed guide on how to effectively use Metadata Cleaner.*
 
 ---
 
 ## **📌 Introduction**
-**Metadata Cleaner** is a powerful command-line tool designed to remove metadata from various file types, including **images, documents, audio, and video files**. This guide provides **detailed instructions** on how to use the tool effectively.
+**Metadata Cleaner** is a powerful **command-line tool** that removes metadata from various file types, including **images, documents, audio, and video files**. This guide provides **detailed usage instructions** to help you make the most of this tool.
 
 ---
 
 ## **🚀 Installation**
 If you haven’t installed Metadata Cleaner yet, follow these steps:
 
-### **1️⃣ Install via `pip`**
+### **1️⃣ Install via `pip` (Recommended)**
 ```bash
 pip install metadata-cleaner
 ```
 
 ### **2️⃣ Install from Source**
 ```bash
-git clone https://github.com/yourusername/metadata-cleaner.git
+git clone https://github.com/sandy-sp/metadata-cleaner.git
 cd metadata-cleaner
 pip install .
 ```
@@ -27,6 +29,7 @@ pip install .
 
 ## **📖 Basic Commands**
 ### **1️⃣ Display Help**
+To see all available options:
 ```bash
 metadata-cleaner --help
 ```
@@ -85,6 +88,13 @@ metadata-cleaner --file document.docx
 ### **2️⃣ Process All PDFs & DOCX in a Folder**
 ```bash
 metadata-cleaner --folder documents
+```
+✅ **Output:**
+```
+Processing Files: 100% |██████████| 20/20 [00:12s]
+📊 **Summary Report:**
+✅ Successfully processed: 20 files
+Cleaned files saved in: documents/cleaned
 ```
 
 ---

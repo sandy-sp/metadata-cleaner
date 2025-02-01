@@ -1,36 +1,38 @@
 # 📄 **API_REFERENCE.md**  
-*A detailed reference guide for developers using the Metadata Cleaner API.*
+---
+# 📄 Metadata Cleaner - API Reference 🧹🔍  
+*A comprehensive guide for developers integrating Metadata Cleaner into their applications.*
 
 ---
 
 ## **📌 Overview**
-Metadata Cleaner provides a **Python API** for programmatically removing metadata from **images, documents, audio, and video files**. This document serves as a **detailed API reference** for developers integrating this tool into their own applications.
+**Metadata Cleaner** provides a **Python API** for programmatically removing metadata from **images, documents, audio, and video files**.  
+This reference guide is intended for **developers** who want to integrate metadata removal functionality into their own applications.
 
 ✅ **Key Features:**
 - Remove metadata **from individual files or entire folders**.
 - Supports **parallel processing** for batch file operations.
 - Provides **detailed logging** for tracking operations.
-- Designed for **easy integration** with other Python applications.
+- Designed for **easy integration** into Python applications.
 
 ---
 
-## **📖 Installation**
+## **🚀 Installation**
 Before using the API, install the package:
 ```bash
 pip install metadata-cleaner
 ```
 Or, if using the source:
 ```bash
-git clone https://github.com/yourusername/metadata-cleaner.git
+git clone https://github.com/sandy-sp/metadata-cleaner.git
 cd metadata-cleaner
 pip install .
 ```
 
 ---
 
-## **🚀 API Usage**
-### **1️⃣ Importing the Library**
-To use the API in your Python scripts:
+## **📖 Importing the Library**
+To use the API inside your Python scripts:
 ```python
 from src.core.remover import remove_metadata, remove_metadata_from_folder
 ```
@@ -226,7 +228,7 @@ cat logs/metadata_cleaner.log
 ## **📬 Support & Issues**
 For any issues or feature requests:
 - **Open an issue**: [GitHub Issues](https://github.com/sandy-sp/metadata-cleaner/issues)
-- **Contact**: `your.email@example.com`
+- **Contact**: `sandeep.paidipati@gmail.com`
 
 ---
 

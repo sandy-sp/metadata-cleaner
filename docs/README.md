@@ -1,66 +1,71 @@
 # 📄 README.md
+---
+# Metadata Cleaner 🧹🔍  
+*A powerful CLI tool to remove metadata from images, PDFs, DOCX, audio, and video files.*
 
-# Metadata Cleaner 🧹🔍
-*A CLI tool to remove metadata from images, PDFs, DOCX, audio, and video files.*
+---
 
 ## 📌 Overview
-Metadata Cleaner is a powerful **command-line tool** that helps users **remove metadata** from various file formats, including **images, PDFs, documents, audio, and videos**. This tool is useful for **privacy protection, security compliance, and data sanitization**.
+**Metadata Cleaner** is a fast and efficient **command-line tool** that removes metadata from various file formats, including **images, PDFs, documents, audio, and videos**.  
+This tool is designed for **privacy protection, security compliance, and data sanitization**.
 
-🚀 **Why use Metadata Cleaner?**
-- **Protect your privacy** by removing hidden metadata from files.
-- **Sanitize documents** before sharing.
-- **Reduce file size** by stripping unnecessary metadata.
-- **Automate metadata removal** for multiple files or entire folders.
-
----
-
-## 🚀 **Features**
-✅ Supports metadata removal for:
-- 📷 **Images**: `JPG, PNG, TIFF`
-- 📄 **Documents**: `PDF, DOCX`
-- 🎵 **Audio**: `MP3, WAV`
-- 🎥 **Videos**: `MP4, MKV`
-
-✅ **Batch Processing**
-- Remove metadata from **individual files** or entire folders.
-
-✅ **Parallel Processing**
-- Speeds up processing by **handling multiple files simultaneously**.
-
-✅ **Interactive & User-Friendly CLI**
-- Supports **progress bars, confirmation prompts, and summary reports**.
-
-✅ **Safe Metadata Removal**
-- Original files are **untouched**, and cleaned versions are saved in a **separate folder**.
-
-✅ **Cross-Platform Compatibility**
-- Works on **Linux, macOS, and Windows**.
+🔍 **Why use Metadata Cleaner?**  
+- **Protect your privacy** by stripping hidden metadata from files.  
+- **Sanitize sensitive documents** before sharing.  
+- **Reduce file size** by removing unnecessary metadata.  
+- **Batch process multiple files or entire folders** for efficiency.  
 
 ---
 
-## 🛠️ **Installation**
+## 🚀 Features
+✅ **Supports Metadata Removal for:**  
+- 📷 **Images**: `JPG, PNG, TIFF`  
+- 📄 **Documents**: `PDF, DOCX`  
+- 🎵 **Audio**: `MP3, WAV, FLAC`  
+- 🎥 **Videos**: `MP4, MKV, MOV`  
+
+✅ **Batch Processing**  
+- Remove metadata **from individual files or entire folders**.  
+
+✅ **Parallel Processing**  
+- **Speed up processing** with **multi-file parallel execution**.  
+
+✅ **Interactive & User-Friendly CLI**  
+- Features **progress bars, confirmation prompts, and summary reports**.  
+
+✅ **Safe Metadata Removal**  
+- **Original files remain untouched**, and cleaned versions are saved in a separate folder.  
+
+✅ **Cross-Platform Compatibility**  
+- Works on **Linux, macOS, and Windows**.  
+
+---
+
+## 🛠️ Installation
+
 ### **1️⃣ Install via `pip` (Recommended)**
-To install the latest version from **PyPI**, run:
+To install the latest version from **PyPI**, run:  
 ```bash
 pip install metadata-cleaner
 ```
 
 ### **2️⃣ Install from Source**
-If you cloned this repository, install it manually:
+If you cloned this repository, install it manually:  
 ```bash
-git clone https://github.com/yourusername/metadata-cleaner.git
+git clone https://github.com/sandy-sp/metadata-cleaner.git
 cd metadata-cleaner
 pip install .
 ```
 
 ---
 
-## 📖 **Usage**
+## 📖 Usage
+
 ### **1️⃣ Remove Metadata from a Single File**
 ```bash
 metadata-cleaner --file path/to/file.jpg
 ```
-✅ Output:
+✅ **Example Output:**
 ```
 Do you want to process file.jpg? [Y/n]: Y
 ✅ Metadata removed. Cleaned file saved at: path/to/cleaned/file.jpg
@@ -70,10 +75,10 @@ Do you want to process file.jpg? [Y/n]: Y
 ```bash
 metadata-cleaner --folder test_folder
 ```
-✅ Output:
+✅ **Example Output:**
 ```
 Do you want to process all files in test_folder? [Y/n]: Y
-Processing Files: 100%|███████████████████████| 5/5 [00:10s]
+Processing Files: 100% |███████████████████████| 5/5 [00:10s]
 
 📊 **Summary Report:**
 ✅ Successfully processed: 5 files
@@ -90,7 +95,7 @@ metadata-cleaner --folder test_folder --yes
 ```bash
 metadata-cleaner --help
 ```
-✅ Output:
+✅ **Example Output:**
 ```
 Usage: metadata-cleaner [OPTIONS]
 
@@ -104,7 +109,7 @@ Options:
 
 ---
 
-## 🔧 **How It Works**
+## 🔧 How It Works
 1️⃣ **Detects file type** and selects the appropriate metadata removal method.  
 2️⃣ **Processes the file** by removing metadata safely.  
 3️⃣ **Saves the cleaned version** in the `cleaned/` subfolder.  
@@ -112,17 +117,18 @@ Options:
 
 ---
 
-## 💻 **Supported File Formats & Methods**
+## 💻 Supported File Formats & Methods
+
 | File Type | Supported Formats | Metadata Removal Method |
 |-----------|------------------|------------------------|
 | 📷 **Images** | `JPG, PNG, TIFF` | Pillow (`PIL`) |
 | 📄 **Documents** | `PDF, DOCX` | PyPDF2, python-docx |
-| 🎵 **Audio** | `MP3, WAV` | Mutagen |
-| 🎥 **Videos** | `MP4, MKV` | FFmpeg |
+| 🎵 **Audio** | `MP3, WAV, FLAC` | Mutagen |
+| 🎥 **Videos** | `MP4, MKV, MOV` | FFmpeg |
 
 ---
 
-## 🏗 **Project Structure**
+## 🏗 Project Structure
 ```
 metadata-cleaner/
 │── docs/                      # Documentation
@@ -140,12 +146,13 @@ metadata-cleaner/
 
 ---
 
-## 💡 **Contributing**
+## 💡 Contributing
 We welcome contributions! To contribute:
+
 1️⃣ **Fork** the repository.  
 2️⃣ **Clone** your forked repo:
    ```bash
-   git clone https://github.com/yourusername/metadata-cleaner.git
+   git clone https://github.com/sandy-sp/metadata-cleaner.git
    ```
 3️⃣ **Create a new branch** for your feature:
    ```bash
@@ -160,24 +167,24 @@ We welcome contributions! To contribute:
    git commit -m "Added new feature"
    git push origin feature-name
    ```
-6️⃣ **Submit a Pull Request (PR)**.
+6️⃣ **Submit a Pull Request (PR).**
 
 ---
 
-## 🔒 **License**
+## 🔒 License
 This project is licensed under the **MIT License**.  
 See the full license in [`LICENSE`](LICENSE).
 
 ---
 
-## 🔗 **Links & Resources**
+## 🔗 Links & Resources
 - 📖 **Documentation**: [API Reference](docs/API_REFERENCE.md)
 - 🐍 **PyPI Package**: [metadata-cleaner](https://pypi.org/project/metadata-cleaner/)
 - 🚀 **GitHub Repository**: [metadata-cleaner](https://github.com/sandy-sp/metadata-cleaner)
 
 ---
 
-## ❤️ **Support**
+## ❤️ Support
 If you found this tool useful, give it a ⭐ on GitHub!  
 For issues or questions, [open an issue](https://github.com/sandy-sp/metadata-cleaner/issues).
 
