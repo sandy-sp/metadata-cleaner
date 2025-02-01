@@ -1,14 +1,15 @@
-import os
 from setuptools import setup, find_packages
+import os
 
-# Ensure README.md exists before reading it
-README_PATH = "docs/README.md"
-long_description = ""
+# Correct path for README.md inside `docs/`
+README_PATH = os.path.join(os.path.dirname(__file__), "docs", "README.md")
+
+# Ensure README.md exists
 if os.path.exists(README_PATH):
     with open(README_PATH, "r", encoding="utf-8") as f:
         long_description = f.read()
 else:
-    print("⚠️ Warning: README.md not found. Using empty long_description.")
+    long_description = "Metadata Cleaner: A CLI tool to remove metadata from images, documents, audio, and video files."
 
 setup(
     name="metadata-cleaner",
@@ -19,8 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sandy-sp/metadata-cleaner",
-    packages=find_packages(where="src"),  # Automatically finds all submodules
-    package_dir={"": "src"},  # Maps 'src/' to package root
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
         "click",
@@ -33,7 +33,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "metadata-cleaner = cli:main",  # Correct package reference
+            "metadata-cleaner = src.cli:main",
         ],
     },
     classifiers=[

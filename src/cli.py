@@ -1,5 +1,5 @@
-import click
 import os
+import click
 from src.logs.logger import logger
 from src.remover import remove_metadata, remove_metadata_from_folder
 
