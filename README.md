@@ -1,6 +1,7 @@
 # 📄 README.md
 ---
-# Metadata Cleaner 🧹🔍  
+
+# 🧹 Metadata Cleaner 🔍  
 *A powerful CLI tool to remove metadata from images, PDFs, DOCX, audio, and video files.*
 
 ---
@@ -28,7 +29,7 @@ This tool is designed for **privacy protection, security compliance, and data sa
 - Remove metadata **from individual files or entire folders**.  
 
 ✅ **Parallel Processing**  
-- **Speed up processing** with **multi-file parallel execution**.  
+- **Speeds up processing** with **multi-file parallel execution**.  
 
 ✅ **Interactive & User-Friendly CLI**  
 - Features **progress bars, confirmation prompts, and summary reports**.  
@@ -41,21 +42,26 @@ This tool is designed for **privacy protection, security compliance, and data sa
 
 ---
 
-## 🛠️ Installation
+## 🛠️ Installation & Usage
 
-### **1️⃣ Install via `pip` (Recommended)**
+### **1️⃣ Install via `pip` (Recommended for Python Users)**
 To install the latest version from **PyPI**, run:  
 ```bash
 pip install metadata-cleaner
 ```
 
-### **2️⃣ Install from Source**
-If you cloned this repository, install it manually:  
+### **2️⃣ Download Standalone Executable (No Python Required)**
+✅ **For users who don't want to install Python**, download the pre-built binary:
+
+- **[Download for Linux](https://github.com/sandy-sp/metadata-cleaner/releases/download/v1.0.0/metadata-cleaner-linux.zip)**  
 ```bash
-git clone https://github.com/sandy-sp/metadata-cleaner.git
-cd metadata-cleaner
-pip install .
+unzip metadata-cleaner-linux.zip
+chmod +x metadata-cleaner
+./metadata-cleaner --help
 ```
+
+- **[Download for Windows](https://github.com/sandy-sp/metadata-cleaner/releases/download/v1.0.0/metadata-cleaner-windows.zip)**  
+Run the `metadata-cleaner.exe` file.
 
 ---
 
@@ -86,15 +92,30 @@ Processing Files: 100% |██████████████████�
 Cleaned files saved in: test_folder/cleaned
 ```
 
-### **3️⃣ Remove Metadata Without Confirmation Prompt**
+### **3️⃣ Save Cleaned Files to a Custom Folder**
+By default, cleaned files are stored in `cleaned/`.  
+To specify a custom location, use:
+```bash
+metadata-cleaner --folder test_folder --output my_cleaned_files
+```
+
+✅ **Example Output:**
+```
+📊 **Summary Report:**
+✅ Successfully processed: 5 files
+Cleaned files saved in: my_cleaned_files/
+```
+
+### **4️⃣ Remove Metadata Without Confirmation Prompt**
 ```bash
 metadata-cleaner --folder test_folder --yes
 ```
 
-### **4️⃣ Display Help**
+### **5️⃣ Display Help**
 ```bash
 metadata-cleaner --help
 ```
+
 ✅ **Example Output:**
 ```
 Usage: metadata-cleaner [OPTIONS]
@@ -149,25 +170,23 @@ metadata-cleaner/
 ## 💡 Contributing
 We welcome contributions! To contribute:
 
-1️⃣ **Fork** the repository.  
-2️⃣ **Clone** your forked repo:
-   ```bash
-   git clone https://github.com/sandy-sp/metadata-cleaner.git
-   ```
-3️⃣ **Create a new branch** for your feature:
-   ```bash
-   git checkout -b feature-name
-   ```
-4️⃣ **Make changes & test**:
-   ```bash
-   pytest tests/
-   ```
-5️⃣ **Commit and push**:
-   ```bash
-   git commit -m "Added new feature"
-   git push origin feature-name
-   ```
-6️⃣ **Submit a Pull Request (PR).**
+```bash
+# Fork the repository
+git clone https://github.com/sandy-sp/metadata-cleaner.git
+cd metadata-cleaner
+
+# Create a new branch for your feature
+git checkout -b feature-name
+
+# Make changes & test
+pytest tests/
+
+# Commit and push
+git commit -m "Added new feature"
+git push origin feature-name
+
+# Submit a Pull Request (PR)
+```
 
 ---
 
