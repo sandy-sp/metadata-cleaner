@@ -60,7 +60,7 @@ chmod +x metadata-cleaner
 ./metadata-cleaner --help
 ```
 
-- **[Download for Windows](https://github.com/sandy-sp/metadata-cleaner/releases/download/v1.0.0/metadata-cleaner-windows.zip)**  
+- **[Download for Windows](https://github.com/sandy-sp/metadata-cleaner/releases/download/v1.0.0/metadata-cleaner)**  
 Run the `metadata-cleaner.exe` file.
 
 ---
