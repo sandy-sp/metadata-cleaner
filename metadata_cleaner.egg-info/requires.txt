@@ -1,0 +1,7 @@
+click
+pillow
+pypdf
+python-docx
+mutagen
+pymediainfo
+tqdm

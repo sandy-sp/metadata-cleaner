@@ -1,0 +1,2 @@
+[console_scripts]
+metadata-cleaner = src.cli:main
