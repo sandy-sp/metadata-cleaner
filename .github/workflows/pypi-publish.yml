@@ -33,7 +33,6 @@ jobs:
           
       - name: 🔑 Publish to PyPI
         env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           twine upload dist/*.tar.gz dist/*.whl
