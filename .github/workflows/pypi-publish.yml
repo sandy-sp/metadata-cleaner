@@ -30,7 +30,11 @@ jobs:
       - name: 🏗 Build Package
         run: |
           python -m build
-          
+
+      - name: Clean extraneous files from dist
+        run: |
+          find dist -type f ! \( -name "*.tar.gz" -o -name "*.whl" \) -delete
+
       - name: 🔑 Publish to PyPI
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
