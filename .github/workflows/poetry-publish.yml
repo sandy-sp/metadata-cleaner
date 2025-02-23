@@ -30,11 +30,11 @@ jobs:
 
       - name: Install Dependencies and Build Package
         run: |
-          poetry install --no-root
-          poetry build --verbose
+          poetry install --no-dev
 
       - name: Publish Package to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          poetry publish --build --no-interaction --verbose
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish --build --verbose
