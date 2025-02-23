@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Poetry specific
+.poetry/
+
+# Test cache
+.cache/
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

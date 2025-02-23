@@ -3,34 +3,35 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v*"  # Triggers on any tag that starts with 'v'
+      - "v*"  # Trigger on any tag that starts with 'v'
 
 jobs:
   deploy:
-    name: Upload Python Package to PyPI via Poetry
+    name: Publish Package to PyPI via Poetry
     runs-on: ubuntu-latest
+
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: 📦 Install Poetry
+      - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           export PATH="$HOME/.local/bin:$PATH"
           poetry --version
 
-      - name: 🏗 Install Dependencies and Build Package
+      - name: Install Dependencies and Build Package
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           poetry install --no-root
           poetry build
 
-      - name: 🔑 Publish Package to PyPI
+      - name: Publish Package to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
         run: |

@@ -1,0 +1,66 @@
+name: Poetry Release
+
+on:
+  push:
+    tags:
+      - "v*"  # Trigger on any tag starting with "v"
+
+jobs:
+  release:
+    name: Build and Release via Poetry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry --version
+
+      - name: Install Dependencies and Build Package
+        run: |
+          poetry install --no-root
+          poetry build
+
+      - name: Create GitHub Release with Update Notes
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          body: |
+            ## Updates in this Version:
+            - Improved metadata filtering with selective removal.
+            - Added recursive folder processing.
+            - Expanded image format support (WEBP, HEIC).
+            - Enhanced logging and error reporting.
+            
+            ## Installation:
+            You can install this version via pip:
+            ```
+            pip install metadata-cleaner
+            ```
+            Or clone the repository and use Poetry:
+            ```
+            poetry install
+            poetry run metadata-cleaner --help
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Upload Artifacts to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

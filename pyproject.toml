@@ -8,6 +8,9 @@ readme = "README.md"
 homepage = "https://github.com/sandy-sp/metadata-cleaner"
 repository = "https://github.com/sandy-sp/metadata-cleaner"
 
+[tool.poetry.packages]
+include = "metadata_cleaner"
+
 [tool.poetry.dependencies]
 python = ">=3.7"
 click = "^8.1.3"
