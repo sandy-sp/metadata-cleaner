@@ -1,40 +1,99 @@
-name: Publish to PyPI via Poetry
+name: 📦 Test & Publish to PyPI & Create GitHub Release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - "v*"  # Trigger on any tag starting with "v"
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
-  deploy:
-    name: Publish Package to PyPI via Poetry
+  test:
+    name: ✅ Run Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: 🛠️ Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set Up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
-      - name: Install Poetry
+      - name: 📦 Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           poetry --version
 
-      - name: Clean previous builds
-        run: rm -rf dist
-
-      - name: Install Dependencies and Build Package
+      - name: 📦 Install Dependencies (with Dev)
         run: |
-          poetry install --no-dev
+          poetry install --with dev
+          poetry run pip install --editable .
+          
+      - name: 🧪 Run Tests
+        run: poetry run pytest tests --disable-warnings
 
-      - name: Publish Package to PyPI
+  build-and-publish:
+    name: 🚀 Build & Publish to PyPI & Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry --version
+
+      - name: 📦 Install Dependencies (main only)
+        run: |
+          poetry install --no-root --only main
+          poetry run pip install --editable .
+
+      - name: 🏗️ Build the Package
+        run: poetry build
+
+      - name: 🔑 Publish to PyPI
         env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish --build --verbose
+          POETRY_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: poetry publish --username __token__ --password "$POETRY_PYPI_TOKEN" --build --no-interaction
+
+      - name: 📂 Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Metadata Cleaner Release ${{ github.ref_name }}"
+          body: |
+            ## Updates in this Release:
+            - Improved selective metadata filtering.
+            - Added recursive folder processing.
+            - Expanded image format support (including WEBP & HEIC).
+            - Enhanced logging and error reporting.
+            
+            ## Installation:
+            Install via pip:
+            ```
+            pip install metadata-cleaner
+            ```
+            Or use Poetry:
+            ```
+            poetry install && poetry run metadata-cleaner --help
+            ```
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+          draft: false
+          prerelease: false
