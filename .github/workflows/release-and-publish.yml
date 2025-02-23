@@ -56,7 +56,21 @@ jobs:
           body: |
             # Release Notes
             - Summary of changes in version ${{ github.ref_name }}
-            - Possibly include bullet points of major updates/fixes
+             ## Updates in this Release:
+            - Improved selective metadata filtering.
+            - Added recursive folder processing.
+            - Expanded image format support (including WEBP & HEIC).
+            - Enhanced logging and error reporting.
+            
+            ## Installation:
+            Install via pip:
+            ```
+            pip install metadata-cleaner
+            ```
+            Or use Poetry:
+            ```
+            poetry install && poetry run metadata-cleaner --help
+            ```
           draft: false
           prerelease: false
         env:
