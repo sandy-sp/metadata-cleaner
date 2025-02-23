@@ -1,9 +1,0 @@
-click
-pillow
-pypdf
-python-docx
-mutagen
-pymediainfo
-tqdm
-py2pdf
-piexif

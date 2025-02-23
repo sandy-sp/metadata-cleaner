@@ -3,7 +3,7 @@ import json
 import tempfile
 import piexif
 from PIL import Image
-from src.core.metadata_filter import load_filter_rules, filter_exif_data
+from metadata_cleaner.core.metadata_filter import load_filter_rules, filter_exif_data
 
 def create_exif_dict():
     """

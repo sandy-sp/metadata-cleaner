@@ -4,11 +4,11 @@ import subprocess
 from PIL import Image
 from docx import Document
 from PyPDF2 import PdfWriter
-from src.file_handlers.image_handler import remove_image_metadata
-from src.file_handlers.pdf_handler import remove_pdf_metadata
-from src.file_handlers.docx_handler import remove_docx_metadata
-from src.file_handlers.audio_handler import remove_audio_metadata
-from src.file_handlers.video_handler import remove_video_metadata
+from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
+from metadata_cleaner.file_handlers.pdf_handler import remove_pdf_metadata
+from metadata_cleaner.file_handlers.docx_handler import remove_docx_metadata
+from metadata_cleaner.file_handlers.audio_handler import remove_audio_metadata
+from metadata_cleaner.file_handlers.video_handler import remove_video_metadata
 
 class TestFileHandlers(unittest.TestCase):
 

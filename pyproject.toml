@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "metadata-cleaner"
+version = "2.0.0"
+description = "A CLI tool to remove or selectively filter metadata from images, documents, audio, and video files."
+authors = ["Sandeep Paidipati <sandeep.paidipati@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/sandy-sp/metadata-cleaner"
+repository = "https://github.com/sandy-sp/metadata-cleaner"
+
+[tool.poetry.dependencies]
+python = ">=3.7"
+click = "^8.1.3"
+pillow = "^9.5.0"
+pypdf = "^3.12.0"
+python-docx = "^0.8.11"
+mutagen = "^1.45.1"
+pymediainfo = "^5.0.3"
+tqdm = "^4.64.0"
+piexif = "^1.1.3"
+
+[tool.poetry.scripts]
+metadata-cleaner = "metadata_cleaner.cli:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

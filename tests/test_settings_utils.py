@@ -1,7 +1,7 @@
 import os
 import unittest
-from src.config.settings import DEFAULT_OUTPUT_FOLDER, ENABLE_PARALLEL_PROCESSING, LOG_LEVEL, SUPPORTED_FORMATS
-from src.core.metadata_utils import ensure_output_folder, copy_file_without_metadata, get_file_extension
+from metadata_cleaner.config.settings import DEFAULT_OUTPUT_FOLDER, ENABLE_PARALLEL_PROCESSING, LOG_LEVEL, SUPPORTED_FORMATS
+from metadata_cleaner.core.metadata_utils import ensure_output_folder, copy_file_without_metadata, get_file_extension
 
 class TestSettingsAndUtils(unittest.TestCase):
 

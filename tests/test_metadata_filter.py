@@ -3,7 +3,7 @@ import piexif
 from PIL import Image
 import json
 import tempfile
-from src.file_handlers.image_handler import remove_image_metadata
+from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
 
 def create_test_image(path):
     img = Image.new("RGB", (100, 100), color="red")
