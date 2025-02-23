@@ -203,5 +203,5 @@ See the full license in [`LICENSE`](LICENSE).
 ## ❤️ Support
 If you found this tool useful, give it a ⭐ on GitHub!  
 For issues or questions, [open an issue](https://github.com/sandy-sp/metadata-cleaner/issues).
-
+Thank You!
 ---
