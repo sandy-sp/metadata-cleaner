@@ -41,7 +41,7 @@ jobs:
         with:
           files: dist/metadata-cleaner-linux.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
   build-windows:
     name: 🏁 Build Executable for Windows
@@ -74,4 +74,4 @@ jobs:
         with:
           files: dist/metadata-cleaner-windows.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
