@@ -1,207 +1,192 @@
-# 📄 README.md
----
+# 📄 Metadata Cleaner 🔍
 
-# 🧹 Metadata Cleaner 🔍  
-*A powerful CLI tool to remove metadata from images, PDFs, DOCX, audio, and video files.*
+*A powerful CLI tool to remove or selectively filter metadata from images, PDFs, DOCX, audio, and video files.*
 
 ---
 
 ## 📌 Overview
-**Metadata Cleaner** is a fast and efficient **command-line tool** that removes metadata from various file formats, including **images, PDFs, documents, audio, and videos**.  
-This tool is designed for **privacy protection, security compliance, and data sanitization**.
 
-🔍 **Why use Metadata Cleaner?**  
-- **Protect your privacy** by stripping hidden metadata from files.  
-- **Sanitize sensitive documents** before sharing.  
-- **Reduce file size** by removing unnecessary metadata.  
-- **Batch process multiple files or entire folders** for efficiency.  
+**Metadata Cleaner** is a fast and efficient **command-line tool** designed for privacy protection, security compliance, and data sanitization. It supports removing metadata from various file formats including images, documents, audio, and video files, with options for selective filtering and parallel batch processing.
+
+🔍 **Why use Metadata Cleaner?**
+- **Protect your privacy:** Strip hidden metadata from files.
+- **Sanitize sensitive documents:** Prepare files for sharing without revealing personal information.
+- **Reduce file size:** Remove unnecessary metadata.
+- **Batch process:** Clean metadata from individual files or entire folders (with recursive support).
 
 ---
 
 ## 🚀 Features
-✅ **Supports Metadata Removal for:**  
-- 📷 **Images**: `JPG, PNG, TIFF`  
-- 📄 **Documents**: `PDF, DOCX`  
-- 🎵 **Audio**: `MP3, WAV, FLAC`  
-- 🎥 **Videos**: `MP4, MKV, MOV`  
 
-✅ **Batch Processing**  
-- Remove metadata **from individual files or entire folders**.  
+- **Selective Metadata Filtering:**  
+  Configure which metadata fields to preserve or remove using a JSON configuration file.
 
-✅ **Parallel Processing**  
-- **Speeds up processing** with **multi-file parallel execution**.  
+- **Batch & Recursive Processing:**  
+  Process a single file, an entire folder, or even subfolders recursively.
 
-✅ **Interactive & User-Friendly CLI**  
-- Features **progress bars, confirmation prompts, and summary reports**.  
+- **Parallel Processing:**  
+  Accelerate batch operations using multi-file parallel execution.
 
-✅ **Safe Metadata Removal**  
-- **Original files remain untouched**, and cleaned versions are saved in a separate folder.  
+- **Cross-Platform CLI:**  
+  Works on Linux, macOS, and Windows.
 
-✅ **Cross-Platform Compatibility**  
-- Works on **Linux, macOS, and Windows**.  
+- **Logging & Error Reporting:**  
+  Detailed logs help troubleshoot issues easily.
 
 ---
 
 ## 🛠️ Installation & Usage
 
-### **1️⃣ Install via `pip` (Recommended for Python Users)**
-To install the latest version from **PyPI**, run:  
+### **1️⃣ Using Poetry (Recommended)**
+
+If you use [Poetry](https://python-poetry.org/), simply clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/sandy-sp/metadata-cleaner.git
+cd metadata-cleaner
+poetry install
+```
+
+To run Metadata Cleaner:
+```bash
+poetry run metadata-cleaner --help
+```
+
+### **2️⃣ Install via PyPI**
+
+Once published to PyPI, you can install it with pip:
 ```bash
 pip install metadata-cleaner
 ```
 
-### **2️⃣ Download Standalone Executable (No Python Required)**
-✅ **For users who don't want to install Python**, download the pre-built binary:
-
-- **[Download for Linux](https://github.com/sandy-sp/metadata-cleaner/releases/download/v1.0.0/metadata-cleaner-linux.zip)**  
-```bash
-unzip metadata-cleaner-linux.zip
-chmod +x metadata-cleaner
-./metadata-cleaner --help
-```
-
----
-
-## 📖 Usage
-
-### **1️⃣ Remove Metadata from a Single File**
-```bash
-metadata-cleaner --file path/to/file.jpg
-```
-✅ **Example Output:**
-```
-Do you want to process file.jpg? [Y/n]: Y
-✅ Metadata removed. Cleaned file saved at: path/to/cleaned/file.jpg
-```
-
-### **2️⃣ Remove Metadata from All Files in a Folder**
-```bash
-metadata-cleaner --folder test_folder
-```
-✅ **Example Output:**
-```
-Do you want to process all files in test_folder? [Y/n]: Y
-Processing Files: 100% |███████████████████████| 5/5 [00:10s]
-
-📊 **Summary Report:**
-✅ Successfully processed: 5 files
-❌ Failed to process: 0 files
-Cleaned files saved in: test_folder/cleaned
-```
-
-### **3️⃣ Save Cleaned Files to a Custom Folder**
-By default, cleaned files are stored in `cleaned/`.  
-To specify a custom location, use:
-```bash
-metadata-cleaner --folder test_folder --output my_cleaned_files
-```
-
-✅ **Example Output:**
-```
-📊 **Summary Report:**
-✅ Successfully processed: 5 files
-Cleaned files saved in: my_cleaned_files/
-```
-
-### **4️⃣ Remove Metadata Without Confirmation Prompt**
-```bash
-metadata-cleaner --folder test_folder --yes
-```
-
-### **5️⃣ Display Help**
+And run it:
 ```bash
 metadata-cleaner --help
 ```
 
-✅ **Example Output:**
-```
-Usage: metadata-cleaner [OPTIONS]
+### **3️⃣ Usage Examples**
 
-Options:
-  --file TEXT    Path to the file to clean metadata from.
-  --folder TEXT  Path to a folder to clean metadata from all supported files.
-  --output TEXT  Path to save the cleaned file(s).
-  --yes          Skip confirmation prompts.
-  --help         Show this message and exit.
+#### **Remove Metadata from a Single File**
+```bash
+metadata-cleaner --file path/to/file.jpg
+```
+**Example Output:**
+```
+Do you want to process file.jpg? [Y/n]: Y
+✅ Metadata removed. Cleaned file saved at: path/to/file_cleaned.jpg
+```
+
+#### **Remove Metadata from All Files in a Folder (Non-Recursive)**
+```bash
+metadata-cleaner --folder test_folder
+```
+**Example Output:**
+```
+Do you want to process all files in test_folder? [Y/n]: Y
+Processing Files: 100% |████████████████| 5/5 [00:10s]
+
+📊 Summary Report:
+✅ Successfully processed: 5 files
+Cleaned files saved in: test_folder/cleaned
+```
+
+#### **Batch Processing with Recursive Search & Custom Output**
+```bash
+metadata-cleaner --folder my_folder --recursive --output sanitized_files --yes
+```
+**Example Output:**
+```
+Processing Files: 100% |████████████████| 20/20 [00:15s]
+
+📊 Summary Report:
+✅ Successfully processed: 20 files
+Cleaned files saved in: sanitized_files
+```
+
+#### **Using a Custom Configuration File**
+You can create a JSON configuration file (e.g., `config.json`) to specify selective metadata rules. Then run:
+```bash
+metadata-cleaner --file sample.jpg --config config.json
 ```
 
 ---
 
 ## 🔧 How It Works
-1️⃣ **Detects file type** and selects the appropriate metadata removal method.  
-2️⃣ **Processes the file** by removing metadata safely.  
-3️⃣ **Saves the cleaned version** in the `cleaned/` subfolder.  
-4️⃣ **Generates logs and a summary report** for easy tracking.  
+
+1. **File Detection:**  
+   The tool detects the file type and selects the appropriate handler.
+
+2. **Selective Filtering:**  
+   For image files, it uses a configuration file (if provided) to selectively remove or preserve EXIF metadata.
+
+3. **Processing:**  
+   Files are processed—either individually or in batches—with parallel execution for efficiency.
+
+4. **Output & Logging:**  
+   Cleaned files are saved in a default or specified output folder, and detailed logs are generated for troubleshooting.
 
 ---
 
-## 💻 Supported File Formats & Methods
+## 💻 Project Structure
 
-| File Type | Supported Formats | Metadata Removal Method |
-|-----------|------------------|------------------------|
-| 📷 **Images** | `JPG, PNG, TIFF` | Pillow (`PIL`) |
-| 📄 **Documents** | `PDF, DOCX` | PyPDF2, python-docx |
-| 🎵 **Audio** | `MP3, WAV, FLAC` | Mutagen |
-| 🎥 **Videos** | `MP4, MKV, MOV` | FFmpeg |
-
----
-
-## 🏗 Project Structure
 ```
 metadata-cleaner/
-│── docs/                      # Documentation
-│── scripts/                   # Setup and installation scripts
-│── src/                       # Source code
-│   │── cli.py                 # CLI entry point
-│   │── remover.py             # Core metadata remover
-│   │── file_handlers/         # File-specific handlers
-│── tests/                     # Unit tests
-│── test_folder/               # Sample test files
-│── setup.py                   # Package setup
-│── requirements.txt           # Dependencies
-│── LICENSE                    # License information
+├── docs/                     # Documentation
+├── metadata_cleaner/         # Python package source code
+│   ├── cli.py                # CLI entry point
+│   ├── remover.py            # Core metadata removal logic
+│   ├── config/               # Configuration settings
+│   ├── core/                 # Metadata filtering utilities
+│   ├── file_handlers/        # File-specific metadata handlers
+│   └── logs/                 # Logging configuration
+├── tests/                    # Unit tests
+├── scripts/                  # Setup and environment scripts (Poetry-based)
+├── pyproject.toml            # Poetry configuration file
+├── MANIFEST.in               # Manifest file for packaging
+└── README.md                 # This file
 ```
 
 ---
 
 ## 💡 Contributing
-We welcome contributions! To contribute:
 
-```bash
-# Fork the repository
-git clone https://github.com/sandy-sp/metadata-cleaner.git
-cd metadata-cleaner
+Contributions are welcome! To contribute:
 
-# Create a new branch for your feature
-git checkout -b feature-name
-
-# Make changes & test
-pytest tests/
-
-# Commit and push
-git commit -m "Added new feature"
-git push origin feature-name
-
-# Submit a Pull Request (PR)
-```
-
----
-
-## 🔒 License
-This project is licensed under the **MIT License**.  
-See the full license in [`LICENSE`](LICENSE).
+1. **Fork the repository**
+2. **Create a new branch** for your feature:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. **Make your changes and test** using:
+   ```bash
+   poetry run pytest
+   ```
+4. **Commit and push** your changes:
+   ```bash
+   git commit -m "Describe your feature"
+   git push origin feature-name
+   ```
+5. **Submit a Pull Request**
 
 ---
 
-## 🔗 Links & Resources
-- 📖 **Documentation**: [API Reference](docs/API_REFERENCE.md)
-- 🐍 **PyPI Package**: [metadata-cleaner](https://pypi.org/project/metadata-cleaner/)
-- 🚀 **GitHub Repository**: [metadata-cleaner](https://github.com/sandy-sp/metadata-cleaner)
+## 🔗 Resources & Links
+
+- **API Reference:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+- **Usage Guide:** [docs/USAGE.md](docs/USAGE.md)
+- **Planned Features:** [docs/PLANNED_FEATURES.md](docs/PLANNED_FEATURES.md)
+- **GitHub Repository:** [metadata-cleaner](https://github.com/sandy-sp/metadata-cleaner)
+- **PyPI Package:** [metadata-cleaner](https://pypi.org/project/metadata-cleaner/)
 
 ---
 
 ## ❤️ Support
-If you found this tool useful, give it a ⭐ on GitHub!  
-For issues or questions, [open an issue](https://github.com/sandy-sp/metadata-cleaner/issues).
-Thank You!
+
+If you find this tool useful, please give it a ⭐ on GitHub!  
+For issues or questions, [open an issue](https://github.com/sandy-sp/metadata-cleaner/issues) or contact `sandeep.paidipati@gmail.com`.
+
 ---
+
+## 🔒 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.

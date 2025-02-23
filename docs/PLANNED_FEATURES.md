@@ -1,85 +1,85 @@
-# 🏗️ Metadata Cleaner v1.1.0 - Planned Features
+# 🏗️ Metadata Cleaner v2.1.0 - Planned Features
 
-🚀 **Planned Release: v1.1.0**
+🚀 **Planned Release: v2.1.0**
 
-This document outlines the features and improvements planned for the **next major release (v1.1.0)** of Metadata Cleaner. The focus of this update is to **introduce a GUI, improve performance, and expand file format support**.
+This document outlines the features and improvements planned for the next release of Metadata Cleaner. The focus is on further enhancing usability, performance, and expanding the tool's capabilities.
 
 ---
 
-## 🎨 **1️⃣ Implement GUI Support**
-To make the tool more accessible to **non-technical users**, we will introduce **three GUI options**:
+## 🎨 **1️⃣ GUI Support**
+
+While Metadata Cleaner is currently CLI-based, we plan to introduce GUI options to make the tool more accessible to non-technical users:
 
 ### **🖥️ Desktop GUI (Tkinter - Quick Implementation)**
-✅ **Lightweight & fast** – Built using Tkinter (Python’s standard GUI library).  
-✅ **Drag & Drop support** for selecting files.  
-✅ **Simple layout** with a "Start Cleaning" button.  
-✅ **Progress bar** to indicate cleaning progress.  
-✅ **Quickest to develop** and integrates seamlessly with the current CLI.  
+- **Lightweight & Fast:** Built with Tkinter (Python’s standard GUI library).
+- **Drag & Drop Support:** Simplify file selection.
+- **Simple Layout:** A “Start Cleaning” button and progress indicator.
+- **Integration:** Seamless integration with current CLI functionality.
 
-### **🖥️ Advanced Desktop GUI (PyQt/PySide - Full Feature GUI)**
-✅ **Modern interface** with better styling.  
-✅ **Batch file selection & folder processing** via UI.  
-✅ **Log window** to display metadata removal results.  
-✅ **Theme toggle (Light/Dark Mode)**.  
-✅ **Standalone executable (.exe / .app)** for users who don’t want CLI.  
+### **🖥️ Advanced Desktop GUI (PyQt/PySide)**
+- **Modern Interface:** Sleek design with improved styling.
+- **Batch & Folder Processing:** Intuitive selection of multiple files or folders.
+- **Log Window:** Real-time display of metadata removal results.
+- **Theme Toggle:** Switch between light and dark modes.
+- **Standalone Executable:** Package the GUI as a standalone app.
 
-### **🌐 Web-Based GUI (Electron.js or Flask/FastAPI)**
-✅ **Cross-platform web UI** accessible from a browser.  
-✅ **Runs locally (no cloud dependency)**.  
-✅ **Future-proof: Can later evolve into a cloud-based metadata cleaning service**.  
-✅ **Ideal for users who want a web-based experience instead of CLI.**  
+### **🌐 Web-Based GUI (Flask/FastAPI or Electron.js)**
+- **Cross-Platform:** Accessible through a web browser.
+- **Local Operation:** Runs locally without cloud dependencies.
+- **Future Potential:** Can evolve into a cloud-based metadata cleaning service.
+- **User-Friendly:** Ideal for users who prefer a web interface over the CLI.
 
 ---
 
 ## ⚡ **2️⃣ Performance Enhancements**
 
-### **Multithreading for Faster Batch Processing**
-✅ Use **Python’s `concurrent.futures.ThreadPoolExecutor`** to process multiple files in parallel.  
-✅ Expect **2x–5x speed improvement** for batch operations.  
-✅ Reduce processing time for large folders.  
+### **Multithreading & Async Processing**
+- **Enhanced Parallelism:** Further improve batch processing speed using Python’s `ThreadPoolExecutor` or asynchronous I/O.
+- **Benchmarking:** Identify bottlenecks and optimize performance.
 
-### **Recursive Folder Processing**
-✅ Introduce a `--recursive` flag to **process all files inside subfolders**.  
-✅ Example:
-```bash
-metadata-cleaner --folder my_folder --recursive
-```
-✅ Scans and cleans metadata for all nested files.
+### **Resource Management**
+- **Memory Optimization:** Fine-tune the handling of large files or batches to reduce memory overhead.
+- **Error Resilience:** Improve error recovery during high-load processing.
 
 ---
 
 ## 📂 **3️⃣ Expanded File Format Support**
 
-### **Newly Supported Formats:**
-✅ **Images**: Add support for **WEBP, HEIC**.  
-✅ **Documents**: Support **ODT, EPUB** metadata removal.  
-✅ **Audio/Video**: Improve support for **WAV, AVI**.  
+### **New Image Formats:**
+- **WEBP & HEIC:** Enhance support for modern image formats.
+  
+### **Document Formats:**
+- **ODT & EPUB:** Extend metadata removal capabilities to additional document formats.
+
+### **Audio/Video Formats:**
+- **Additional Formats:** Improve support for formats such as WAV, AVI, and others.
 
 ---
 
 ## 🔍 **4️⃣ Enhanced Logging & Error Reporting**
-✅ Introduce a `--log` flag for **detailed logs**.
-✅ Log failed file reasons (`corrupt file, unsupported format, permission denied`).
-✅ Save logs to `logs/metadata_cleaner.log` for debugging.
+
+- **Detailed Logs:** Introduce a `--log` flag to enable verbose logging for debugging.
+- **Error Aggregation:** Log reasons for failed file processing (e.g., corrupt files, permission issues).
+- **Log Rotation:** Implement log rotation to manage file sizes and maintain long-term logs.
 
 ---
 
-## 🔄 **5️⃣ Auto-Update Feature (Standalone Executable)**
-✅ Implement a `--update` command that checks for the latest GitHub release.
-✅ If a new version exists, it downloads and replaces the old binary.
-✅ Example:
-```bash
-metadata-cleaner --update
-```
+## 🔄 **5️⃣ Auto-Update Feature**
+
+- **Self-Updating Executable:** Implement a command (`--update`) that checks for the latest release on GitHub and auto-updates the standalone executable.
+- **Seamless Experience:** Ensure that updating is smooth and does not interrupt user workflows.
 
 ---
 
 ## ✅ **Next Steps**
-📌 **Assign development tasks for each feature.**  
-📌 **Create separate branches for GUI implementations (Tkinter, PyQt, Electron).**  
-📌 **Test performance improvements in batch processing.**  
-📌 **Verify compatibility for new file formats.**  
-📌 **Plan beta testing before the full release.**  
 
-🚀 **Once completed, v1.1.0 will be released with these improvements!**
+- **Assign Tasks:** Break down the above features into individual development tasks.
+- **Create Branches:** Work on each feature in separate branches (e.g., `gui-tkinter`, `performance-improvements`, etc.).
+- **Beta Testing:** Once features are implemented, conduct beta testing with a subset of users.
+- **Documentation:** Update user guides and API references as new features are added.
+- **Community Feedback:** Gather user feedback to prioritize future enhancements.
+
+---
+
+Once these features are completed and tested, Metadata Cleaner v2.1.0 will provide a much richer user experience, improved performance, and broader file format support.
 
