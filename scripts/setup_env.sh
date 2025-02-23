@@ -1,38 +1,25 @@
 #!/bin/bash
+# Setup script for Metadata Cleaner Development Environment using Poetry.
+# This script checks for Poetry, installs dependencies, and optionally activates the virtual environment.
 
-echo "🚀 Setting up the Metadata Cleaner Development Environment..."
+echo "🚀 Setting up the Metadata Cleaner Development Environment using Poetry..."
 
-# 1️⃣ Check if Python3 is installed
-if ! command -v python3 &> /dev/null
-then
-    echo "❌ Python3 is not installed. Please install Python3 first."
+# Check if Poetry is installed
+if ! command -v poetry &> /dev/null; then
+    echo "❌ Poetry is not installed. Please install Poetry first: https://python-poetry.org/docs/#installation"
     exit 1
 fi
 
-# 2️⃣ Create a Virtual Environment
-echo "🛠 Creating a virtual environment..."
-python3 -m venv venv
+# Install project dependencies using Poetry
+echo "📥 Installing dependencies via Poetry..."
+poetry install
 
-# 3️⃣ Activate the Virtual Environment
-echo "🔄 Activating the virtual environment..."
-if [[ "$OSTYPE" == "msys" ]]; then
-    venv\Scripts\activate
+# Optionally, activate the Poetry virtual environment
+read -p "Do you want to activate the virtual environment now? (y/n): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "🔄 Activating Poetry shell..."
+    poetry shell
 else
-    source venv/bin/activate
-echo "🔍 Checking if pip is up-to-date..."
-pip list --outdated | grep -q 'pip' && pip install --upgrade pip || echo "pip is already up-to-date."
-# 4️⃣ Install Dependencies
-echo "📥 Installing dependencies..."
-pip install --upgrade pip
-
-if [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt
-else
-    echo "❌ requirements.txt not found. Please ensure the file exists in the current directory."
-    deactivate
-    exit 1
+    echo "✅ Setup Complete! You can activate the environment later using 'poetry shell'."
 fi
-pip install -r requirements.txt
-
-echo "✅ Setup Complete! Virtual environment is now ready."
-echo "Run 'source venv/bin/activate' to activate the environment."
