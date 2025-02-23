@@ -8,7 +8,8 @@ from src.remover import remove_metadata, remove_metadata_from_folder
 @click.option('--folder', '-d', type=click.Path(exists=True), help="Path to a folder to clean metadata from all supported files.")
 @click.option('--output', '-o', type=click.Path(), help="Path to save the cleaned file(s).")
 @click.option('--yes', '-y', is_flag=True, help="Skip confirmation prompts.")
-def main(file, folder, output, yes):
+@click.option('--config', '-c', type=click.Path(exists=True), help="Path to configuration file for selective metadata filtering.")
+def main(file, folder, output, yes, config):
     """CLI for metadata removal. Supports single file or batch processing with interactivity."""
     try:
         if file:
@@ -17,7 +18,7 @@ def main(file, folder, output, yes):
                 return
 
             logger.info(f"Processing single file: {file}")
-            cleaned_file = remove_metadata(file, output)
+            cleaned_file = remove_metadata(file, output, config)
             if cleaned_file:
                 click.echo(f"✅ Metadata removed. Cleaned file saved at: {cleaned_file}")
             else:
@@ -29,12 +30,10 @@ def main(file, folder, output, yes):
                 return
 
             logger.info(f"Processing folder: {folder}")
-            cleaned_files = remove_metadata_from_folder(folder, output)
+            cleaned_files = remove_metadata_from_folder(folder, output, config)
 
-            # Display summary report
             click.echo("\n📊 **Summary Report:**")
             click.echo(f"✅ Successfully processed: {len(cleaned_files)} files")
-
             if cleaned_files:
                 click.echo(f"Cleaned files saved in: {output if output else folder}")
 
