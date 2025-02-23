@@ -7,17 +7,21 @@ from src.file_handlers.image_handler import remove_image_metadata
 
 def create_test_image(path):
     img = Image.new("RGB", (100, 100), color="red")
-    # Inject dummy Exif data (Orientation: 1, GPS: some value, Timestamp: "2025:02:23 10:00:00")
+    # Inject dummy Exif data:
+    # - Orientation (tag 274) in "0th"
+    # - DateTimeOriginal (tag 36867) in "Exif"
+    # - GPS data in "GPS"
     exif_dict = {
         "0th": {
             274: 1,  # Orientation
+        },
+        "Exif": {
             36867: "2025:02:23 10:00:00"
         },
         "GPS": {
             1: b"N",
             2: ((40, 1), (26, 1), (0, 1))  # Some GPS data
         },
-        "Exif": {},
         "1st": {},
         "thumbnail": None
     }
@@ -55,7 +59,7 @@ def test_image_filtering():
         assert 274 not in exif_data.get("0th", {}), "Orientation should be removed"
         assert exif_data.get("GPS", {}) == {}, "GPS data should be removed"
         # Check that the timestamp is date-only.
-        timestamp = exif_data.get("0th", {}).get(36867, b"").decode("utf-8")
+        timestamp = exif_data.get("Exif", {}).get(36867, b"").decode("utf-8")
         assert len(timestamp.split(" ")) == 1, "Timestamp should be date only"
 
 if __name__ == "__main__":

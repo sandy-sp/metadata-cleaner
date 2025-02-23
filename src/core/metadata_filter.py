@@ -54,17 +54,16 @@ def filter_exif_data(exif_dict, rules):
                     pass
         # For "exact", leave the GPS data as-is.
 
-    # Process Timestamp (e.g., DateTimeOriginal is tag 36867)
-    if "0th" in exif_dict and 36867 in exif_dict["0th"]:
+    # Process Timestamp (e.g., DateTimeOriginal is tag 36867 in the "Exif" IFD)
+    if "Exif" in exif_dict and 36867 in exif_dict["Exif"]:
         ts_rule = rules.get("Timestamp", "date_only")
-        dt = exif_dict["0th"][36867]
-        # Decode if needed
+        dt = exif_dict["Exif"][36867]
         dt_str = dt.decode("utf-8") if isinstance(dt, bytes) else dt
         if ts_rule == "date_only":
             date_only = dt_str.split(" ")[0] if " " in dt_str else dt_str
-            exif_dict["0th"][36867] = date_only.encode("utf-8")
+            exif_dict["Exif"][36867] = date_only.encode("utf-8")
         elif ts_rule == "remove":
-            del exif_dict["0th"][36867]
+            del exif_dict["Exif"][36867]
 
     # Placeholders for additional rules (CameraSettings, Descriptions, Thumbnail, ImageMetrics)
     # Extend as needed.
