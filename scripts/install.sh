@@ -1,55 +1,29 @@
 #!/bin/bash
+# Install script for Metadata Cleaner using Poetry.
+# This script sets up the environment and installs Metadata Cleaner using Poetry.
+# It requires that Poetry is installed on the system.
+echo "🚀 Starting Metadata Cleaner Installation using Poetry..."
 
-echo "🚀 Starting Metadata Cleaner Installation..."
-
-# 1️⃣ Ensure the script runs with sudo
-if [[ $EUID -ne 0 ]]; then
-   echo "❌ Please run this script as root (using sudo)."
-   exit 1
+# Check if Poetry is installed
+if ! command -v poetry &> /dev/null
+then
+    echo "❌ Poetry is not installed. Please install Poetry first: https://python-poetry.org/docs/#installation"
+    exit 1
 fi
 
-# 2️⃣ Update System Packages
+# Update system packages (optional)
 echo "🔄 Updating system packages..."
-apt-get update
+sudo apt-get update
 
 read -p "Do you want to upgrade all packages? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    apt-get upgrade
-fi
-# 3️⃣ Install Python and Pip (if not installed)
-echo "🐍 Checking for Python & Pip..."
-if ! command -v python3 &> /dev/null
-then
-    echo "📥 Installing Python 3..."
-    apt install python3 -y
-else
-    echo "✅ Python 3 is already installed."
+    sudo apt-get upgrade -y
 fi
 
-if ! command -v pip3 &> /dev/null
-then
-    echo "📥 Installing Pip 3..."
-    apt install python3-pip -y
-else
-    echo "✅ Pip 3 is already installed."
-fi
+# Install project dependencies using Poetry
+echo "📦 Installing dependencies using Poetry..."
+poetry install
 
-# 4️⃣ Install System Dependencies (FFmpeg & MediaInfo)
-echo "📥 Installing FFmpeg and MediaInfo..."
-apt install -y ffmpeg libmediainfo0v5
-
-# 5️⃣ Create and activate a virtual environment
-echo "🐍 Creating a virtual environment..."
-pip3 install --user metadata-cleaner
-source venv/bin/activate
-
-# 6️⃣ Install Metadata Cleaner using pip
-echo "📥 Installing Metadata Cleaner..."
-pip install metadata-cleaner
-
-# 6️⃣ Verify Installation
 echo "✅ Installation Complete!"
-echo "Run 'metadata-cleaner --help' to get started."
-echo "To clean metadata from a file, use: 'metadata-cleaner <file_path>'"
-echo "For example: 'metadata-cleaner /path/to/your/file'"
+echo "You can now run Metadata Cleaner using: poetry run metadata-cleaner --help"
