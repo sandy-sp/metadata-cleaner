@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="metadata-cleaner",
-    version="1.0.0",
+    version="2.0.0",
     author="Sandeep Paidipati",
     author_email="sandeep.paidipati@gmail.com",
-    description="A CLI tool to remove metadata from images, documents, audio, and video files.",
+    description="A CLI tool to remove or selectively filter metadata from images, documents, audio, and video files.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/sandy-sp/metadata-cleaner",
@@ -18,7 +18,8 @@ setup(
         "python-docx",
         "mutagen",
         "pymediainfo",
-        "tqdm"
+        "tqdm",
+        "piexif"
     ],
     entry_points={
         "console_scripts": [
