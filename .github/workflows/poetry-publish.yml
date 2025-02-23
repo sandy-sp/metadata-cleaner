@@ -58,9 +58,9 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           poetry --version
 
-      - name: 📦 Install Dependencies (main only)
+      - name: 📦 Install Dependencies (with Dev)
         run: |
-          poetry install --no-root --only main
+          poetry install
           poetry run pip install --editable .
 
       - name: 🏗️ Build the Package
