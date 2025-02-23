@@ -1,0 +1,63 @@
+name: Release and Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"  # any tag starting with 'v'
+
+jobs:
+  publish_and_release:
+    name: Publish Package and Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Check out your repo code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2) Install system deps (like libjpeg) if needed
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libjpeg-dev zlib1g-dev
+
+      # 3) Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      # 4) Install Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry --version
+
+      # 5) Install and Build
+      - name: Install Dependencies and Build Package
+        run: |
+          poetry install --no-root
+          poetry build
+
+      # 6) Publish to PyPI
+      - name: Publish Package to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          poetry publish --username __token__ --password "$POETRY_PYPI_TOKEN_PYPI" --no-interaction
+
+      # 7) Create a GitHub Release with the new tag
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}   # e.g. "v2.0.0"
+          release_name: "Release ${{ github.ref_name }}"
+          body: |
+            # Release Notes
+            - Summary of changes in version ${{ github.ref_name }}
+            - Possibly include bullet points of major updates/fixes
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
