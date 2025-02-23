@@ -1,4 +1,8 @@
 # 📄 Metadata Cleaner 🔍
+[![Build Status](https://github.com/sandy-sp/metadata-cleaner/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/sandy-sp/metadata-cleaner/actions)
+[![Release](https://img.shields.io/github/release/sandy-sp/metadata-cleaner.svg)](https://github.com/sandy-sp/metadata-cleaner/releases)
+[![PyPI version](https://badge.fury.io/py/metadata-cleaner.svg)](https://pypi.org/project/metadata-cleaner/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 *A powerful CLI tool to remove or selectively filter metadata from images, PDFs, DOCX, audio, and video files.*
 
