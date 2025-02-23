@@ -1,4 +1,4 @@
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 import os
 from typing import Optional
 from metadata_cleaner.logs.logger import logger
