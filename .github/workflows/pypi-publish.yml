@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v*"  # Trigger on any tag that starts with 'v'
+      - "v*"  # Triggers on any tag that starts with 'v'
 
 jobs:
   deploy:
@@ -22,12 +22,11 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          export PATH="$HOME/.local/bin:$PATH"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
           poetry --version
 
       - name: Install Dependencies and Build Package
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           poetry install --no-root
           poetry build
 
@@ -35,5 +34,4 @@ jobs:
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           poetry publish --build --no-interaction
