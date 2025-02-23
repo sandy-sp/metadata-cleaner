@@ -16,7 +16,7 @@ SUPPORTED_EXTENSIONS = {
     ".mp4": remove_video_metadata, ".mkv": remove_video_metadata, ".mov": remove_video_metadata, ".avi": remove_video_metadata
 }
 
-def remove_metadata(file_path, output_path=None):
+def remove_metadata(file_path, output_path=None, config_file=None):
     """Removes metadata from a single file and logs detailed errors."""
     try:
         if not os.path.exists(file_path):
@@ -31,7 +31,10 @@ def remove_metadata(file_path, output_path=None):
         logger.info(f"Processing file: {file_path}")
         remover_function = SUPPORTED_EXTENSIONS[ext]
 
-        cleaned_file = remover_function(file_path, output_path)
+        if ext in [".jpg", ".jpeg", ".png", ".tiff"]:
+            cleaned_file = remover_function(file_path, output_path, config_file)
+        else:
+            cleaned_file = remover_function(file_path, output_path)
 
         if cleaned_file and os.path.exists(cleaned_file):
             logger.info(f"Metadata removed successfully: {cleaned_file}")
@@ -44,13 +47,16 @@ def remove_metadata(file_path, output_path=None):
         logger.error(f"Error processing file {file_path}: {e}")
         return None
 
-def process_file(file_path, output_folder):
+def process_file(file_path, output_folder, config_file=None):
     """Processes a single file in parallel."""
     try:
         ext = os.path.splitext(file_path)[1].lower()
         if ext in SUPPORTED_EXTENSIONS:
             output_path = os.path.join(output_folder, os.path.basename(file_path)) if output_folder else file_path
-            cleaned_file = SUPPORTED_EXTENSIONS[ext](file_path, output_path)
+            if ext in [".jpg", ".jpeg", ".png", ".tiff"]:
+                cleaned_file = SUPPORTED_EXTENSIONS[ext](file_path, output_path, config_file)
+            else:
+                cleaned_file = SUPPORTED_EXTENSIONS[ext](file_path, output_path)
             if cleaned_file and os.path.exists(cleaned_file):
                 logger.info(f"✅ Metadata removed: {cleaned_file}")
                 return cleaned_file
@@ -64,13 +70,12 @@ def process_file(file_path, output_folder):
         logger.error(f"Error processing {file_path}: {e}")
         return None
 
-def remove_metadata_from_folder(folder_path, output_folder=None):
+def remove_metadata_from_folder(folder_path, output_folder=None, config_file=None):
     """Removes metadata from all supported files in a folder with parallel processing."""
     if not os.path.exists(folder_path):
         logger.error(f"❌ Folder not found: {folder_path}")
         raise FileNotFoundError(f"Folder not found: {folder_path}")
 
-    # Create output folder inside test_folder
     if not output_folder:
         output_folder = os.path.join(folder_path, "cleaned")
     os.makedirs(output_folder, exist_ok=True)
@@ -88,7 +93,10 @@ def remove_metadata_from_folder(folder_path, output_folder=None):
 
     with tqdm(total=len(files_to_process), desc="Processing Files", unit="file") as pbar:
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            future_to_file = {executor.submit(process_file, file_path, output_folder): file_path for file_path in files_to_process}
+            future_to_file = {
+                executor.submit(process_file, file_path, output_folder, config_file): file_path 
+                for file_path in files_to_process
+            }
 
             for future in concurrent.futures.as_completed(future_to_file):
                 result = future.result()
@@ -98,11 +106,9 @@ def remove_metadata_from_folder(folder_path, output_folder=None):
                     failed_files.append(future_to_file[future])
                 pbar.update(1)
 
-    # Summary Report
     logger.info("\n📊 **Summary Report:**")
     logger.info(f"✅ Successfully processed: {len(processed_files)} files")
     logger.info(f"❌ Failed to process: {len(failed_files)} files")
-
     if failed_files:
         logger.info("\n⚠️ Failed Files:")
         for file in failed_files:
