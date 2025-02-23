@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"  # Trigger on version tags like v1.0.0, v1.1.0, etc.
 
+permissions:
+  contents: write
+
 jobs:
   build-linux:
     name: 🐧 Build Executable for Linux
