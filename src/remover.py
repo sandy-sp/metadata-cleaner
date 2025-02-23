@@ -10,11 +10,13 @@ from src.file_handlers.video_handler import remove_video_metadata
 
 SUPPORTED_EXTENSIONS = {
     ".jpg": remove_image_metadata, ".jpeg": remove_image_metadata, ".png": remove_image_metadata, ".tiff": remove_image_metadata,
+    ".webp": remove_image_metadata, ".heic": remove_image_metadata,
     ".pdf": remove_pdf_metadata,
     ".docx": remove_docx_metadata, ".doc": remove_docx_metadata,
     ".mp3": remove_audio_metadata, ".wav": remove_audio_metadata, ".flac": remove_audio_metadata, ".ogg": remove_audio_metadata,
     ".mp4": remove_video_metadata, ".mkv": remove_video_metadata, ".mov": remove_video_metadata, ".avi": remove_video_metadata
 }
+
 
 def remove_metadata(file_path, output_path=None, config_file=None):
     """Removes metadata from a single file and logs detailed errors."""
@@ -70,8 +72,10 @@ def process_file(file_path, output_folder, config_file=None):
         logger.error(f"Error processing {file_path}: {e}")
         return None
 
-def remove_metadata_from_folder(folder_path, output_folder=None, config_file=None):
-    """Removes metadata from all supported files in a folder with parallel processing."""
+def remove_metadata_from_folder(folder_path, output_folder=None, config_file=None, recursive=False):
+    """Removes metadata from all supported files in a folder with parallel processing.
+       If recursive is False, only process files in the top-level folder.
+    """
     if not os.path.exists(folder_path):
         logger.error(f"❌ Folder not found: {folder_path}")
         raise FileNotFoundError(f"Folder not found: {folder_path}")
@@ -81,12 +85,21 @@ def remove_metadata_from_folder(folder_path, output_folder=None, config_file=Non
     os.makedirs(output_folder, exist_ok=True)
 
     files_to_process = []
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            ext = os.path.splitext(file)[1].lower()
-            if ext in SUPPORTED_EXTENSIONS:
-                files_to_process.append(file_path)
+    if recursive:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                ext = os.path.splitext(file)[1].lower()
+                if ext in SUPPORTED_EXTENSIONS:
+                    files_to_process.append(file_path)
+    else:
+        # Only process files in the immediate folder (non-recursive)
+        for file in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file)
+            if os.path.isfile(file_path):
+                ext = os.path.splitext(file)[1].lower()
+                if ext in SUPPORTED_EXTENSIONS:
+                    files_to_process.append(file_path)
 
     processed_files = []
     failed_files = []

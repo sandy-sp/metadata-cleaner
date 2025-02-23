@@ -14,9 +14,16 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(LOG_PATH),  # Log to a file
-        logging.StreamHandler()  # Log to console
+        logging.FileHandler(LOG_PATH),
+        logging.StreamHandler()
     ]
 )
 
 logger = logging.getLogger("metadata_cleaner")
+
+def set_log_level(level_str):
+    """
+    Set the logging level based on the provided level string.
+    """
+    level = getattr(logging, level_str, logging.INFO)
+    logger.setLevel(level)
