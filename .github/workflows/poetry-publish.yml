@@ -25,13 +25,16 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           poetry --version
 
+      - name: Clean previous builds
+        run: rm -rf dist
+
       - name: Install Dependencies and Build Package
         run: |
           poetry install --no-root
-          poetry build
+          poetry build --verbose
 
       - name: Publish Package to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          poetry publish --build --no-interaction
+          poetry publish --build --no-interaction --verbose
