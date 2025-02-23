@@ -1,8 +1,10 @@
 import json
 import os
+from typing import Optional, Dict, Any
+from metadata_cleaner.logs.logger import logger
 
 # Default filtering rules
-DEFAULT_RULES = {
+DEFAULT_RULES: Dict[str, Any] = {
     "Orientation": True,             # Preserve orientation by default
     "GPS": "whole_degrees",          # Options: "exact", "whole_degrees", "remove"
     "Timestamp": "date_only",        # Options: "exact", "date_only", "remove"
@@ -12,10 +14,18 @@ DEFAULT_RULES = {
     "ImageMetrics": False
 }
 
-def load_filter_rules(config_file=None):
+def load_filter_rules(config_file: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load filtering rules from a JSON config file. If no file is provided or file is missing,
+    Load filtering rules from a JSON config file.
+
+    If no config file is provided or the file is missing/invalid,
     return the default rules.
+
+    Parameters:
+        config_file (Optional[str]): Path to the configuration JSON file.
+
+    Returns:
+        Dict[str, Any]: A dictionary of filtering rules.
     """
     if config_file and os.path.exists(config_file):
         with open(config_file, 'r') as f:
@@ -23,17 +33,25 @@ def load_filter_rules(config_file=None):
                 rules = json.load(f)
                 return rules
             except Exception as e:
-                print(f"Error reading config file {config_file}: {e}")
+                logger.error(f"Error reading config file {config_file}: {e}", exc_info=True)
                 return DEFAULT_RULES
     else:
         return DEFAULT_RULES
 
-def filter_exif_data(exif_dict, rules):
+def filter_exif_data(exif_dict: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Filter the exif dictionary based on provided rules.
-    This basic implementation demonstrates processing a few key fields.
+    Filter the EXIF data dictionary based on provided rules.
+
+    This implementation demonstrates processing a few key fields.
+
+    Parameters:
+        exif_dict (Dict[str, Any]): The original EXIF data dictionary.
+        rules (Dict[str, Any]): A dictionary of filtering rules.
+
+    Returns:
+        Dict[str, Any]: The filtered EXIF data dictionary.
     """
-    # Process Orientation: Exif tag 274 (if set to False, remove it)
+    # Process Orientation: EXIF tag 274 (if set to False, remove it)
     if not rules.get("Orientation", True):
         if "0th" in exif_dict and 274 in exif_dict["0th"]:
             del exif_dict["0th"][274]
@@ -44,17 +62,17 @@ def filter_exif_data(exif_dict, rules):
         if gps_rule == "remove":
             exif_dict["GPS"] = {}
         elif gps_rule == "whole_degrees":
-            # Naively convert rational numbers to whole degrees if possible
+            # Convert rational numbers to whole degrees if possible
             for tag, value in exif_dict["GPS"].items():
                 try:
                     if isinstance(value, tuple) and len(value) == 2:
                         num, den = value
                         exif_dict["GPS"][tag] = (int(num / den), 1)
-                except Exception:
-                    pass
-        # For "exact", leave the GPS data as-is.
+                except Exception as e:
+                    logger.error(f"Error processing GPS tag {tag}: {e}", exc_info=True)
+        # For "exact", leave the GPS data unchanged.
 
-    # Process Timestamp (e.g., DateTimeOriginal is tag 36867 in the "Exif" IFD)
+    # Process Timestamp (DateTimeOriginal is tag 36867 in the "Exif" IFD)
     if "Exif" in exif_dict and 36867 in exif_dict["Exif"]:
         ts_rule = rules.get("Timestamp", "date_only")
         dt = exif_dict["Exif"][36867]
