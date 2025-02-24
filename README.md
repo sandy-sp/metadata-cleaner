@@ -152,6 +152,33 @@ metadata-cleaner/
 
 ---
 
+## ⚠️ Troubleshooting Pillow Installation
+
+When installing **Metadata Cleaner** with `pip`, you may see errors about compiling **Pillow** from source (for example, “`error: command 'gcc' failed: No such file or directory`” or “`RequiredDependencyException: jpeg`”). This happens because:
+
+1. **No system C compiler installed:** Pillow falls back to building from source if a suitable prebuilt wheel isn’t available.
+2. **Missing development libraries:** Pillow requires headers/libraries like `libjpeg-dev` and `zlib1g-dev` on Linux to compile image support.
+
+**Fix:**  
+- **Install the compiler and libraries** (for Debian/Ubuntu):
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y build-essential libjpeg-dev zlib1g-dev
+  ```
+  Then re-run:
+  ```bash
+  pip install metadata-cleaner
+  ```
+
+- **Use Conda** (if you’re in a Conda environment):
+  ```bash
+  conda install -c conda-forge pillow
+  pip install metadata-cleaner
+  ```
+  This uses prebuilt packages and avoids the need to compile from source.
+
+Once you have the necessary libraries and a working compiler, **Metadata Cleaner** (and Pillow) should install without issues.
+
 ## 💡 Contributing
 
 Contributions are welcome! To contribute:
