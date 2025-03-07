@@ -1,13 +1,15 @@
 import os
 import json
-from typing import Optional, Dict, List
-from metadata_cleaner.file_handlers.image_handler import extract_image_metadata
-from metadata_cleaner.file_handlers.pdf_handler import extract_pdf_metadata
-from metadata_cleaner.file_handlers.docx_handler import extract_docx_metadata
-from metadata_cleaner.file_handlers.audio_handler import extract_audio_metadata
-from metadata_cleaner.file_handlers.video_handler import extract_video_metadata
-from metadata_cleaner.config.settings import SUPPORTED_FORMATS
+import concurrent.futures
+from typing import List, Optional, Dict
+from tqdm import tqdm
 from metadata_cleaner.logs.logger import logger
+from metadata_cleaner.config.settings import SUPPORTED_FORMATS
+from metadata_cleaner.file_handlers.image_handler import extract_image_metadata, remove_image_metadata
+from metadata_cleaner.file_handlers.pdf_handler import extract_pdf_metadata, remove_pdf_metadata
+from metadata_cleaner.file_handlers.docx_handler import extract_docx_metadata, remove_docx_metadata
+from metadata_cleaner.file_handlers.audio_handler import extract_audio_metadata, remove_audio_metadata
+from metadata_cleaner.file_handlers.video_handler import extract_video_metadata, remove_video_metadata
 
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {
@@ -16,6 +18,14 @@ METADATA_EXTRACTOR_MAP = {
     **{ext: extract_docx_metadata for ext in SUPPORTED_FORMATS["documents"] if ext in {".docx", ".doc"}},
     **{ext: extract_audio_metadata for ext in SUPPORTED_FORMATS["audio"]},
     **{ext: extract_video_metadata for ext in SUPPORTED_FORMATS["videos"]},
+}
+
+FILE_HANDLER_MAP = {
+    **{ext: remove_image_metadata for ext in SUPPORTED_FORMATS["images"]},
+    **{ext: remove_pdf_metadata for ext in SUPPORTED_FORMATS["documents"] if ext == ".pdf"},
+    **{ext: remove_docx_metadata for ext in SUPPORTED_FORMATS["documents"] if ext in {".docx", ".doc"}},
+    **{ext: remove_audio_metadata for ext in SUPPORTED_FORMATS["audio"]},
+    **{ext: remove_video_metadata for ext in SUPPORTED_FORMATS["videos"]},
 }
 
 def load_metadata_config(config_file: Optional[str]) -> Dict:
@@ -106,12 +116,12 @@ def remove_metadata(file_path: str, output_folder: Optional[str] = None, dry_run
         return None
 
     ext = os.path.splitext(file_path)[1].lower()
-    if ext not in METADATA_EXTRACTOR_MAP:
+    if ext not in FILE_HANDLER_MAP:
         logger.warning(f"Unsupported file type: {ext}")
         return None
 
     logger.info(f"Processing file: {file_path}")
-    remover_function = METADATA_EXTRACTOR_MAP[ext]
+    remover_function = FILE_HANDLER_MAP[ext]
 
     try:
         if dry_run:
@@ -151,7 +161,7 @@ def remove_metadata_from_folder(folder_path: str,
     """
     if not os.path.exists(folder_path):
         logger.error(f"❌ Folder not found: {folder_path}")
-        raise FileNotFoundError(f"Folder not found: {folder_path}")
+        return []
 
     output_folder = output_folder or os.path.join(folder_path, "cleaned")
     os.makedirs(output_folder, exist_ok=True)
@@ -168,9 +178,9 @@ def remove_metadata_from_folder(folder_path: str,
     failed_files = []
 
     with tqdm(total=len(files_to_process), desc="Processing Files", unit="file") as pbar:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_file = {
-                executor.submit(remove_metadata, file_path, output_folder, config_file, prefix, suffix): file_path
+                executor.submit(remove_metadata, file_path, output_folder): file_path
                 for file_path in files_to_process
             }
 
@@ -182,7 +192,6 @@ def remove_metadata_from_folder(folder_path: str,
                     failed_files.append(future_to_file[future])
                 pbar.update(1)
 
-    # Logging summary
     logger.info("\n📊 Summary Report:")
     logger.info(f"✅ Successfully processed: {len(processed_files)} files")
     if failed_files:
