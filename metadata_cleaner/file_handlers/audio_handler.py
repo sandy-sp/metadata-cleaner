@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Optional
+from typing import Optional, Dict
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
@@ -9,6 +9,14 @@ from mutagen.wavpack import WavPack
 from mutagen.aac import AAC
 from metadata_cleaner.logs.logger import logger
 
+def extract_audio_metadata(file_path: str) -> Optional[Dict]:
+    from mutagen import File
+    try:
+        audio = File(file_path)
+        return dict(audio.tags) if audio and audio.tags else {"message": "No metadata found."}
+    except Exception as e:
+        logger.error(f"Error extracting audio metadata: {e}")
+        return None
 
 def remove_audio_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """

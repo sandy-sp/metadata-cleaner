@@ -1,8 +1,16 @@
 from pypdf import PdfReader, PdfWriter
 import os
-from typing import Optional
+from typing import Optional, Dict
 from metadata_cleaner.logs.logger import logger
 
+def extract_pdf_metadata(file_path: str) -> Optional[Dict]:
+    from pypdf import PdfReader
+    try:
+        reader = PdfReader(file_path)
+        return reader.metadata if reader.metadata else {"message": "No metadata found."}
+    except Exception as e:
+        logger.error(f"Error extracting PDF metadata: {e}")
+        return None
 
 def remove_pdf_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """

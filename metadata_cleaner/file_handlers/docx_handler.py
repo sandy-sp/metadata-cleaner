@@ -1,6 +1,21 @@
 from docx import Document
-from typing import Optional
+from typing import Optional, Dict
 from metadata_cleaner.logs.logger import logger
+
+def extract_docx_metadata(file_path: str) -> Optional[Dict]:
+    from docx import Document
+    try:
+        doc = Document(file_path)
+        core_props = doc.core_properties
+        return {
+            "author": core_props.author,
+            "title": core_props.title,
+            "keywords": core_props.keywords,
+            "comments": core_props.comments,
+        }
+    except Exception as e:
+        logger.error(f"Error extracting DOCX metadata: {e}")
+        return None
 
 def remove_docx_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """

@@ -1,10 +1,20 @@
 from PIL import Image, UnidentifiedImageError
 import piexif
 import os
-from typing import Optional
+from typing import Optional, Dict
 from metadata_cleaner.core import metadata_filter
 from metadata_cleaner.logs.logger import logger
 
+def extract_image_metadata(file_path: str) -> Optional[Dict]:
+    from PIL import Image
+    import piexif
+    try:
+        img = Image.open(file_path)
+        exif_data = img.info.get('exif', None)
+        return piexif.load(exif_data) if exif_data else {"message": "No EXIF metadata found."}
+    except Exception as e:
+        logger.error(f"Error extracting image metadata: {e}")
+        return None
 
 def remove_image_metadata(file_path: str, output_path: Optional[str] = None, config_file: Optional[str] = None) -> Optional[str]:
     """

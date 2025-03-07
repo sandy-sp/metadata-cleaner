@@ -1,9 +1,18 @@
 import subprocess
 import os
 import shutil
-from typing import Optional
+from typing import Optional, Dict
 from metadata_cleaner.logs.logger import logger
 
+def extract_video_metadata(file_path: str) -> Optional[Dict]:
+    import subprocess
+    try:
+        cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", file_path]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        return json.loads(result.stdout) if result.stdout else {"message": "No metadata found."}
+    except Exception as e:
+        logger.error(f"Error extracting video metadata: {e}")
+        return None
 
 def is_ffmpeg_installed() -> bool:
     """
