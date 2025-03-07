@@ -1,6 +1,7 @@
 import os
 import concurrent.futures
-from typing import List, Optional
+import json
+from typing import List, Optional, Dict, Any
 from tqdm import tqdm
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
@@ -8,6 +9,7 @@ from metadata_cleaner.file_handlers.pdf_handler import remove_pdf_metadata
 from metadata_cleaner.file_handlers.docx_handler import remove_docx_metadata
 from metadata_cleaner.file_handlers.audio_handler import remove_audio_metadata
 from metadata_cleaner.file_handlers.video_handler import remove_video_metadata
+from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 
 # Mapping of supported file extensions to their corresponding removal functions
 SUPPORTED_EXTENSIONS = {
@@ -30,7 +32,11 @@ SUPPORTED_EXTENSIONS = {
     ".avi": remove_video_metadata
 }
 
-def remove_metadata(file_path: str, output_path: Optional[str] = None, config_file: Optional[str] = None) -> Optional[str]:
+def remove_metadata(file_path: str, 
+                   output_path: Optional[str] = None, 
+                   config_file: Optional[str] = None,
+                   prefix: Optional[str] = None,
+                   suffix: Optional[str] = None) -> Optional[str]:
     """
     Remove metadata from a single file.
 
@@ -38,6 +44,8 @@ def remove_metadata(file_path: str, output_path: Optional[str] = None, config_fi
         file_path (str): Path to the file to be processed.
         output_path (Optional[str]): Custom output path. If None, a default naming scheme is used.
         config_file (Optional[str]): Path to a JSON configuration file for selective metadata filtering.
+        prefix (Optional[str]): Custom prefix for the cleaned file name.
+        suffix (Optional[str]): Custom suffix for the cleaned file name.
 
     Returns:
         Optional[str]: The path to the cleaned file if successful, else None.
@@ -55,9 +63,33 @@ def remove_metadata(file_path: str, output_path: Optional[str] = None, config_fi
         logger.info(f"Processing file: {file_path}")
         remover_function = SUPPORTED_EXTENSIONS[ext]
 
-        # For image files, pass along the config file for selective filtering.
+        # Prepare metadata configuration
+        metadata_config = {}
+        if config_file:
+            with open(config_file, 'r') as f:
+                config_data = json.load(f)
+                metadata_config.update(config_data)
+
+        # Apply CLI-specific metadata options if provided
+        # (These would be passed through from the CLI)
+        # Example:
+        # if remove_gps:
+        #     metadata_config['GPS'] = 'remove'
+        # if keep_timestamp:
+        #     metadata_config['Timestamp'] = 'exact'
+
+        # Determine output path with custom naming options
+        if output_path:
+            base, ext = os.path.splitext(os.path.basename(file_path))
+            output_filename = f"{prefix}{base}{suffix}{ext}" if prefix or suffix else f"{base}_cleaned{ext}"
+            output_path = os.path.join(output_path, output_filename)
+        else:
+            base, ext = os.path.splitext(file_path)
+            output_path = f"{base}_cleaned{ext}"
+
+        # For image files, pass along the config for selective filtering.
         if ext in [".jpg", ".jpeg", ".png", ".tiff", ".webp", ".heic"]:
-            cleaned_file = remover_function(file_path, output_path, config_file)
+            cleaned_file = remover_function(file_path, output_path, metadata_config)
         else:
             cleaned_file = remover_function(file_path, output_path)
 
@@ -72,7 +104,11 @@ def remove_metadata(file_path: str, output_path: Optional[str] = None, config_fi
         logger.error(f"Error processing file {file_path}: {e}", exc_info=True)
         return None
 
-def process_file(file_path: str, output_folder: str, config_file: Optional[str] = None) -> Optional[str]:
+def process_file(file_path: str,
+                output_folder: str,
+                config_file: Optional[str] = None,
+                prefix: Optional[str] = None,
+                suffix: Optional[str] = None) -> Optional[str]:
     """
     Process a single file and remove its metadata.
 
@@ -80,6 +116,8 @@ def process_file(file_path: str, output_folder: str, config_file: Optional[str] 
         file_path (str): Path to the file.
         output_folder (str): Folder where the cleaned file will be saved.
         config_file (Optional[str]): Configuration file for metadata filtering (for images).
+        prefix (Optional[str]): Custom prefix for the cleaned file name.
+        suffix (Optional[str]): Custom suffix for the cleaned file name.
 
     Returns:
         Optional[str]: The path to the cleaned file if successful, else None.
@@ -87,11 +125,24 @@ def process_file(file_path: str, output_folder: str, config_file: Optional[str] 
     try:
         ext = os.path.splitext(file_path)[1].lower()
         if ext in SUPPORTED_EXTENSIONS:
-            output_path = os.path.join(output_folder, os.path.basename(file_path))
+            # Prepare metadata configuration
+            metadata_config = {}
+            if config_file:
+                with open(config_file, 'r') as f:
+                    config_data = json.load(f)
+                    metadata_config.update(config_data)
+
+            # Determine output path with custom naming options
+            base, ext = os.path.splitext(os.path.basename(file_path))
+            output_filename = f"{prefix}{base}{suffix}{ext}" if prefix or suffix else f"{base}_cleaned{ext}"
+            output_path = os.path.join(output_folder, output_filename)
+
+            remover_function = SUPPORTED_EXTENSIONS[ext]
             if ext in [".jpg", ".jpeg", ".png", ".tiff", ".webp", ".heic"]:
-                cleaned_file = SUPPORTED_EXTENSIONS[ext](file_path, output_path, config_file)
+                cleaned_file = remover_function(file_path, output_path, metadata_config)
             else:
-                cleaned_file = SUPPORTED_EXTENSIONS[ext](file_path, output_path)
+                cleaned_file = remover_function(file_path, output_path)
+
             if cleaned_file and os.path.exists(cleaned_file):
                 logger.info(f"✅ Metadata removed: {cleaned_file}")
                 return cleaned_file
@@ -108,7 +159,9 @@ def process_file(file_path: str, output_folder: str, config_file: Optional[str] 
 def remove_metadata_from_folder(folder_path: str,
                                   output_folder: Optional[str] = None,
                                   config_file: Optional[str] = None,
-                                  recursive: bool = False) -> List[str]:
+                                  recursive: bool = False,
+                                  prefix: Optional[str] = None,
+                                  suffix: Optional[str] = None) -> List[str]:
     """
     Remove metadata from all supported files within a folder.
 
@@ -117,6 +170,8 @@ def remove_metadata_from_folder(folder_path: str,
         output_folder (Optional[str]): Folder to save cleaned files. If None, a 'cleaned' subfolder is created.
         config_file (Optional[str]): Configuration file for selective metadata filtering (applied to images).
         recursive (bool): If True, process files in subfolders recursively.
+        prefix (Optional[str]): Custom prefix for cleaned file names.
+        suffix (Optional[str]): Custom suffix for cleaned file names.
 
     Returns:
         List[str]: A list of paths to successfully cleaned files.
@@ -152,7 +207,7 @@ def remove_metadata_from_folder(folder_path: str,
     with tqdm(total=len(files_to_process), desc="Processing Files", unit="file") as pbar:
         with concurrent.futures.ProcessPoolExecutor() as executor:
             future_to_file = {
-                executor.submit(process_file, file_path, output_folder, config_file): file_path
+                executor.submit(process_file, file_path, output_folder, config_file, prefix, suffix): file_path
                 for file_path in files_to_process
             }
 
