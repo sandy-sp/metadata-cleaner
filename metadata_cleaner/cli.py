@@ -6,20 +6,20 @@ from metadata_cleaner.remover import remove_metadata, remove_metadata_from_folde
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 
 @click.command()
-@click.option('--file', '-f', type=click.Path(exists=True), help="Path to the file to clean metadata from.")
-@click.option('--folder', '-d', type=click.Path(exists=True), help="Path to a folder to clean metadata from all supported files.")
-@click.option('--output', '-o', type=click.Path(), help="Path to save the cleaned file(s).")
+@click.option('--file', '-f', type=click.Path(exists=True), help="File path to clean metadata from.")
+@click.option('--folder', '-d', type=click.Path(exists=True), help="Folder path containing files to process.")
+@click.option('--output', '-o', type=click.Path(), help="Output directory for cleaned files.")
 @click.option('--yes', '-y', is_flag=True, help="Skip confirmation prompts.")
-@click.option('--config', '-c', type=click.Path(exists=True), help="Path to configuration file for selective metadata filtering.")
-@click.option('--recursive', '-r', is_flag=True, help="Process files in subfolders recursively. (Default: False, only process top-level folder)")
-@click.option('--log-level', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR'], case_sensitive=False), help="Set the logging level.")
-@click.option('--list-formats', is_flag=True, help="List supported file formats and exit.")
-@click.option('--quiet', '-q', is_flag=True, help="Suppress all non-essential output.")
+@click.option('--config', '-c', type=click.Path(exists=True), help="Path to metadata filtering config file.")
+@click.option('--recursive', '-r', is_flag=True, help="Process subfolders recursively.")
+@click.option('--log-level', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR'], case_sensitive=False), help="Set logging level.")
+@click.option('--list-formats', is_flag=True, help="List supported file formats.")
+@click.option('--quiet', '-q', is_flag=True, help="Suppress non-essential output.")
 @click.option('--remove-gps', is_flag=True, help="Remove GPS metadata from images.")
-@click.option('--keep-timestamp', is_flag=True, help="Keep the timestamp (DateTimeOriginal) in images.")
+@click.option('--keep-timestamp', is_flag=True, help="Preserve timestamp in images.")
 @click.option('--prefix', type=str, help="Custom prefix for cleaned file names.")
 @click.option('--suffix', type=str, help="Custom suffix for cleaned file names.")
-@click.option('--version', is_flag=True, help="Show the version and exit.")
+@click.option('--version', is_flag=True, help="Show version and exit.")
 def main(file: Optional[str],
          folder: Optional[str],
          output: Optional[str],
@@ -35,23 +35,36 @@ def main(file: Optional[str],
          suffix: Optional[str],
          version: bool) -> None:
     """
-    Command-line interface for Metadata Cleaner.
+    🧹 Metadata Cleaner
+
+    A powerful tool for removing metadata from files.
+
+    Features:
+    - Support for images, documents, audio, and video files
+    - Batch processing with recursive folder support
+    - Selective metadata filtering using config files
+    - Quiet mode for automated workflows
+
+    Usage Examples:
+    - Clean a single file: metadata-cleaner --file path/to/file.jpg
+    - Process a folder: metadata-cleaner --folder path/to/folder
+    - List supported formats: metadata-cleaner --list-formats
 
     Parameters:
-        file (Optional[str]): Path to a single file to clean metadata from.
-        folder (Optional[str]): Path to a folder to clean metadata from all supported files.
-        output (Optional[str]): Custom output directory or file path for cleaned files.
-        yes (bool): If True, skip confirmation prompts.
-        config (Optional[str]): Path to a JSON configuration file for selective metadata filtering.
-        recursive (bool): If True, process files in subfolders recursively.
-        log_level (Optional[str]): Logging level (DEBUG, INFO, WARNING, ERROR).
-        list_formats (bool): List supported file formats and exit.
-        quiet (bool): Suppress all non-essential output.
-        remove_gps (bool): Remove GPS metadata from images.
-        keep_timestamp (bool): Keep the timestamp (DateTimeOriginal) in images.
-        prefix (Optional[str]): Custom prefix for cleaned file names.
-        suffix (Optional[str]): Custom suffix for cleaned file names.
-        version (bool): Show the version and exit.
+        File path to clean metadata from.
+        Folder path containing files to process.
+        Output directory for cleaned files.
+        Skip confirmation prompts.
+        Path to metadata filtering config file.
+        Process subfolders recursively.
+        Set logging level (DEBUG, INFO, WARNING, ERROR).
+        List supported file formats.
+        Suppress non-essential output.
+        Remove GPS metadata from images.
+        Preserve timestamp in images.
+        Custom prefix for cleaned file names.
+        Custom suffix for cleaned file names.
+        Show version and exit.
     """
     try:
         if version:
@@ -70,7 +83,7 @@ def main(file: Optional[str],
         if list_formats:
             click.echo("Supported file formats:")
             for category, extensions in SUPPORTED_FORMATS.items():
-                click.echo(f"{category.title()}: {', '.join(extensions)}")
+                click.echo(f"📁 {category.title()}: {', '.join(extensions)}")
             return
 
         if log_level:
@@ -81,11 +94,11 @@ def main(file: Optional[str],
             logger.setLevel('ERROR')
 
         if file:
-            if not yes and not click.confirm(f"Do you want to process {file}?", default=True):
+            if not yes and not click.confirm(f"📌 Process file: {file}?", default=True):
                 click.echo("❌ Operation cancelled.")
                 return
 
-            logger.info(f"Processing single file: {file}")
+            logger.info(f"Processing file: {file}")
             metadata_config = {}
             if remove_gps:
                 metadata_config['GPS'] = 'remove'
@@ -100,12 +113,12 @@ def main(file: Optional[str],
 
             cleaned_file = remove_metadata(file, output, metadata_config)
             if cleaned_file:
-                click.echo(f"✅ Metadata removed. Cleaned file saved at: {cleaned_file}")
+                click.echo(f"✅ Cleaned file saved at: {cleaned_file}")
             else:
-                click.echo(f"⚠️ Failed to process file: {file}")
+                click.echo(f"⚠️  Failed to process file: {file}")
 
         elif folder:
-            if not yes and not click.confirm(f"Do you want to process all files in {folder}?", default=True):
+            if not yes and not click.confirm(f"📁 Process folder: {folder}?", default=True):
                 click.echo("❌ Operation cancelled.")
                 return
 
@@ -132,7 +145,7 @@ def main(file: Optional[str],
             )
 
             click.echo("\n📊 Summary Report:")
-            click.echo(f"✅ Successfully processed: {len(cleaned_files)} files")
+            click.echo(f"✅ Processed {len(cleaned_files)} files")
             if cleaned_files:
                 click.echo(f"Cleaned files saved in: {output if output else folder}")
 
