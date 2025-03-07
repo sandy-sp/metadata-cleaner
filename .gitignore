@@ -20,6 +20,7 @@ venv/
 
 # Poetry specific
 .poetry/
+.lock/
 
 # Test cache
 .cache/
@@ -31,3 +32,6 @@ venv/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Logs
+.log/

@@ -1,7 +1,8 @@
 import os
 import shutil
 from typing import Optional
-from mutagen.mp3 import MP3, EasyID3
+from mutagen.mp3 import MP3
+from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
 from mutagen.wavpack import WavPack
