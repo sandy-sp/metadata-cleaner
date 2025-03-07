@@ -8,6 +8,7 @@ from metadata_cleaner.file_handlers.audio_handler import extract_audio_metadata
 from metadata_cleaner.file_handlers.video_handler import extract_video_metadata
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 from metadata_cleaner.logs.logger import logger
+from metadata_cleaner.remover import remove_metadata
 
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {
@@ -46,3 +47,25 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
     except Exception as e:
         logger.error(f"❌ Error extracting metadata from {file_path}: {e}", exc_info=True)
         return None
+
+def dry_run_metadata_removal(file_path: str) -> Optional[Dict]:
+    """
+    Simulates metadata removal without modifying the file.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        Optional[Dict]: Metadata differences before and after simulated removal.
+    """
+    original_metadata = extract_metadata(file_path)
+    if not original_metadata:
+        return {"message": "No metadata found before removal."}
+    
+    simulated_clean_file = remove_metadata(file_path, dry_run=True)
+    cleaned_metadata = extract_metadata(simulated_clean_file) if simulated_clean_file else {}
+    
+    return {
+        "before_removal": original_metadata,
+        "after_removal": cleaned_metadata if cleaned_metadata else {"message": "Metadata successfully removed."}
+    }

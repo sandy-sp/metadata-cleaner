@@ -3,9 +3,10 @@ import json
 import click
 from typing import Optional, Dict
 from metadata_cleaner.logs.logger import logger, set_log_level
-from metadata_cleaner.remover import remove_metadata, remove_metadata_from_folder
+from metadata_cleaner.remover import remove_metadata, remove_metadata_from_folder, dry_run_metadata_removal
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 from metadata_cleaner.file_handlers.metadata_extractor import extract_metadata
+
 
 @click.command()
 @click.option('--file', '-f', type=click.Path(exists=True), help="File path to clean metadata from.")
@@ -17,6 +18,7 @@ from metadata_cleaner.file_handlers.metadata_extractor import extract_metadata
 @click.option('--log-level', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR'], case_sensitive=False),
               help="Set logging level.")
 @click.option('--view-metadata', is_flag=True, help="View metadata for a specified file.")
+@click.option('--dry-run', is_flag=True, help="Simulate metadata removal without modifying the file.")
 @click.option('--list-formats', is_flag=True, help="List supported file formats.")
 @click.option('--quiet', '-q', is_flag=True, help="Suppress non-essential output.")
 @click.option('--remove-gps', is_flag=True, help="Remove GPS metadata from images.")
@@ -32,6 +34,7 @@ def main(file: Optional[str],
          recursive: bool,
          log_level: Optional[str],
          view_metadata: bool,
+         dry_run: bool,
          list_formats: bool,
          quiet: bool,
          remove_gps: bool,
@@ -70,17 +73,20 @@ def main(file: Optional[str],
         if quiet:
             logger.setLevel('ERROR')
 
-        if file and view_metadata:
-            metadata = extract_metadata(file)
-            if metadata:
-                click.echo(f"🔍 Metadata for {file}:\n" + json.dumps(metadata, indent=4))
-            else:
-                click.echo(f"⚠️ No metadata found in {file}.")
-            return
-
         if file:
+            if view_metadata:
+                metadata = extract_metadata(file)
+                click.echo(f"🔍 Metadata for {file}:\n" + json.dumps(metadata, indent=4))
+                return
+            if dry_run:
+                metadata_comparison = dry_run_metadata_removal(file)
+                click.echo(f"📝 Dry-Run Metadata Removal for {file}:\n" + json.dumps(metadata_comparison, indent=4))
+                return
             process_single_file(file, output, yes, config, remove_gps, keep_timestamp, prefix, suffix)
         elif folder:
+            if dry_run:
+                click.echo("📝 Dry-run is only supported for individual files, not folders.")
+                return
             process_folder(folder, output, yes, config, recursive, remove_gps, keep_timestamp, prefix, suffix)
         else:
             click.echo("❌ Please specify either --file or --folder to process.")
@@ -88,7 +94,6 @@ def main(file: Optional[str],
     except Exception as e:
         logger.error(f"CLI Error: {e}", exc_info=True)
         click.echo(f"❌ Error: {e}")
-
 
 def display_version():
     """Displays the current version of Metadata Cleaner."""
