@@ -1,10 +1,12 @@
 import os
 import json
 import tempfile
-from typing import Optional
+import unittest
 import piexif
 from PIL import Image
+from typing import Optional, Dict
 from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
+
 
 def create_test_image(path: str) -> None:
     """
@@ -14,8 +16,8 @@ def create_test_image(path: str) -> None:
       - Orientation (tag 274) in the '0th' IFD.
       - DateTimeOriginal (tag 36867) in the 'Exif' IFD.
       - GPS data in the 'GPS' IFD.
-    
-    Parameters:
+
+    Args:
         path (str): The path where the test image will be saved.
     """
     img = Image.new("RGB", (100, 100), color="red")
@@ -29,24 +31,21 @@ def create_test_image(path: str) -> None:
     exif_bytes = piexif.dump(exif_dict)
     img.save(path, exif=exif_bytes)
 
-def test_image_filtering() -> None:
-    """
-    Test that the image filtering function removes or modifies EXIF data as per configuration.
 
-    It creates a test image with known EXIF data, then applies metadata removal using a test configuration,
-    and finally verifies that:
-      - Orientation (tag 274) is removed if set to False.
-      - GPS data is removed if configured.
-      - Timestamp (DateTimeOriginal, tag 36867) is converted to date-only.
-    """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        input_path: str = os.path.join(tmpdir, "test.jpg")
-        output_path: str = os.path.join(tmpdir, "test_cleaned.jpg")
-        # Create a test image with dummy EXIF data.
-        create_test_image(input_path)
+class TestMetadataFilter(unittest.TestCase):
+    def setUp(self) -> None:
+        """
+        Creates a temporary test directory and generates a test image with EXIF data.
+        """
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.input_path = os.path.join(self.tmpdir.name, "test.jpg")
+        self.output_path = os.path.join(self.tmpdir.name, "test_cleaned.jpg")
+        
+        # Create test image with EXIF data
+        create_test_image(self.input_path)
 
-        # Create a temporary configuration file with our test rules.
-        test_rules = {
+        # Create metadata filter configuration
+        self.test_rules: Dict[str, bool] = {
             "Orientation": False,         # Remove orientation
             "GPS": "remove",              # Remove GPS data
             "Timestamp": "date_only",     # Convert timestamp to date only
@@ -55,28 +54,42 @@ def test_image_filtering() -> None:
             "Thumbnail": False,
             "ImageMetrics": False
         }
-        config_path: str = os.path.join(tmpdir, "test_config.json")
-        with open(config_path, "w") as f:
-            json.dump(test_rules, f)
+        self.config_path = os.path.join(self.tmpdir.name, "test_config.json")
+        with open(self.config_path, "w") as f:
+            json.dump(self.test_rules, f)
 
-        # Run metadata removal on the test image.
-        result: Optional[str] = remove_image_metadata(input_path, output_path, config_path)
-        assert result is not None, "Metadata removal should succeed."
+    def test_image_filtering(self) -> None:
+        """
+        Test that image metadata removal correctly applies filter rules.
 
-        # Load the cleaned image's EXIF data.
-        img = Image.open(output_path)
+        - Orientation (tag 274) should be removed.
+        - GPS data should be removed.
+        - Timestamp (tag 36867) should be converted to date-only.
+        """
+        # Run metadata removal on the test image
+        result: Optional[str] = remove_image_metadata(self.input_path, self.output_path, self.config_path)
+        self.assertIsNotNone(result, "Metadata removal failed.")
+
+        # Load the cleaned image's EXIF data
+        img = Image.open(self.output_path)
         exif_data = piexif.load(img.info.get("exif", b""))
-        
-        # Verify that Orientation (tag 274) has been removed.
-        assert 274 not in exif_data.get("0th", {}), "Orientation should be removed."
-        
-        # Verify that GPS data has been removed.
-        assert exif_data.get("GPS", {}) == {}, "GPS data should be removed."
-        
-        # Verify that Timestamp (tag 36867) is converted to date-only.
+
+        # Verify that Orientation (tag 274) has been removed
+        self.assertNotIn(274, exif_data.get("0th", {}), "Orientation should be removed.")
+
+        # Verify that GPS data has been removed
+        self.assertEqual(exif_data.get("GPS", {}), {}, "GPS data should be removed.")
+
+        # Verify that Timestamp (tag 36867) is converted to date-only
         timestamp = exif_data.get("Exif", {}).get(36867, b"").decode("utf-8")
-        assert len(timestamp.split(" ")) == 1, "Timestamp should be date only."
+        self.assertEqual(len(timestamp.split(" ")), 1, "Timestamp should be date-only.")
+
+    def tearDown(self) -> None:
+        """
+        Cleans up temporary test files.
+        """
+        self.tmpdir.cleanup()
+
 
 if __name__ == "__main__":
-    test_image_filtering()
-    print("Test passed!")
+    unittest.main()
