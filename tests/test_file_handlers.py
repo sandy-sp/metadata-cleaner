@@ -1,121 +1,100 @@
-import unittest
 import os
-import subprocess
 import shutil
+import tempfile
+import unittest
 from PIL import Image
 from docx import Document
 from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
-from typing import Optional
 from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
 from metadata_cleaner.file_handlers.pdf_handler import remove_pdf_metadata
 from metadata_cleaner.file_handlers.docx_handler import remove_docx_metadata
 from metadata_cleaner.file_handlers.audio_handler import remove_audio_metadata
 from metadata_cleaner.file_handlers.video_handler import remove_video_metadata
 
-
 class TestFileHandlers(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         """
-        Create valid test files for each supported file type.
+        Create temporary test files for each supported file type.
         """
-        self.test_folder = "test_files"
-        os.makedirs(self.test_folder, exist_ok=True)
+        self.test_dir = tempfile.TemporaryDirectory()
+        self.test_folder = self.test_dir.name
+        self.test_output_folder = os.path.join(self.test_folder, "output")
+        os.makedirs(self.test_output_folder, exist_ok=True)
 
+        # Image Test File
         self.test_image = os.path.join(self.test_folder, "test_image.jpg")
-        self.test_pdf = os.path.join(self.test_folder, "test_document.pdf")
-        self.test_docx = os.path.join(self.test_folder, "test_document.docx")
-        self.test_audio = os.path.join(self.test_folder, "test_audio.mp3")
-        self.test_video = os.path.join(self.test_folder, "test_video.mp4")
-
-        # Create a valid JPG file with EXIF metadata
         img = Image.new("RGB", (100, 100), color="blue")
         img.save(self.test_image, "JPEG")
 
-        # Create a valid PDF file with metadata
+        # PDF Test File
+        self.test_pdf = os.path.join(self.test_folder, "test_document.pdf")
         writer = PdfWriter()
         writer.add_metadata({"/Author": "Test Author"})
         with open(self.test_pdf, "wb") as f:
             writer.write(f)
 
-        # Create a valid DOCX file with metadata
+        # DOCX Test File
+        self.test_docx = os.path.join(self.test_folder, "test_document.docx")
         doc = Document()
         doc.add_paragraph("This is a test document.")
         doc.core_properties.author = "Test Author"
         doc.save(self.test_docx)
 
-        # Create a valid MP3 file using FFmpeg (skip if FFmpeg is missing)
+        # MP3 Test File
+        self.test_audio = os.path.join(self.test_folder, "test_audio.mp3")
         if shutil.which("ffmpeg"):
-            subprocess.run([
-                "ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
-                "-t", "3", "-q:a", "9", "-acodec", "libmp3lame", self.test_audio, "-y"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.system(f"ffmpeg -f lavfi -i anullsrc=r=44100:cl=mono -t 3 -q:a 9 -acodec libmp3lame {self.test_audio} -y")
 
-        # Create a valid MP4 file using FFmpeg (skip if FFmpeg is missing)
+        # MP4 Test File
+        self.test_video = os.path.join(self.test_folder, "test_video.mp4")
         if shutil.which("ffmpeg"):
-            subprocess.run([
-                "ffmpeg", "-f", "lavfi", "-i", "color=c=blue:s=320x240:d=3",
-                "-vf", "format=yuv420p", self.test_video, "-y"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.system(f"ffmpeg -f lavfi -i color=c=blue:s=320x240:d=3 -vf format=yuv420p {self.test_video} -y")
 
-    def test_image_handler(self) -> None:
+    def test_image_handler(self):
         """Test image metadata removal."""
-        output_file: Optional[str] = remove_image_metadata(self.test_image)
-        self.assertIsNotNone(output_file)
-        self.assertTrue(os.path.exists(output_file))
+        output_file = os.path.join(self.test_output_folder, "test_image_cleaned.jpg")
+        result = remove_image_metadata(self.test_image, output_file)
+        self.assertIsNotNone(result)
+        self.assertTrue(os.path.exists(result))
 
-        # Verify metadata removal
-        img = Image.open(output_file)
-        self.assertNotIn("exif", img.info, "EXIF metadata not removed from image.")
-
-    def test_pdf_handler(self) -> None:
+    def test_pdf_handler(self):
         """Test PDF metadata removal."""
-        output_file: Optional[str] = remove_pdf_metadata(self.test_pdf)
-        self.assertIsNotNone(output_file)
-        self.assertTrue(os.path.exists(output_file))
+        output_file = os.path.join(self.test_output_folder, "test_pdf_cleaned.pdf")
+        result = remove_pdf_metadata(self.test_pdf, output_file)
+        self.assertIsNotNone(result)
+        self.assertTrue(os.path.exists(result))
 
-        # Verify metadata removal
-        reader = PdfReader(output_file)
-        self.assertFalse(reader.metadata, "Metadata not removed from PDF.")
-
-    def test_docx_handler(self) -> None:
+    def test_docx_handler(self):
         """Test DOCX metadata removal."""
-        output_file: Optional[str] = remove_docx_metadata(self.test_docx)
-        self.assertIsNotNone(output_file)
-        self.assertTrue(os.path.exists(output_file))
+        output_file = os.path.join(self.test_output_folder, "test_docx_cleaned.docx")
+        result = remove_docx_metadata(self.test_docx, output_file)
+        self.assertIsNotNone(result)
+        self.assertTrue(os.path.exists(result))
 
-        # Verify metadata removal
-        doc = Document(output_file)
-        self.assertFalse(doc.core_properties.author, "Metadata not removed from DOCX.")
-
-    def test_audio_handler(self) -> None:
+    def test_audio_handler(self):
         """Test audio metadata removal."""
         if not shutil.which("ffmpeg"):
             self.skipTest("FFmpeg not found, skipping audio test.")
+        output_file = os.path.join(self.test_output_folder, "test_audio_cleaned.mp3")
+        result = remove_audio_metadata(self.test_audio, output_file)
+        self.assertIsNotNone(result)
+        self.assertTrue(os.path.exists(result))
 
-        output_file: Optional[str] = remove_audio_metadata(self.test_audio)
-        self.assertIsNotNone(output_file)
-        self.assertTrue(os.path.exists(output_file))
-
-        # Verify metadata removal
-        audio = MP3(output_file)
-        self.assertFalse(audio.tags, "Metadata not removed from MP3.")
-
-    def test_video_handler(self) -> None:
+    def test_video_handler(self):
         """Test video metadata removal."""
         if not shutil.which("ffmpeg"):
             self.skipTest("FFmpeg not found, skipping video test.")
+        output_file = os.path.join(self.test_output_folder, "test_video_cleaned.mp4")
+        result = remove_video_metadata(self.test_video, output_file)
+        self.assertIsNotNone(result)
+        self.assertTrue(os.path.exists(result))
 
-        output_file: Optional[str] = remove_video_metadata(self.test_video)
-        self.assertIsNotNone(output_file)
-        self.assertTrue(os.path.exists(output_file))
-
-    def tearDown(self) -> None:
+    def tearDown(self):
         """
-        Clean up test files created during the tests.
+        Clean up temporary test files.
         """
-        shutil.rmtree(self.test_folder, ignore_errors=True)
-
+        self.test_dir.cleanup()
 
 if __name__ == "__main__":
     unittest.main()

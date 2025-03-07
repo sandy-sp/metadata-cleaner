@@ -1,67 +1,54 @@
 import os
-import subprocess
-import unittest
 import shutil
+import tempfile
+import unittest
 from typing import List
 from PIL import Image
 from docx import Document
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
 from metadata_cleaner.remover import remove_metadata_from_folder
-
 
 class TestMetadataRemover(unittest.TestCase):
     def setUp(self) -> None:
         """
-        Create valid test files for each supported file type in a test folder.
+        Create a temporary test directory with valid test files.
         """
-        self.test_folder: str = "test_batch"
-        self.output_folder: str = "test_batch_output"
-        os.makedirs(self.test_folder, exist_ok=True)
+        self.test_dir = tempfile.TemporaryDirectory()
+        self.test_folder = self.test_dir.name
+        self.test_output_folder = os.path.join(self.test_folder, "output")
+        os.makedirs(self.test_output_folder, exist_ok=True)
 
-        # Create a valid JPG file with EXIF metadata
-        image_path: str = os.path.join(self.test_folder, "test_image.jpg")
+        # Create test files
+        self.test_image = os.path.join(self.test_folder, "test_image.jpg")
         img = Image.new("RGB", (100, 100), color="red")
-        img.save(image_path, "JPEG")
+        img.save(self.test_image, "JPEG")
 
-        # Create a valid PDF file with metadata
-        pdf_path: str = os.path.join(self.test_folder, "test_document.pdf")
+        self.test_pdf = os.path.join(self.test_folder, "test_document.pdf")
         writer = PdfWriter()
         writer.add_metadata({"/Author": "Test Author"})
-        with open(pdf_path, "wb") as f:
+        with open(self.test_pdf, "wb") as f:
             writer.write(f)
 
-        # Create a valid DOCX file with metadata
-        docx_path: str = os.path.join(self.test_folder, "test_document.docx")
+        self.test_docx = os.path.join(self.test_folder, "test_document.docx")
         doc = Document()
         doc.add_paragraph("This is a test document.")
         doc.core_properties.author = "Test Author"
-        doc.save(docx_path)
+        doc.save(self.test_docx)
 
-        # Create a valid MP3 file using ffmpeg (skip if FFmpeg is missing)
-        self.test_audio: str = os.path.join(self.test_folder, "test_audio.mp3")
+        self.test_audio = os.path.join(self.test_folder, "test_audio.mp3")
         if shutil.which("ffmpeg"):
-            subprocess.run([
-                "ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
-                "-t", "3", "-q:a", "9", "-acodec", "libmp3lame", self.test_audio, "-y"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.system(f"ffmpeg -f lavfi -i anullsrc=r=44100:cl=mono -t 3 -q:a 9 -acodec libmp3lame {self.test_audio} -y")
 
-        # Create a valid MP4 file using ffmpeg (skip if FFmpeg is missing)
-        self.test_video: str = os.path.join(self.test_folder, "test_video.mp4")
+        self.test_video = os.path.join(self.test_folder, "test_video.mp4")
         if shutil.which("ffmpeg"):
-            subprocess.run([
-                "ffmpeg", "-f", "lavfi", "-i", "color=c=blue:s=320x240:d=3",
-                "-vf", "format=yuv420p", self.test_video, "-y"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.system(f"ffmpeg -f lavfi -i color=c=blue:s=320x240:d=3 -vf format=yuv420p {self.test_video} -y")
 
     def test_batch_processing(self) -> None:
         """
-        Test batch metadata removal for all supported file types in the test folder.
-
-        Verifies that the number of processed files matches the number of created files and that each output file exists.
-        Also verifies that metadata is actually removed.
+        Test batch metadata removal for all supported file types.
         """
-        cleaned_files: List[str] = remove_metadata_from_folder(self.test_folder, self.output_folder)
+        cleaned_files: List[str] = remove_metadata_from_folder(self.test_folder, self.test_output_folder)
 
         expected_count = sum(
             os.path.isfile(os.path.join(self.test_folder, f)) for f in os.listdir(self.test_folder)
@@ -82,7 +69,7 @@ class TestMetadataRemover(unittest.TestCase):
 
             elif ext == ".pdf":
                 reader = PdfReader(cleaned_file)
-                self.assertFalse(reader.metadata, "Metadata not removed from PDF.")
+                self.assertEqual(reader.metadata, {}, "Metadata not fully removed from PDF.")
 
             elif ext == ".docx":
                 doc = Document(cleaned_file)
@@ -94,11 +81,9 @@ class TestMetadataRemover(unittest.TestCase):
 
     def tearDown(self) -> None:
         """
-        Clean up test directories created during the tests.
+        Clean up temporary test directories.
         """
-        shutil.rmtree(self.test_folder, ignore_errors=True)
-        shutil.rmtree(self.output_folder, ignore_errors=True)
-
+        self.test_dir.cleanup()
 
 if __name__ == "__main__":
     unittest.main()
