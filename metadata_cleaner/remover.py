@@ -126,9 +126,11 @@ def remove_metadata(file_path: str, output_folder: Optional[str] = None, dry_run
     try:
         if dry_run:
             logger.info(f"Dry-run mode: Simulating metadata removal for {file_path}")
-            return file_path  # Return the same file path as a placeholder
+            return file_path
 
-        cleaned_file = remover_function(file_path, output_folder)
+        output_path = os.path.join(output_folder or os.path.dirname(file_path), f"cleaned_{os.path.basename(file_path)}")
+        cleaned_file = remover_function(file_path, output_path)
+        
         if cleaned_file and os.path.exists(cleaned_file):
             logger.info(f"✅ Metadata removed successfully: {cleaned_file}")
             return cleaned_file

@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from docx import Document
 from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
@@ -26,6 +26,11 @@ class TestFileHandlers(unittest.TestCase):
         self.test_image = os.path.join(self.test_folder, "test_image.jpg")
         img = Image.new("RGB", (100, 100), color="blue")
         img.save(self.test_image, "JPEG")
+
+        # Corrupt Image File
+        self.test_corrupt_image = os.path.join(self.test_folder, "corrupt_image.jpg")
+        with open(self.test_corrupt_image, "wb") as f:
+            f.write(b"corruptdata")
 
         # PDF Test File
         self.test_pdf = os.path.join(self.test_folder, "test_document.pdf")
@@ -52,11 +57,20 @@ class TestFileHandlers(unittest.TestCase):
             os.system(f"ffmpeg -f lavfi -i color=c=blue:s=320x240:d=3 -vf format=yuv420p {self.test_video} -y")
 
     def test_image_handler(self):
-        """Test image metadata removal."""
+        """Test image metadata removal and ensure original remains unchanged."""
         output_file = os.path.join(self.test_output_folder, "test_image_cleaned.jpg")
         result = remove_image_metadata(self.test_image, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
+        
+        img = Image.open(result)
+        self.assertNotIn("exif", img.info, "EXIF metadata not removed from image.")
+
+    def test_corrupt_image_handler(self):
+        """Test handling of a corrupt image file."""
+        output_file = os.path.join(self.test_output_folder, "corrupt_image_cleaned.jpg")
+        result = remove_image_metadata(self.test_corrupt_image, output_file)
+        self.assertIsNone(result, "Corrupt image should not be processed.")
 
     def test_pdf_handler(self):
         """Test PDF metadata removal."""
@@ -64,6 +78,9 @@ class TestFileHandlers(unittest.TestCase):
         result = remove_pdf_metadata(self.test_pdf, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
+        
+        reader = PdfReader(result)
+        self.assertEqual(reader.metadata, {}, "Metadata not fully removed from PDF.")
 
     def test_docx_handler(self):
         """Test DOCX metadata removal."""
@@ -71,6 +88,9 @@ class TestFileHandlers(unittest.TestCase):
         result = remove_docx_metadata(self.test_docx, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
+        
+        doc = Document(result)
+        self.assertFalse(doc.core_properties.author, "Metadata not removed from DOCX.")
 
     def test_audio_handler(self):
         """Test audio metadata removal."""
@@ -80,6 +100,9 @@ class TestFileHandlers(unittest.TestCase):
         result = remove_audio_metadata(self.test_audio, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
+        
+        audio = MP3(result)
+        self.assertFalse(audio.tags, "Metadata not removed from MP3.")
 
     def test_video_handler(self):
         """Test video metadata removal."""

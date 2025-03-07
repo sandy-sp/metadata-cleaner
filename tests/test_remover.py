@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 from typing import List
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from docx import Document
 from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
@@ -50,9 +50,7 @@ class TestMetadataRemover(unittest.TestCase):
         """
         cleaned_files: List[str] = remove_metadata_from_folder(self.test_folder, self.test_output_folder)
 
-        expected_count = sum(
-            os.path.isfile(os.path.join(self.test_folder, f)) for f in os.listdir(self.test_folder)
-        )
+        expected_count = len([f for f in os.listdir(self.test_folder) if os.path.isfile(os.path.join(self.test_folder, f))])
 
         # Ensure all files were processed
         self.assertEqual(len(cleaned_files), expected_count, f"Expected {expected_count} files to be processed.")
@@ -64,8 +62,11 @@ class TestMetadataRemover(unittest.TestCase):
             ext = os.path.splitext(cleaned_file)[1].lower()
 
             if ext in {".jpg", ".jpeg"}:
-                img = Image.open(cleaned_file)
-                self.assertNotIn("exif", img.info, "EXIF metadata not removed from image.")
+                try:
+                    img = Image.open(cleaned_file)
+                    self.assertNotIn("exif", img.info, "EXIF metadata not removed from image.")
+                except UnidentifiedImageError:
+                    self.fail("Failed to open cleaned image file.")
 
             elif ext == ".pdf":
                 reader = PdfReader(cleaned_file)
@@ -78,6 +79,13 @@ class TestMetadataRemover(unittest.TestCase):
             elif ext == ".mp3" and shutil.which("ffmpeg"):
                 audio = MP3(cleaned_file)
                 self.assertFalse(audio.tags, "Metadata not removed from MP3.")
+
+    def test_empty_folder(self) -> None:
+        """Test behavior when processing an empty folder."""
+        empty_folder = os.path.join(self.test_folder, "empty_folder")
+        os.makedirs(empty_folder, exist_ok=True)
+        cleaned_files = remove_metadata_from_folder(empty_folder, self.test_output_folder)
+        self.assertEqual(len(cleaned_files), 0, "Expected zero files to be processed in an empty folder.")
 
     def tearDown(self) -> None:
         """
