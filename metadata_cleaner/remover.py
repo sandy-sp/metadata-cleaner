@@ -5,11 +5,11 @@ from typing import List, Optional, Dict
 from tqdm import tqdm
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
-from metadata_cleaner.file_handlers.image_handler import extract_image_metadata, remove_image_metadata
-from metadata_cleaner.file_handlers.pdf_handler import extract_pdf_metadata, remove_pdf_metadata
-from metadata_cleaner.file_handlers.docx_handler import extract_docx_metadata, remove_docx_metadata
-from metadata_cleaner.file_handlers.audio_handler import extract_audio_metadata, remove_audio_metadata
-from metadata_cleaner.file_handlers.video_handler import extract_video_metadata, remove_video_metadata
+from metadata_cleaner.file_handlers.image.image_handler import extract_image_metadata, remove_image_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import extract_pdf_metadata, remove_pdf_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import extract_docx_metadata, remove_docx_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import extract_audio_metadata, remove_audio_metadata
+from metadata_cleaner.file_handlers.video.video_handler import extract_video_metadata, remove_video_metadata
 
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {

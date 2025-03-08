@@ -1,11 +1,11 @@
 import os
 import json
 from typing import Optional, Dict
-from metadata_cleaner.file_handlers.image_handler import extract_image_metadata
-from metadata_cleaner.file_handlers.pdf_handler import extract_pdf_metadata
-from metadata_cleaner.file_handlers.docx_handler import extract_docx_metadata
-from metadata_cleaner.file_handlers.audio_handler import extract_audio_metadata
-from metadata_cleaner.file_handlers.video_handler import extract_video_metadata
+from metadata_cleaner.file_handlers.image.image_handler import extract_image_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import extract_pdf_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import extract_docx_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import extract_audio_metadata
+from metadata_cleaner.file_handlers.video.video_handler import extract_video_metadata
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.remover import remove_metadata

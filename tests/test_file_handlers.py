@@ -6,11 +6,11 @@ from PIL import Image, UnidentifiedImageError
 from docx import Document
 from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
-from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
-from metadata_cleaner.file_handlers.pdf_handler import remove_pdf_metadata
-from metadata_cleaner.file_handlers.docx_handler import remove_docx_metadata
-from metadata_cleaner.file_handlers.audio_handler import remove_audio_metadata
-from metadata_cleaner.file_handlers.video_handler import remove_video_metadata
+from metadata_cleaner.file_handlers.image.image_handler import remove_image_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import remove_pdf_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import remove_docx_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import remove_audio_metadata
+from metadata_cleaner.file_handlers.video.video_handler import remove_video_metadata
 
 class TestFileHandlers(unittest.TestCase):
     def setUp(self):

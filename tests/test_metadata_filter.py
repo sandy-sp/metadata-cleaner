@@ -5,7 +5,7 @@ import unittest
 import piexif
 from PIL import Image
 from typing import Optional, Dict
-from metadata_cleaner.file_handlers.image_handler import remove_image_metadata
+from metadata_cleaner.file_handlers.image.image_handler import remove_image_metadata
 
 
 def create_test_image(path: str) -> None:
