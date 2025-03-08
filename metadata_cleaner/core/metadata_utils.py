@@ -2,6 +2,13 @@ import os
 import shutil
 from typing import Optional
 
+"""
+Utility functions for file handling and metadata processing.
+
+This module provides helper functions to manage output directories,
+copy files while ensuring metadata removal, and retrieve file extensions.
+"""
+
 def ensure_output_folder(output_folder: str) -> None:
     """
     Ensure that the output folder exists. If it does not, create it.
@@ -9,8 +16,7 @@ def ensure_output_folder(output_folder: str) -> None:
     Parameters:
         output_folder (str): The path to the output folder.
     """
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
 
 def copy_file_without_metadata(original_path: str, output_path: str) -> Optional[str]:
     """
@@ -24,10 +30,10 @@ def copy_file_without_metadata(original_path: str, output_path: str) -> Optional
         Optional[str]: The output path if the file was successfully copied; otherwise, None.
     """
     try:
-        shutil.copy(original_path, output_path)
+        shutil.copy2(original_path, output_path)  # Ensures timestamps and permissions are preserved
         return output_path
     except Exception as e:
-        print(f"❌ Error copying file: {e}")
+        print(f"❌ Error copying file {original_path} to {output_path}: {e}")
         return None
 
 def get_file_extension(file_path: str) -> str:
