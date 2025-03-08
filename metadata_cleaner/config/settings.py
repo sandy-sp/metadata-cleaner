@@ -39,3 +39,14 @@ SUPPORTED_FORMATS: Dict[str, Set[str]] = {
 
 # Flatten all supported extensions into a set for easy checking
 ALL_SUPPORTED_EXTENSIONS: Set[str] = {ext for exts in SUPPORTED_FORMATS.values() for ext in exts}
+
+# Function to validate supported formats
+
+def validate_supported_formats() -> None:
+    """Ensures that all file extensions are lowercase and correctly formatted."""
+    for category, extensions in SUPPORTED_FORMATS.items():
+        assert all(ext.startswith(".") for ext in extensions), f"Invalid format in {category}: {extensions}"
+        assert all(ext.lower() == ext for ext in extensions), f"Extensions should be lowercase in {category}: {extensions}"
+
+# Run validation on startup
+validate_supported_formats()
