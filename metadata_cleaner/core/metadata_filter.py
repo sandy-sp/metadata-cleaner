@@ -1,85 +1,375 @@
 import json
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Set
+from functools import lru_cache
 from metadata_cleaner.logs.logger import logger
 
 """
-Metadata filtering utility for selective removal of metadata fields.
+Enhanced metadata filtering utility for selective removal of metadata fields.
 
-This module provides functionality to load and apply metadata filtering rules.
+Features:
+- Cached configuration loading
+- Strict type validation
+- Flexible rule inheritance
+- Custom rule validation
+- Support for rule templates
 """
 
-# Default filtering rules
+# Default filtering rules with detailed documentation
 DEFAULT_RULES: Dict[str, Any] = {
-    "Orientation": True,  # Preserve orientation by default
-    "GPS": "whole_degrees",  # Options: "exact", "whole_degrees", "remove"
-    "Timestamp": "date_only",  # Options: "exact", "date_only", "remove"
-    "CameraSettings": "all_except_make_model",  # Options: "all", "all_except_make_model", "remove"
+    "Orientation": True,  # Preserve image orientation
+    "GPS": {
+        "mode": "whole_degrees",  # Options: "exact", "whole_degrees", "remove"
+        "precision": 0,  # Decimal places for coordinates (if mode is "whole_degrees")
+        "remove_altitude": True,  # Always remove altitude information
+    },
+    "Timestamp": {
+        "mode": "date_only",  # Options: "exact", "date_only", "remove"
+        "format": "%Y:%m:%d",  # Date format for "date_only" mode
+        "timezone": "UTC",  # Timezone for timestamp conversion
+    },
+    "CameraSettings": {
+        "mode": "all_except_make_model",  # Options: "all", "all_except_make_model", "remove"
+        "preserve": ["Make", "Model"],  # Fields to preserve in "all_except_make_model" mode
+    },
     "Descriptions": False,
     "Thumbnail": False,
-    "ImageMetrics": False
+    "ImageMetrics": False,
+    "Software": False,
 }
 
+# Valid options for each rule type
+VALID_OPTIONS = {
+    "GPS": {"exact", "whole_degrees", "remove"},
+    "Timestamp": {"exact", "date_only", "remove"},
+    "CameraSettings": {"all", "all_except_make_model", "remove"},
+}
+
+@lru_cache(maxsize=32)
 def load_filter_rules(config_file: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load filtering rules from a JSON config file.
+    Load and validate filtering rules from a JSON config file.
 
-    If no config file is provided or the file is missing/invalid,
-    return the default rules.
-
-    Parameters:
+    Args:
         config_file (Optional[str]): Path to the configuration JSON file.
 
     Returns:
-        Dict[str, Any]: A dictionary of filtering rules.
+        Dict[str, Any]: Validated filtering rules.
+
+    Raises:
+        ValueError: If the configuration is invalid.
     """
-    if config_file and os.path.exists(config_file):
+    rules = DEFAULT_RULES.copy()
+
+    if config_file:
+        if not os.path.exists(config_file):
+            logger.warning(f"Config file not found: {config_file}")
+            return rules
+
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
-                rules = json.load(f)
-                return rules
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.error(f"Error reading config file {config_file}: {e}", exc_info=True)
-            return DEFAULT_RULES
-    else:
-        return DEFAULT_RULES
+                custom_rules = json.load(f)
+            
+            # Validate and merge custom rules
+            rules.update(validate_rules(custom_rules))
+            logger.info(f"Loaded custom rules from: {config_file}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in config file: {e}")
+        except ValueError as e:
+            logger.error(f"Invalid rule configuration: {e}")
+        except Exception as e:
+            logger.error(f"Error loading config file: {e}", exc_info=True)
+
+    return rules
+
+def validate_rules(rules: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validate custom rules against schema.
+
+    Args:
+        rules (Dict[str, Any]): Custom rules to validate.
+
+    Returns:
+        Dict[str, Any]: Validated rules.
+
+    Raises:
+        ValueError: If rules are invalid.
+    """
+    validated = {}
+
+    for key, value in rules.items():
+        if key not in DEFAULT_RULES:
+            logger.warning(f"Unknown rule key: {key}")
+            continue
+
+        if isinstance(value, dict):
+            if "mode" in value and key in VALID_OPTIONS:
+                if value["mode"] not in VALID_OPTIONS[key]:
+                    raise ValueError(f"Invalid mode for {key}: {value['mode']}")
+        elif isinstance(value, bool):
+            if not isinstance(DEFAULT_RULES[key], bool):
+                raise ValueError(f"Invalid type for {key}: expected dict, got bool")
+        else:
+            raise ValueError(f"Invalid value type for {key}")
+
+        validated[key] = value
+
+    return validated
 
 def filter_exif_data(exif_dict: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Filter the EXIF data dictionary based on provided rules.
+    Filter EXIF data based on rules.
 
-    This implementation demonstrates processing key metadata fields.
-
-    Parameters:
-        exif_dict (Dict[str, Any]): The original EXIF data dictionary.
-        rules (Dict[str, Any]): A dictionary of filtering rules.
+    Args:
+        exif_dict (Dict[str, Any]): Original EXIF data.
+        rules (Dict[str, Any]): Filtering rules.
 
     Returns:
-        Dict[str, Any]: The filtered EXIF data dictionary.
+        Dict[str, Any]: Filtered EXIF data.
     """
-    # Remove Orientation if specified
-    if not rules.get("Orientation", True):
-        exif_dict.get("0th", {}).pop(274, None)
+    if not isinstance(exif_dict, dict):
+        raise ValueError("Invalid EXIF data format")
+
+    filtered = exif_dict.copy()
+
+    try:
+        # Process Orientation
+        if not rules.get("Orientation", True):
+            filtered.get("0th", {}).pop(274, None)
+        
+        # Process GPS data
+        if "GPS" in filtered:
+            gps_rules = rules.get("GPS", {})
+            filtered["GPS"] = process_gps_data(filtered["GPS"], gps_rules)
+        
+        # Process Timestamp
+        if "Exif" in filtered:
+            timestamp_rules = rules.get("Timestamp", {})
+            filtered["Exif"] = process_timestamp(filtered["Exif"], timestamp_rules)
+        
+        # Process Camera Settings
+        camera_rules = rules.get("CameraSettings", {})
+        filtered = process_camera_settings(filtered, camera_rules)
+        
+        # Remove additional metadata based on rules
+        if not rules.get("Descriptions", True):
+            filtered.pop("ImageDescription", None)
+            filtered.pop("UserComment", None)
+        
+        if not rules.get("Thumbnail", True):
+            filtered.pop("thumbnail", None)
+        
+        if not rules.get("Software", True):
+            filtered.get("0th", {}).pop(305, None)  # Software tag
+        
+    except Exception as e:
+        logger.error(f"Error filtering EXIF data: {e}", exc_info=True)
+        return exif_dict  # Return original data if filtering fails
+
+    return filtered
+
+def process_gps_data(gps_data: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process GPS data according to rules.
+
+    Args:
+        gps_data (Dict[str, Any]): Original GPS data.
+        rules (Dict[str, Any]): GPS filtering rules.
+
+    Returns:
+        Dict[str, Any]: Processed GPS data.
+    """
+    if not isinstance(gps_data, dict):
+        return {}
+
+    mode = rules.get("mode", "whole_degrees")
+    precision = rules.get("precision", 0)
+    remove_altitude = rules.get("remove_altitude", True)
+
+    try:
+        if mode == "remove":
+            return {}
+
+        processed = gps_data.copy()
+
+        if remove_altitude:
+            processed.pop(6, None)  # Altitude
+            processed.pop(7, None)  # Altitude reference
+
+        if mode == "whole_degrees":
+            # Process latitude and longitude
+            for tag in [2, 4]:  # 2: Latitude, 4: Longitude
+                if tag in processed:
+                    value = processed[tag]
+                    if isinstance(value, tuple) and len(value) == 2:
+                        num, den = value
+                        degrees = round(float(num) / float(den), precision)
+                        processed[tag] = (int(degrees * (10 ** precision)), 10 ** precision)
+
+        return processed
+
+    except Exception as e:
+        logger.error(f"Error processing GPS data: {e}", exc_info=True)
+        return {}  # Return empty dict if processing fails
+
+def process_timestamp(exif_data: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process timestamp data according to rules.
+
+    Args:
+        exif_data (Dict[str, Any]): Original EXIF data containing timestamp.
+        rules (Dict[str, Any]): Timestamp filtering rules.
+
+    Returns:
+        Dict[str, Any]: Processed EXIF data with modified timestamp.
+    """
+    if not isinstance(exif_data, dict):
+        return {}
+
+    mode = rules.get("mode", "date_only")
+    date_format = rules.get("format", "%Y:%m:%d")
     
-    # Process GPS data (located in the "GPS" section)
-    if "GPS" in exif_dict:
-        gps_rule = rules.get("GPS", "whole_degrees")
-        if gps_rule == "remove":
-            exif_dict["GPS"] = {}
-        elif gps_rule == "whole_degrees":
-            for tag, value in exif_dict["GPS"].items():
-                if isinstance(value, tuple) and len(value) == 2:
-                    num, den = value
-                    exif_dict["GPS"][tag] = (int(num / den), 1)
+    try:
+        # Process DateTimeOriginal (tag 36867)
+        if 36867 in exif_data:
+            if mode == "remove":
+                exif_data.pop(36867)
+            elif mode == "date_only":
+                dt_str = exif_data[36867]
+                if isinstance(dt_str, bytes):
+                    dt_str = dt_str.decode('utf-8')
+                date_part = dt_str.split()[0]
+                exif_data[36867] = date_part.encode('utf-8')
+
+        # Process other timestamp-related tags
+        timestamp_tags = [36868, 306]  # DateTimeDigitized, DateTime
+        if mode == "remove":
+            for tag in timestamp_tags:
+                exif_data.pop(tag, None)
+
+        return exif_data
+
+    except Exception as e:
+        logger.error(f"Error processing timestamp: {e}", exc_info=True)
+        return exif_data
+
+def process_camera_settings(exif_data: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process camera settings according to rules.
+
+    Args:
+        exif_data (Dict[str, Any]): Original EXIF data.
+        rules (Dict[str, Any]): Camera settings filtering rules.
+
+    Returns:
+        Dict[str, Any]: Processed EXIF data with modified camera settings.
+    """
+    if not isinstance(exif_data, dict):
+        return {}
+
+    mode = rules.get("mode", "all_except_make_model")
+    preserve_fields = set(rules.get("preserve", ["Make", "Model"]))
+
+    try:
+        if mode == "remove":
+            # Remove all camera-related tags
+            camera_tags = {
+                "0th": [271, 272, 305, 306],  # Make, Model, Software, DateTime
+                "Exif": [33434, 33437, 34850, 34855, 37377, 37378, 37379, 37380]  # Various camera settings
+            }
+            
+            for ifd in camera_tags:
+                if ifd in exif_data:
+                    for tag in camera_tags[ifd]:
+                        exif_data[ifd].pop(tag, None)
+
+        elif mode == "all_except_make_model":
+            # Preserve only specified fields
+            for ifd in exif_data:
+                if isinstance(exif_data[ifd], dict):
+                    tags_to_remove = []
+                    for tag, value in exif_data[ifd].items():
+                        tag_name = get_exif_tag_name(ifd, tag)
+                        if tag_name not in preserve_fields:
+                            tags_to_remove.append(tag)
+                    
+                    for tag in tags_to_remove:
+                        exif_data[ifd].pop(tag, None)
+
+        return exif_data
+
+    except Exception as e:
+        logger.error(f"Error processing camera settings: {e}", exc_info=True)
+        return exif_data
+
+def get_exif_tag_name(ifd: str, tag: int) -> str:
+    """
+    Get the name of an EXIF tag.
+
+    Args:
+        ifd (str): IFD section name.
+        tag (int): Tag number.
+
+    Returns:
+        str: Tag name or empty string if not found.
+    """
+    # Common EXIF tags mapping
+    EXIF_TAGS = {
+        "0th": {
+            271: "Make",
+            272: "Model",
+            305: "Software",
+            306: "DateTime"
+        },
+        "Exif": {
+            36867: "DateTimeOriginal",
+            33434: "ExposureTime",
+            33437: "FNumber",
+            34850: "ExposureProgram",
+            34855: "ISOSpeedRatings"
+        }
+    }
     
-    # Process Timestamp (DateTimeOriginal is tag 36867 in the "Exif" IFD)
-    if "Exif" in exif_dict and 36867 in exif_dict["Exif"]:
-        ts_rule = rules.get("Timestamp", "date_only")
-        dt_str = exif_dict["Exif"][36867]
-        dt_str = dt_str.decode("utf-8") if isinstance(dt_str, bytes) else dt_str
-        if ts_rule == "date_only":
-            exif_dict["Exif"][36867] = dt_str.split(" ")[0].encode("utf-8")
-        elif ts_rule == "remove":
-            del exif_dict["Exif"][36867]
+    return EXIF_TAGS.get(ifd, {}).get(tag, "")
+
+def create_filter_template(name: str) -> Dict[str, Any]:
+    """
+    Create a predefined filter template.
+
+    Args:
+        name (str): Template name ("privacy", "minimal", "strict").
+
+    Returns:
+        Dict[str, Any]: Template configuration.
+    """
+    templates = {
+        "privacy": {
+            "Orientation": True,
+            "GPS": {"mode": "remove"},
+            "Timestamp": {"mode": "date_only"},
+            "CameraSettings": {"mode": "all_except_make_model"},
+            "Descriptions": False,
+            "Thumbnail": False,
+            "Software": False
+        },
+        "minimal": {
+            "Orientation": True,
+            "GPS": {"mode": "whole_degrees", "precision": 0},
+            "Timestamp": {"mode": "date_only"},
+            "CameraSettings": {"mode": "all"},
+            "Descriptions": True,
+            "Thumbnail": False,
+            "Software": True
+        },
+        "strict": {
+            "Orientation": False,
+            "GPS": {"mode": "remove"},
+            "Timestamp": {"mode": "remove"},
+            "CameraSettings": {"mode": "remove"},
+            "Descriptions": False,
+            "Thumbnail": False,
+            "Software": False
+        }
+    }
     
-    return exif_dict
+    return templates.get(name, DEFAULT_RULES.copy())
