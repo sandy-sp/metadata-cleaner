@@ -99,18 +99,13 @@ def validate_rules(rules: Dict[str, Any]) -> Dict[str, Any]:
 
     for key, value in rules.items():
         if key not in DEFAULT_RULES:
-            logger.warning(f"Unknown rule key: {key}")
-            continue
+            logger.warning(f"Unknown rule key: {key} (Ignoring)")
+            continue  # Ignore invalid keys
 
         if isinstance(value, dict):
-            if "mode" in value and key in VALID_OPTIONS:
-                if value["mode"] not in VALID_OPTIONS[key]:
-                    raise ValueError(f"Invalid mode for {key}: {value['mode']}")
-        elif isinstance(value, bool):
-            if not isinstance(DEFAULT_RULES[key], bool):
-                raise ValueError(f"Invalid type for {key}: expected dict, got bool")
-        else:
-            raise ValueError(f"Invalid value type for {key}")
+            if "mode" in value and key in VALID_OPTIONS and value["mode"] not in VALID_OPTIONS[key]:
+                logger.error(f"Invalid mode for {key}: {value['mode']} (Using Default)")
+                value["mode"] = DEFAULT_RULES[key]["mode"]  # Revert to default
 
         validated[key] = value
 
