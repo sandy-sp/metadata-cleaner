@@ -79,7 +79,7 @@ class ImageHandler:
             logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
             return extract_metadata_piexif(file_path)
 
-    def remove_metadata(self, 
+    def remove_image_metadata(self, 
                        file_path: str, 
                        output_path: Optional[str] = None,
                        config_file: Optional[str] = None,

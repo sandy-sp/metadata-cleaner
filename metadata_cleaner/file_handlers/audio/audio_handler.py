@@ -90,7 +90,7 @@ class AudioHandler:
             logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
             return None
 
-    def remove_metadata(self, 
+    def remove_audio_metadata(self, 
                        file_path: str, 
                        output_path: Optional[str] = None,
                        verify: bool = True) -> Optional[str]:
