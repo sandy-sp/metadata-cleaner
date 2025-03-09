@@ -62,61 +62,33 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
 def remove_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """
     Removes metadata from a PDF dynamically based on available tools.
-
-    Parameters:
-        file_path (str): Path to the PDF file.
-        output_path (Optional[str]): Destination path for the cleaned PDF.
-                                     If None, overwrites the original file.
-
-    Returns:
-        Optional[str]: Path to the cleaned PDF if successful; otherwise, None.
     """
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return None
-    
+
     logger.info(f"Attempting to remove metadata from: {file_path}")
-    
+
     if exiftool_remove_metadata(file_path):
         logger.info("Metadata removed successfully using ExifTool.")
         return file_path
-    
+
     logger.warning("ExifTool failed, falling back to PyMuPDF...")
     try:
         doc = fitz.open(file_path)
         doc.set_metadata({})
         output_path = output_path or file_path
         doc.save(output_path)
-        logger.info("Metadata removed using PyMuPDF.")
-        return output_path
+        doc.close()
+
+        # Verify that the cleaned file exists and is non-empty
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info("Metadata removed using PyMuPDF.")
+            return output_path
+        else:
+            logger.error("PyMuPDF operation failed; output file might be corrupted.")
+            return None
     except Exception as e:
         logger.error(f"PyMuPDF failed: {e}")
-    
-    logger.warning("Falling back to pikepdf...")
-    try:
-        with pikepdf.open(file_path) as pdf:
-            pdf.docinfo.clear()
-            output_path = output_path or file_path
-            pdf.save(output_path)
-            logger.info("Metadata removed using pikepdf.")
-            return output_path
-    except Exception as e:
-        logger.error(f"pikepdf failed: {e}")
-    
-    logger.warning("Falling back to PyPDF...")
-    try:
-        reader = PdfReader(file_path)
-        writer = PdfWriter()
-        for page in reader.pages:
-            writer.add_page(page)
-        writer.add_metadata({})
-        output_path = output_path or file_path
-        with open(output_path, "wb") as f:
-            writer.write(f)
-        logger.info("Metadata removed using PyPDF.")
-        return output_path
-    except Exception as e:
-        logger.error(f"PyPDF failed: {e}")
-    
-    logger.error("All metadata removal attempts failed.")
+
     return None
