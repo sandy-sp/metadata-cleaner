@@ -23,7 +23,7 @@ LOG_BACKUP_COUNT: int = int(os.getenv("METADATA_CLEANER_LOG_BACKUPS", "5"))  # K
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configure logging format
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+LOG_FORMAT = "%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] %(message)s"
 
 # Initialize logger
 logger = logging.getLogger("metadata_cleaner")
