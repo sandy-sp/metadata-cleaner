@@ -44,15 +44,7 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
 
 def remove_metadata(file_path: str, output_path: Optional[str] = None) -> bool:
     """
-    Removes all metadata from a video file using FFmpeg.
-
-    Parameters:
-        file_path (str): Path to the video file.
-        output_path (Optional[str]): Destination path for the cleaned video.
-                                     If None, overwrites the original file.
-
-    Returns:
-        bool: True if metadata removal is successful, False otherwise.
+    Remove metadata from a video file using FFmpeg.
     """
     if not is_ffmpeg_available():
         logger.error("FFmpeg is not installed.")
@@ -60,17 +52,23 @@ def remove_metadata(file_path: str, output_path: Optional[str] = None) -> bool:
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return False
+
     try:
         if not output_path:
             base, ext = os.path.splitext(file_path)
             output_path = f"{base}_cleaned{ext}"
-        
+
         command = [
             FFMPEG_CMD, "-i", file_path, "-map_metadata", "-1",
             "-c:v", "copy", "-c:a", "copy", output_path, "-y"
         ]
 
         subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            logger.error(f"FFmpeg failed to create output file: {output_path}")
+            return False
+
         logger.info(f"Metadata removed successfully using FFmpeg: {output_path}")
         return True
     except Exception as e:

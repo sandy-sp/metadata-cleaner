@@ -59,7 +59,7 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
     logger.error("All metadata extraction attempts failed.")
     return None
 
-def remove_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+def remove_pdf_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """
     Removes metadata from a PDF dynamically based on available tools.
     """

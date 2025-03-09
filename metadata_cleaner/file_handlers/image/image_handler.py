@@ -179,7 +179,7 @@ def extract_metadata(file_path: str) -> Optional[Dict[str, Any]]:
     """Convenience function to extract metadata using default handler."""
     return default_handler.extract_metadata(file_path)
 
-def remove_metadata(file_path: str, output_path: Optional[str] = None,
+def remove_image_metadata(file_path: str, output_path: Optional[str] = None,
                    config_file: Optional[str] = None) -> Optional[str]:
     """Convenience function to remove metadata using default handler."""
     return default_handler.remove_metadata(file_path, output_path, config_file)
