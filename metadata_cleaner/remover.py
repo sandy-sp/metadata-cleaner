@@ -4,12 +4,13 @@ import concurrent.futures
 from typing import List, Optional, Dict
 from tqdm import tqdm
 from metadata_cleaner.logs.logger import logger
-from metadata_cleaner.config.settings import SUPPORTED_FORMATS
-from metadata_cleaner.file_handlers.image.image_handler import extract_image_metadata, remove_image_metadata
-from metadata_cleaner.file_handlers.document.pdf_handler import extract_pdf_metadata, remove_pdf_metadata
-from metadata_cleaner.file_handlers.document.docx_handler import extract_docx_metadata, remove_docx_metadata
-from metadata_cleaner.file_handlers.audio.audio_handler import extract_audio_metadata, remove_audio_metadata
-from metadata_cleaner.file_handlers.video.video_handler import extract_video_metadata, remove_video_metadata
+from metadata_cleaner.config.settings import SUPPORTED_FORMATS, ENABLE_PARALLEL_PROCESSING
+from metadata_cleaner.core.metadata_filter import load_filter_rules
+from metadata_cleaner.file_handlers.image.image_handler import extract_metadata as extract_image_metadata, remove_metadata as remove_image_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import extract_metadata as extract_pdf_metadata, remove_metadata as remove_pdf_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import extract_metadata as extract_docx_metadata, remove_metadata as remove_docx_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import extract_metadata as extract_audio_metadata, remove_metadata as remove_audio_metadata
+from metadata_cleaner.file_handlers.video.video_handler import extract_metadata as extract_video_metadata, remove_metadata as remove_video_metadata
 
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {
@@ -61,18 +62,16 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
     if not os.path.exists(file_path):
         logger.error(f"❌ File not found: {file_path}")
         return None
-
+    
     ext = os.path.splitext(file_path)[1].lower()
-    if ext not in METADATA_EXTRACTOR_MAP:
+    extractor_function = METADATA_EXTRACTOR_MAP.get(ext)
+    
+    if not extractor_function:
         logger.warning(f"⚠️ Unsupported file type for metadata extraction: {ext}")
         return None
-
-    logger.info(f"Extracting metadata for: {file_path}")
-    extractor_function = METADATA_EXTRACTOR_MAP[ext]
-
+    
     try:
-        metadata = extractor_function(file_path)
-        return metadata if metadata else {"message": "No metadata found."}
+        return extractor_function(file_path) or {"message": "No metadata found."}
     except Exception as e:
         logger.error(f"❌ Error extracting metadata from {file_path}: {e}", exc_info=True)
         return None
@@ -99,7 +98,7 @@ def dry_run_metadata_removal(file_path: str) -> Optional[Dict]:
         "after_removal": cleaned_metadata if cleaned_metadata else {"message": "Metadata successfully removed."}
     }
 
-def remove_metadata(file_path: str, output_folder: Optional[str] = None, dry_run: bool = False) -> Optional[str]:
+def remove_metadata(file_path: str, output_folder: Optional[str] = None, config_file: Optional[str] = None, dry_run: bool = False) -> Optional[str]:
     """
     Remove metadata from a single file with dry-run support.
 
@@ -114,23 +113,22 @@ def remove_metadata(file_path: str, output_folder: Optional[str] = None, dry_run
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return None
-
+    
     ext = os.path.splitext(file_path)[1].lower()
-    if ext not in FILE_HANDLER_MAP:
+    remover_function = FILE_HANDLER_MAP.get(ext)
+    
+    if not remover_function:
         logger.warning(f"Unsupported file type: {ext}")
         return None
-
-    logger.info(f"Processing file: {file_path}")
-    remover_function = FILE_HANDLER_MAP[ext]
-
+    
+    if dry_run:
+        logger.info(f"Dry-run mode: Simulating metadata removal for {file_path}")
+        return file_path
+    
+    output_path = os.path.join(output_folder or os.path.dirname(file_path), f"cleaned_{os.path.basename(file_path)}")
+    
     try:
-        if dry_run:
-            logger.info(f"Dry-run mode: Simulating metadata removal for {file_path}")
-            return file_path
-
-        output_path = os.path.join(output_folder or os.path.dirname(file_path), f"cleaned_{os.path.basename(file_path)}")
         cleaned_file = remover_function(file_path, output_path)
-        
         if cleaned_file and os.path.exists(cleaned_file):
             logger.info(f"✅ Metadata removed successfully: {cleaned_file}")
             return cleaned_file
@@ -180,11 +178,8 @@ def remove_metadata_from_folder(folder_path: str,
     failed_files = []
 
     with tqdm(total=len(files_to_process), desc="Processing Files", unit="file") as pbar:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_to_file = {
-                executor.submit(remove_metadata, file_path, output_folder): file_path
-                for file_path in files_to_process
-            }
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4 if ENABLE_PARALLEL_PROCESSING else 1) as executor:
+            future_to_file = {executor.submit(remove_metadata, file_path, output_folder): file_path for file_path in files_to_process}
 
             for future in concurrent.futures.as_completed(future_to_file):
                 result = future.result()
