@@ -81,13 +81,16 @@ def remove_metadata(file_path: str, output_path: Optional[str] = None) -> Option
         doc.save(output_path)
         doc.close()
 
-        # Verify that the cleaned file exists and is non-empty
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-            logger.info("Metadata removed using PyMuPDF.")
-            return output_path
-        else:
-            logger.error("PyMuPDF operation failed; output file might be corrupted.")
+        # Verify that the cleaned file is readable
+        try:
+            test_doc = fitz.open(output_path)
+            test_doc.close()
+        except Exception:
+            logger.error("Metadata removal resulted in a corrupted PDF file.")
             return None
+
+        logger.info("Metadata removed using PyMuPDF.")
+        return output_path
     except Exception as e:
         logger.error(f"PyMuPDF failed: {e}")
 
