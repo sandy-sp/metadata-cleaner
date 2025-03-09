@@ -12,12 +12,6 @@ Provides an alternative method for metadata operations when ExifTool is unavaila
 def extract_metadata(file_path: str) -> Optional[Dict]:
     """
     Extract metadata from an audio file using Mutagen.
-
-    Parameters:
-        file_path (str): Path to the audio file.
-
-    Returns:
-        Optional[Dict]: Extracted metadata, or None if an error occurs.
     """
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
