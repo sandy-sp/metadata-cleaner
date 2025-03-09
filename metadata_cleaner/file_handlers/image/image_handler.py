@@ -62,26 +62,21 @@ class ImageHandler:
             logger.error(f"Unsupported image format: {file_path}")
             return None
 
+        if not is_exiftool_available():
+            logger.warning("ExifTool not found. Falling back to Piexif.")
+            return extract_metadata_piexif(file_path)
+
         try:
-            # Try ExifTool first if available and enabled
-            if self.use_exiftool:
-                metadata = extract_metadata_exiftool(file_path)
-                if metadata:
-                    logger.info(f"Metadata extracted using ExifTool: {file_path}")
-                    return metadata
-
-            # Fall back to Piexif
-            metadata = extract_metadata_piexif(file_path)
+            metadata = extract_metadata_exiftool(file_path)
             if metadata:
-                logger.info(f"Metadata extracted using Piexif: {file_path}")
+                logger.info(f"Metadata extracted using ExifTool: {file_path}")
                 return metadata
-
-            logger.warning(f"No metadata found in: {file_path}")
-            return {}
-
+            else:
+                logger.warning("ExifTool failed to extract metadata. Falling back to Piexif.")
+                return extract_metadata_piexif(file_path)
         except Exception as e:
-            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
-            return None
+            logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
+            return extract_metadata_piexif(file_path)
 
     def remove_metadata(self, 
                        file_path: str, 
