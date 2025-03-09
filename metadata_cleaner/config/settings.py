@@ -16,7 +16,10 @@ These settings include:
 DEFAULT_OUTPUT_FOLDER: str = os.getenv("METADATA_CLEANER_OUTPUT_DIR", "cleaned")
 
 # Enable or disable parallel processing (default: enabled)
-ENABLE_PARALLEL_PROCESSING: bool = os.getenv("METADATA_CLEANER_PARALLEL", "True").lower() in ("true", "1", "yes")
+def str_to_bool(value: str) -> bool:
+    return value.strip().lower() in {"true", "1", "yes"}
+
+ENABLE_PARALLEL_PROCESSING: bool = str_to_bool(os.getenv("METADATA_CLEANER_PARALLEL", "True")) # Enable parallel processing
 MAX_WORKERS: int = int(os.getenv("METADATA_CLEANER_WORKERS", "4"))  # Limit parallel workers
 
 # Logging configuration
