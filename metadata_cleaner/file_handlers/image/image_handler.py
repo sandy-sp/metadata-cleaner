@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Dict, Any
 from PIL import Image
+import piexif 
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.core.metadata_filter import load_filter_rules, filter_exif_data
 from metadata_cleaner.file_handlers.image.exiftool_handler import (
@@ -158,13 +159,14 @@ class ImageHandler:
             filtered_metadata = filter_exif_data(metadata, rules)
             output_path = output_path or get_safe_output_path(file_path)
 
-            # Apply filtered metadata
             img = Image.open(file_path)
-            img.save(output_path, exif=filtered_metadata)
             
+            # Convert dictionary to binary EXIF
+            exif_bytes = piexif.dump(filtered_metadata)
+            
+            img.save(output_path, exif=exif_bytes)  # Save correctly formatted EXIF data
             logger.info(f"Metadata filtered successfully: {output_path}")
             return output_path
-
         except Exception as e:
             logger.error(f"Error filtering metadata: {e}", exc_info=True)
             return None
