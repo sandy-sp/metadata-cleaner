@@ -6,11 +6,11 @@ from tqdm import tqdm
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS, ENABLE_PARALLEL_PROCESSING
 from metadata_cleaner.core.metadata_filter import load_filter_rules
-from metadata_cleaner.file_handlers.image.image_handler import extract_metadata as extract_image_metadata, remove_metadata as remove_image_metadata
-from metadata_cleaner.file_handlers.document.pdf_handler import extract_metadata as extract_pdf_metadata, remove_metadata as remove_pdf_metadata
-from metadata_cleaner.file_handlers.document.docx_handler import extract_metadata as extract_docx_metadata, remove_metadata as remove_docx_metadata
-from metadata_cleaner.file_handlers.audio.audio_handler import extract_metadata as extract_audio_metadata, remove_metadata as remove_audio_metadata
-from metadata_cleaner.file_handlers.video.video_handler import extract_metadata as extract_video_metadata, remove_metadata as remove_video_metadata
+from metadata_cleaner.file_handlers.image.image_handler import extract_metadata as extract_image_metadata, remove_image_metadata as remove_image_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import extract_metadata as extract_pdf_metadata, remove_pdf_metadata as remove_pdf_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import extract_metadata as extract_docx_metadata, remove_docx_metadata as remove_docx_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import extract_metadata as extract_audio_metadata, remove_audio_metadata as remove_audio_metadata
+from metadata_cleaner.file_handlers.video.video_handler import extract_metadata as extract_video_metadata, remove_video_metadata as remove_video_metadata
 
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {

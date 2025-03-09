@@ -50,8 +50,8 @@ class TestSettingsAndUtils(unittest.TestCase):
         """
         Test that copy_file_without_metadata correctly copies a file.
         """
-        test_file = "test_original.txt"
-        copied_file = "test_copied.txt"
+        test_file = "test_folder/test_original.txt"
+        copied_file = "test_folder/test_copied.txt"
 
         # Create a test file.
         with open(test_file, "w") as f:
