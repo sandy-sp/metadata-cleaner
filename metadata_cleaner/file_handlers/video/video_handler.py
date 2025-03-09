@@ -14,34 +14,33 @@ Uses FFmpeg as the primary tool, with PyAV and Hachoir as fallbacks.
 def extract_metadata(file_path: str) -> Optional[Dict]:
     """
     Extract metadata from a video file dynamically based on available tools.
-
-    Parameters:
-        file_path (str): Path to the video file.
-
-    Returns:
-        Optional[Dict]: Extracted metadata, or None if an error occurs.
     """
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return None
     
     logger.info(f"Attempting to extract metadata from: {file_path}")
-    
+
+    # Try FFmpeg first
     metadata = extract_metadata_ffmpeg(file_path)
     if metadata:
         logger.info("Metadata extracted successfully using FFmpeg.")
         return metadata
-    
+
+    # Try PyAV before Hachoir (for better metadata details)
     logger.warning("FFmpeg failed, falling back to PyAV...")
     metadata = extract_metadata_pyav(file_path)
     if metadata:
+        logger.info("Metadata extracted successfully using PyAV.")
         return metadata
-    
+
+    # Fallback to Hachoir as last resort
     logger.warning("Falling back to Hachoir...")
     metadata = extract_metadata_hachoir(file_path)
     if metadata:
+        logger.info("Metadata extracted successfully using Hachoir.")
         return metadata
-    
+
     logger.error("All metadata extraction attempts failed.")
     return None
 
