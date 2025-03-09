@@ -20,12 +20,6 @@ def is_exiftool_available() -> bool:
 def extract_metadata(file_path: str) -> Optional[Dict]:
     """
     Extracts metadata from an audio file using ExifTool.
-
-    Parameters:
-        file_path (str): Path to the audio file.
-
-    Returns:
-        Optional[Dict]: Extracted metadata, or None if an error occurs.
     """
     if not is_exiftool_available():
         logger.error("ExifTool is not installed.")
@@ -35,8 +29,17 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
         return None
     try:
         result = subprocess.run([EXIFTOOL_CMD, "-j", file_path], capture_output=True, text=True, check=True)
+        
+        # Handle empty or invalid output safely
+        if not result.stdout.strip():
+            logger.error(f"ExifTool did not return metadata for {file_path}")
+            return None
+        
         metadata = json.loads(result.stdout)
         return metadata[0] if metadata else {}
+    except json.JSONDecodeError:
+        logger.error(f"ExifTool returned invalid JSON for {file_path}.")
+        return None
     except Exception as e:
         logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
         return None
