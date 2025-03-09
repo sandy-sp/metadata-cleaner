@@ -44,6 +44,11 @@ def remove_metadata(file_path: str) -> bool:
         if audio is None:
             logger.error(f"Unsupported file format or file is corrupted: {file_path}")
             return False
+        
+        # Ensure ID3 tags are cleared for MP3
+        if file_path.lower().endswith('.mp3'):
+            audio.clear()
+        
         audio.delete()
         audio.save()
         logger.info(f"Metadata removed successfully from {file_path} using Mutagen.")
