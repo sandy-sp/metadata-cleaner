@@ -2,6 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 from typing import Optional
+import glob
 
 """
 Logger configuration for Metadata Cleaner.
@@ -75,3 +76,12 @@ def enable_log_rotation(max_size: int = LOG_ROTATION_SIZE, backup_count: int = L
     file_handler = RotatingFileHandler(LOG_FILE, maxBytes=max_size, backupCount=backup_count)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     logger.addHandler(file_handler)
+
+def cleanup_old_logs():
+    """Ensure log backups do not exceed the set limit."""
+    log_files = sorted(glob.glob(os.path.join(LOG_DIR, "metadata_cleaner.log*")), key=os.path.getctime)
+    while len(log_files) > LOG_BACKUP_COUNT:
+        os.remove(log_files.pop(0))
+
+# Call cleanup at the end of the logger setup
+cleanup_old_logs()
