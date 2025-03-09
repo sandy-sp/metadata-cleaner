@@ -91,9 +91,6 @@ def validate_rules(rules: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
         Dict[str, Any]: Validated rules.
-
-    Raises:
-        ValueError: If rules are invalid.
     """
     validated = {}
 
@@ -102,10 +99,10 @@ def validate_rules(rules: Dict[str, Any]) -> Dict[str, Any]:
             logger.warning(f"Unknown rule key: {key} (Ignoring)")
             continue  # Ignore invalid keys
 
-        if isinstance(value, dict):
-            if "mode" in value and key in VALID_OPTIONS and value["mode"] not in VALID_OPTIONS[key]:
-                logger.error(f"Invalid mode for {key}: {value['mode']} (Using Default)")
-                value["mode"] = DEFAULT_RULES[key]["mode"]  # Revert to default
+        if isinstance(value, dict) and "mode" in value:
+            if key in VALID_OPTIONS and value["mode"] not in VALID_OPTIONS[key]:
+                logger.error(f"Invalid mode for {key}: {value['mode']} (Ignoring rule)")
+                continue  # Ignore this rule instead of modifying it
 
         validated[key] = value
 
@@ -125,7 +122,7 @@ def filter_exif_data(exif_dict: Dict[str, Any], rules: Dict[str, Any]) -> Dict[s
     if not isinstance(exif_dict, dict):
         raise ValueError("Invalid EXIF data format")
 
-    filtered = exif_dict.copy()
+    filtered = {k: v.copy() if isinstance(v, dict) else v for k, v in exif_dict.items()}
 
     try:
         # Process Orientation
@@ -135,12 +132,12 @@ def filter_exif_data(exif_dict: Dict[str, Any], rules: Dict[str, Any]) -> Dict[s
         # Process GPS data
         if "GPS" in filtered:
             gps_rules = rules.get("GPS", {})
-            filtered["GPS"] = process_gps_data(filtered["GPS"], gps_rules)
+            filtered["GPS"] = process_gps_data(filtered.get("GPS", {}), gps_rules)
         
         # Process Timestamp
         if "Exif" in filtered:
             timestamp_rules = rules.get("Timestamp", {})
-            filtered["Exif"] = process_timestamp(filtered["Exif"], timestamp_rules)
+            filtered["Exif"] = process_timestamp(filtered.get("Exif", {}), timestamp_rules)
         
         # Process Camera Settings
         camera_rules = rules.get("CameraSettings", {})
@@ -174,32 +171,29 @@ def process_gps_data(gps_data: Dict[str, Any], rules: Dict[str, Any]) -> Dict[st
     Returns:
         Dict[str, Any]: Processed GPS data.
     """
-    if not isinstance(gps_data, dict):
+    if not isinstance(gps_data, dict) or not gps_data:
         return {}
 
     mode = rules.get("mode", "whole_degrees")
     precision = rules.get("precision", 0)
     remove_altitude = rules.get("remove_altitude", True)
 
+    processed = gps_data.copy()
+
     try:
-        if mode == "remove":
-            return {}
-
-        processed = gps_data.copy()
-
         if remove_altitude:
             processed.pop(6, None)  # Altitude
             processed.pop(7, None)  # Altitude reference
 
+        if mode == "remove":
+            return {}
+
         if mode == "whole_degrees":
-            # Process latitude and longitude
-            for tag in [2, 4]:  # 2: Latitude, 4: Longitude
-                if tag in processed:
-                    value = processed[tag]
-                    if isinstance(value, tuple) and len(value) == 2:
-                        num, den = value
-                        degrees = round(float(num) / float(den), precision)
-                        processed[tag] = (int(degrees * (10 ** precision)), 10 ** precision)
+            for tag in [2, 4]:  # Latitude & Longitude
+                if tag in processed and isinstance(processed[tag], tuple) and len(processed[tag]) == 2:
+                    num, den = processed[tag]
+                    degrees = round(float(num) / float(den), precision)
+                    processed[tag] = (int(degrees * (10 ** precision)), 10 ** precision)
 
         return processed
 

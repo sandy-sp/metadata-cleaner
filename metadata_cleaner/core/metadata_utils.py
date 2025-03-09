@@ -99,16 +99,20 @@ def verify_file_integrity(original_path: str, processed_path: str) -> bool:
                 for byte_block in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
+        except FileNotFoundError:
+            logger.error(f"File missing for integrity check: {file_path}")
+            return ""
         except Exception as e:
             logger.error(f"Error calculating hash for {file_path}: {e}")
             return ""
 
     original_hash = get_file_hash(original_path)
     processed_hash = get_file_hash(processed_path)
-    
+
     if not original_hash or not processed_hash:
-        return False
-        
+        logger.error("Integrity check failed due to missing files.")
+        return False  # Explicitly return False if files are missing
+
     return original_hash == processed_hash
 
 def backup_metadata(file_path: str) -> Optional[str]:
@@ -317,22 +321,22 @@ def is_file_locked(file_path: str) -> bool:
     """
     try:
         with open(file_path, 'rb') as f:
-            # Try to acquire an exclusive lock
             if os.name == 'nt':  # Windows
                 import msvcrt
                 try:
                     msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
                     msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
-                except IOError:
+                except OSError:  # More specific error
                     return True
             else:  # Unix-based
                 import fcntl
                 try:
                     fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                     fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-                except IOError:
+                except OSError:
                     return True
         return False
-    except Exception:
-        return True  # Assume locked if we can't check
+    except Exception as e:
+        logger.error(f"Error checking file lock: {e}")
+        return False  # Assume unlocked unless proven otherwise
 
