@@ -7,7 +7,6 @@ from metadata_cleaner.remover import remove_metadata, remove_metadata_from_folde
 from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 from metadata_cleaner.file_handlers.metadata_extractor import extract_metadata
 
-
 @click.command()
 @click.option('--file', '-f', type=click.Path(exists=True), help="File path to clean metadata from.")
 @click.option('--folder', '-d', type=click.Path(exists=True), help="Folder path containing files to process.")
@@ -46,16 +45,6 @@ def main(file: Optional[str],
     🧹 Metadata Cleaner - CLI
 
     A powerful command-line tool for removing metadata from images, documents, audio, and video files.
-
-    Features:
-    - Support for various file formats
-    - Supports metadata viewing
-    - Batch processing with recursive folder support
-    - Selective metadata filtering using config files
-    - Quiet mode for automation
-    - Custom prefix and suffix for output filenames
-    - Remove GPS metadata from images
-    - Preserve timestamp metadata in images
     """
     try:
         if version:
