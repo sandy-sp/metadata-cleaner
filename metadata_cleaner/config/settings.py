@@ -1,5 +1,6 @@
 import os
 from typing import Dict, Set
+import multiprocessing
 
 """
 Configuration settings for Metadata Cleaner.
@@ -20,7 +21,7 @@ def str_to_bool(value: str) -> bool:
     return value.strip().lower() in {"true", "1", "yes"}
 
 ENABLE_PARALLEL_PROCESSING: bool = str_to_bool(os.getenv("METADATA_CLEANER_PARALLEL", "True")) # Enable parallel processing
-MAX_WORKERS: int = int(os.getenv("METADATA_CLEANER_WORKERS", "4"))  # Limit parallel workers
+MAX_WORKERS: int = min(int(os.getenv("METADATA_CLEANER_WORKERS", "4")), multiprocessing.cpu_count())
 
 # Logging configuration
 LOG_DIR: str = os.getenv("METADATA_CLEANER_LOG_DIR", "logs")
