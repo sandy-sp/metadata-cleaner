@@ -166,6 +166,11 @@ def restore_metadata_from_backup(file_path: str, backup_path: str) -> bool:
         logger.error(f"Failed to restore metadata: {e}")
         return False
 
+def copy_file_without_metadata(source_path: str, destination_path: str):
+    """Safely copies a file without transferring metadata."""
+    import shutil
+    shutil.copy2(source_path, destination_path)
+
 def safe_copy_file(source_path: str, dest_path: str) -> bool:
     """
     Safely copy a file with error handling and verification.

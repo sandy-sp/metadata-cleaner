@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shutil
 from typing import Optional, Dict
 from metadata_cleaner.logs.logger import logger
 
