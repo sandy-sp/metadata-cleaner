@@ -24,9 +24,9 @@ ENABLE_PARALLEL_PROCESSING: bool = str_to_bool(os.getenv("METADATA_CLEANER_PARAL
 MAX_WORKERS: int = min(int(os.getenv("METADATA_CLEANER_WORKERS", "4")), multiprocessing.cpu_count())
 
 # Logging configuration
-LOG_DIR: str = os.getenv("METADATA_CLEANER_LOG_DIR", "logs")
+LOG_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
 LOG_FILE: str = os.path.join(LOG_DIR, "metadata_cleaner.log")
-LOG_LEVEL: str = os.getenv("METADATA_CLEANER_LOG_LEVEL", "INFO")  # Options: DEBUG, INFO, WARNING, ERROR
+LOG_LEVEL: str = os.getenv("METADATA_CLEANER_LOG_LEVEL", "INFO").upper()  # Options: DEBUG, INFO, WARNING, ERROR
 LOG_ROTATION_SIZE: int = int(os.getenv("METADATA_CLEANER_LOG_SIZE", "10485760"))  # 10MB log rotation
 LOG_BACKUP_COUNT: int = int(os.getenv("METADATA_CLEANER_LOG_BACKUPS", "5"))  # Keep last 5 log files
 
