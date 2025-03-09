@@ -6,11 +6,11 @@ from PIL import Image, UnidentifiedImageError
 from docx import Document
 from pypdf import PdfReader, PdfWriter
 from mutagen.mp3 import MP3
-from metadata_cleaner.file_handlers.image.image_handler import remove_image_metadata
-from metadata_cleaner.file_handlers.document.pdf_handler import remove_pdf_metadata
-from metadata_cleaner.file_handlers.document.docx_handler import remove_docx_metadata
-from metadata_cleaner.file_handlers.audio.audio_handler import remove_audio_metadata
-from metadata_cleaner.file_handlers.video.video_handler import remove_video_metadata
+from metadata_cleaner.file_handlers.image.image_handler import remove_metadata
+from metadata_cleaner.file_handlers.document.pdf_handler import remove_metadata
+from metadata_cleaner.file_handlers.document.docx_handler import remove_metadata
+from metadata_cleaner.file_handlers.audio.audio_handler import remove_metadata
+from metadata_cleaner.file_handlers.video.video_handler import remove_metadata
 
 class TestFileHandlers(unittest.TestCase):
     def setUp(self):
@@ -59,7 +59,7 @@ class TestFileHandlers(unittest.TestCase):
     def test_image_handler(self):
         """Test image metadata removal and ensure original remains unchanged."""
         output_file = os.path.join(self.test_output_folder, "test_image_cleaned.jpg")
-        result = remove_image_metadata(self.test_image, output_file)
+        result = remove_metadata(self.test_image, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
         
@@ -69,13 +69,13 @@ class TestFileHandlers(unittest.TestCase):
     def test_corrupt_image_handler(self):
         """Test handling of a corrupt image file."""
         output_file = os.path.join(self.test_output_folder, "corrupt_image_cleaned.jpg")
-        result = remove_image_metadata(self.test_corrupt_image, output_file)
+        result = remove_metadata(self.test_corrupt_image, output_file)
         self.assertIsNone(result, "Corrupt image should not be processed.")
 
     def test_pdf_handler(self):
         """Test PDF metadata removal."""
         output_file = os.path.join(self.test_output_folder, "test_pdf_cleaned.pdf")
-        result = remove_pdf_metadata(self.test_pdf, output_file)
+        result = remove_metadata(self.test_pdf, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
         
@@ -85,7 +85,7 @@ class TestFileHandlers(unittest.TestCase):
     def test_docx_handler(self):
         """Test DOCX metadata removal."""
         output_file = os.path.join(self.test_output_folder, "test_docx_cleaned.docx")
-        result = remove_docx_metadata(self.test_docx, output_file)
+        result = remove_metadata(self.test_docx, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
         
@@ -97,7 +97,7 @@ class TestFileHandlers(unittest.TestCase):
         if not shutil.which("ffmpeg"):
             self.skipTest("FFmpeg not found, skipping audio test.")
         output_file = os.path.join(self.test_output_folder, "test_audio_cleaned.mp3")
-        result = remove_audio_metadata(self.test_audio, output_file)
+        result = remove_metadata(self.test_audio, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
         
@@ -109,7 +109,7 @@ class TestFileHandlers(unittest.TestCase):
         if not shutil.which("ffmpeg"):
             self.skipTest("FFmpeg not found, skipping video test.")
         output_file = os.path.join(self.test_output_folder, "test_video_cleaned.mp4")
-        result = remove_video_metadata(self.test_video, output_file)
+        result = remove_metadata(self.test_video, output_file)
         self.assertIsNotNone(result)
         self.assertTrue(os.path.exists(result))
 
