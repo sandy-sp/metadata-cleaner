@@ -182,7 +182,7 @@ def extract_metadata(file_path: str) -> Optional[Dict[str, Any]]:
 def remove_image_metadata(file_path: str, output_path: Optional[str] = None,
                    config_file: Optional[str] = None) -> Optional[str]:
     """Convenience function to remove metadata using default handler."""
-    return default_handler.remove_metadata(file_path, output_path, config_file)
+    return default_handler.remove_image_metadata(file_path, output_path, config_file)
 
 def filter_metadata(file_path: str, rules: Dict[str, Any],
                    output_path: Optional[str] = None) -> Optional[str]:

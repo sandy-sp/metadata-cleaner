@@ -42,7 +42,7 @@ def extract_metadata(file_path: str) -> Optional[Dict[str, str]]:
         logger.error(f"Error extracting metadata: {e}", exc_info=True)
         return None
 
-def remove_docx_metadata(file_path: str) -> bool:
+def remove_docx_metadata(file_path: str, output_path: Optional[str] = None) -> bool:
     """
     Removes metadata from a DOCX file using available tools.
 

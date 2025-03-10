@@ -152,4 +152,4 @@ def extract_metadata(file_path: str) -> Optional[Dict[str, Any]]:
 
 def remove_audio_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """Convenience function to remove metadata using default handler."""
-    return default_handler.remove_metadata(file_path, output_path)
+    return default_handler.remove_audio_metadata(file_path, output_path)
