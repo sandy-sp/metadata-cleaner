@@ -79,6 +79,14 @@ class TestMetadataRemover(unittest.TestCase):
             elif ext == ".mp3" and shutil.which("ffmpeg"):
                 audio = MP3(cleaned_file)
                 self.assertFalse(audio.tags, "Metadata not removed from MP3.")
+        
+        # Identify files that were not processed correctly
+        failed_files = set(os.listdir(self.test_folder)) - set(cleaned_files)
+        if len(cleaned_files) != expected_count:
+            print(f"⚠️ Expected {expected_count} files, but only {len(cleaned_files)} were processed.")
+            print(f"❌ Failed files: {failed_files}")
+
+        self.assertEqual(len(cleaned_files), expected_count, f"Expected {expected_count} files to be processed.")
 
     def test_empty_folder(self) -> None:
         """Test behavior when processing an empty folder."""

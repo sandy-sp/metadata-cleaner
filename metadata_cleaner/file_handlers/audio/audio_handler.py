@@ -127,7 +127,7 @@ class AudioHandler:
                     return output_path
 
             # Fall back to Mutagen
-            result = remove_metadata_mutagen(file_path, output_path)
+            result = remove_metadata_mutagen(file_path)
             if result:
                 logger.info(f"Metadata removed using Mutagen: {output_path}")
                 if verify and not verify_file_integrity(file_path, output_path):
