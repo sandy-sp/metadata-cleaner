@@ -118,7 +118,7 @@ class AudioHandler:
         try:
             # Try ExifTool first if available and enabled
             if self.use_exiftool:
-                result = remove_metadata_exiftool(file_path, output_path)
+                result = remove_metadata_exiftool(file_path)  # Corrected here
                 if result:
                     logger.info(f"Metadata removed using ExifTool: {output_path}")
                     if verify and not verify_file_integrity(file_path, output_path):

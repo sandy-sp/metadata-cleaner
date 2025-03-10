@@ -107,6 +107,11 @@ class ImageHandler:
         output_path = output_path or get_safe_output_path(file_path)
 
         try:
+            # Ensure output directory exists
+            output_dir = os.path.dirname(output_path)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
             # Load filtering rules if config provided
             rules = load_filter_rules(config_file) if config_file else None
 
@@ -159,12 +164,18 @@ class ImageHandler:
             filtered_metadata = filter_exif_data(metadata, rules)
             output_path = output_path or get_safe_output_path(file_path)
 
+            # Ensure output directory exists
+            output_dir = os.path.dirname(output_path)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
             img = Image.open(file_path)
             
             # Convert dictionary to binary EXIF
             exif_bytes = piexif.dump(filtered_metadata)
             
-            img.save(output_path, exif=exif_bytes)  # Save correctly formatted EXIF data
+            # Save the image with filtered metadata
+            img.save(output_path, exif=exif_bytes)
             logger.info(f"Metadata filtered successfully: {output_path}")
             return output_path
         except Exception as e:
