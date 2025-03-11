@@ -1,7 +1,7 @@
 import os
 from typing import Optional, Dict, Any
 from PIL import Image
-import piexif 
+import piexif
 from metadata_cleaner.logs.logger import logger
 from metadata_cleaner.core.metadata_filter import load_filter_rules, filter_exif_data
 from metadata_cleaner.file_handlers.image.exiftool_handler import (
@@ -22,7 +22,7 @@ from metadata_cleaner.core.metadata_utils import (
 class ImageHandler:
     """
     Unified handler for image metadata operations.
-    
+
     Features:
     - Automatic tool selection (ExifTool/Piexif)
     - Metadata extraction and removal
@@ -60,29 +60,34 @@ class ImageHandler:
             return None
 
         if not self.is_supported(file_path):
-            logger.error(f"Unsupported image format: {file_path}")
+            logger.error(f"❌ Unsupported image format: {file_path}")
             return None
 
-        if not is_exiftool_available():
-            logger.warning("ExifTool not found. Falling back to Piexif.")
-            return extract_metadata_piexif(file_path)
+        logger.info(f"📂 Extracting metadata from: {file_path}")
 
         try:
-            metadata = extract_metadata_exiftool(file_path)
+            if self.use_exiftool:
+                metadata = extract_metadata_exiftool(file_path)
+                if metadata:
+                    logger.info(f"✅ Metadata extracted using ExifTool: {file_path}")
+                    return metadata
+
+            logger.warning("⚠️ ExifTool failed, falling back to Piexif...")
+            metadata = extract_metadata_piexif(file_path)
             if metadata:
-                logger.info(f"Metadata extracted using ExifTool: {file_path}")
+                logger.info(f"✅ Metadata extracted using Piexif: {file_path}")
                 return metadata
-            else:
-                logger.warning("ExifTool failed to extract metadata. Falling back to Piexif.")
-                return extract_metadata_piexif(file_path)
+
         except Exception as e:
-            logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
-            return extract_metadata_piexif(file_path)
+            logger.error(f"❌ Error extracting metadata: {e}", exc_info=True)
+
+        logger.error(f"❌ All metadata extraction attempts failed: {file_path}")
+        return None
 
     def remove_image_metadata(self, file_path: str, output_path: Optional[str] = None,
                               config_file: Optional[str] = None, verify: bool = True) -> Optional[str]:
         """
-        Remove metadata from an image file and ensure the cleaned file is saved.
+        Remove metadata from an image file.
 
         Args:
             file_path (str): Path to the image file.
@@ -103,19 +108,21 @@ class ImageHandler:
 
         output_path = get_safe_output_path(file_path, output_path)
 
+        logger.info(f"📂 Removing metadata from: {file_path}")
+
         try:
             if self.use_exiftool:
                 cleaned_file = remove_metadata_exiftool(file_path)
                 if cleaned_file:
                     logger.info(f"✅ Metadata removed using ExifTool: {cleaned_file}")
                 else:
-                    logger.warning("ExifTool failed, falling back to Piexif...")
+                    logger.warning("⚠️ ExifTool failed, falling back to Piexif...")
                     cleaned_file = remove_metadata_piexif(file_path, output_path)
             else:
                 cleaned_file = remove_metadata_piexif(file_path, output_path)
 
             if not cleaned_file:
-                logger.error(f"❌ Failed to remove metadata: {file_path}")
+                logger.error(f"❌ Metadata removal failed: {file_path}")
                 return None
 
             if verify and not verify_file_integrity(file_path, cleaned_file):
@@ -128,10 +135,8 @@ class ImageHandler:
             logger.error(f"❌ Error removing metadata: {file_path} - {e}", exc_info=True)
             return None
 
-    def filter_metadata(self, 
-                       file_path: str, 
-                       rules: Dict[str, Any],
-                       output_path: Optional[str] = None) -> Optional[str]:
+    def filter_metadata(self, file_path: str, rules: Dict[str, Any],
+                        output_path: Optional[str] = None) -> Optional[str]:
         """
         Selectively filter metadata from an image file.
 
@@ -151,22 +156,15 @@ class ImageHandler:
             filtered_metadata = filter_exif_data(metadata, rules)
             output_path = output_path or get_safe_output_path(file_path)
 
-            # Ensure output directory exists
-            output_dir = os.path.dirname(output_path)
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir, exist_ok=True)
-
             img = Image.open(file_path)
-            
-            # Convert dictionary to binary EXIF
             exif_bytes = piexif.dump(filtered_metadata)
-            
-            # Save the image with filtered metadata
             img.save(output_path, exif=exif_bytes)
-            logger.info(f"Metadata filtered successfully: {output_path}")
+
+            logger.info(f"✅ Metadata filtered successfully: {output_path}")
             return output_path
+
         except Exception as e:
-            logger.error(f"Error filtering metadata: {e}", exc_info=True)
+            logger.error(f"❌ Error filtering metadata: {e}", exc_info=True)
             return None
 
 # Create a default instance
@@ -174,15 +172,15 @@ default_handler = ImageHandler()
 
 # Convenience functions using the default handler
 def extract_metadata(file_path: str) -> Optional[Dict[str, Any]]:
-    """Convenience function to extract metadata using default handler."""
+    """Convenience function to extract metadata using the default handler."""
     return default_handler.extract_metadata(file_path)
 
 def remove_image_metadata(file_path: str, output_path: Optional[str] = None,
-                   config_file: Optional[str] = None) -> Optional[str]:
-    """Convenience function to remove metadata using default handler."""
+                          config_file: Optional[str] = None) -> Optional[str]:
+    """Convenience function to remove metadata using the default handler."""
     return default_handler.remove_image_metadata(file_path, output_path, config_file)
 
 def filter_metadata(file_path: str, rules: Dict[str, Any],
-                   output_path: Optional[str] = None) -> Optional[str]:
-    """Convenience function to filter metadata using default handler."""
+                    output_path: Optional[str] = None) -> Optional[str]:
+    """Convenience function to filter metadata using the default handler."""
     return default_handler.filter_metadata(file_path, rules, output_path)

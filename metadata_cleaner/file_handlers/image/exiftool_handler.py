@@ -16,51 +16,87 @@ def is_exiftool_available() -> bool:
     """Check if ExifTool is installed and available on the system."""
     return shutil.which(EXIFTOOL_CMD) is not None
 
+def validate_file(file_path: str) -> bool:
+    """Check if the file exists and is valid."""
+    if not os.path.exists(file_path):
+        logger.error(f"❌ File not found: {file_path}")
+        return False
+    if not os.path.isfile(file_path):
+        logger.error(f"❌ Not a valid file: {file_path}")
+        return False
+    return True
+
 def extract_metadata(file_path: str) -> Optional[Dict]:
     """
     Extracts metadata from an image using ExifTool.
 
-    Parameters:
-        file_path (str): Path to the image file.
-
     Returns:
-        Optional[Dict]: Extracted metadata, or None if an error occurs.
+        - Metadata dictionary if extraction succeeds.
+        - None if extraction fails.
     """
+    if not is_exiftool_available():
+        logger.error("❌ ExifTool is not installed.")
+        return None
+    if not validate_file(file_path):
+        return None
+
+    logger.info(f"📂 Extracting metadata using ExifTool: {file_path}")
+
     try:
-        result = subprocess.run([EXIFTOOL_CMD, "-json", file_path], capture_output=True, text=True)
-        if result.returncode == 0:
-            import json
-            metadata = json.loads(result.stdout)
-            return metadata[0] if metadata else {}
-        else:
-            logger.error(f"ExifTool failed to extract metadata: {result.stderr}")
+        result = subprocess.run(
+            [EXIFTOOL_CMD, "-json", file_path],
+            capture_output=True, text=True, check=True
+        )
+
+        if not result.stdout.strip():
+            logger.error(f"❌ ExifTool did not return metadata for {file_path}")
             return None
-    except Exception as e:
-        logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
+
+        import json
+        metadata = json.loads(result.stdout)
+        return metadata[0] if metadata else {}
+
+    except json.JSONDecodeError:
+        logger.error(f"❌ ExifTool returned invalid JSON for {file_path}.")
+        return None
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ ExifTool encountered an error: {e}", exc_info=True)
         return None
 
 def remove_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]:
     """
     Removes metadata from an image using ExifTool.
 
-    Parameters:
-        file_path (str): Path to the image file.
-        output_path (Optional[str]): Destination path for the cleaned image.
-                                     If None, overwrites the original file.
-
     Returns:
-        Optional[str]: Path to the cleaned file if successful; otherwise, None.
+        - The output file path if removal succeeds.
+        - None if the process fails.
     """
+    if not is_exiftool_available():
+        logger.error("❌ ExifTool is not installed.")
+        return None
+    if not validate_file(file_path):
+        return None
+
+    # Determine output path if not provided
+    if not output_path:
+        output_path = file_path  # ExifTool modifies files in place
+
+    logger.info(f"📂 Removing metadata using ExifTool: {file_path}")
+
     try:
-        if output_path is None:
-            output_path = file_path
-        result = subprocess.run([EXIFTOOL_CMD, "-all=", "-overwrite_original", file_path], capture_output=True, text=True)
-        if result.returncode == 0:
-            logger.info(f"Metadata removed successfully from {file_path}")
-            return output_path
-        else:
-            logger.error(f"ExifTool failed to remove metadata: {result.stderr}")
+        result = subprocess.run(
+            [EXIFTOOL_CMD, "-all=", "-overwrite_original", file_path],
+            capture_output=True, text=True, check=True
+        )
+
+        # Verify metadata removal success
+        if not validate_file(output_path):
+            logger.error(f"❌ ExifTool failed to process: {output_path}")
             return None
-    except Exception as e:
-        logger.error(f"Error removing metadata using ExifTool: {e}", exc_info=True)
+
+        logger.info(f"✅ Metadata removed successfully using ExifTool: {output_path}")
+        return output_path
+
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ ExifTool encountered an error: {e}", exc_info=True)
         return None
