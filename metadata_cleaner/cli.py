@@ -63,19 +63,8 @@ def main(file: Optional[str],
             logger.setLevel('ERROR')
 
         if file:
-            if view_metadata:
-                metadata = extract_metadata(file)
-                click.echo(f"🔍 Metadata for {file}:\n" + json.dumps(metadata, indent=4))
-                return
-            if dry_run:
-                metadata_comparison = dry_run_metadata_removal(file)
-                click.echo(f"📝 Dry-Run Metadata Removal for {file}:\n" + json.dumps(metadata_comparison, indent=4))
-                return
-            process_single_file(file, output, yes, config, remove_gps, keep_timestamp, prefix, suffix)
+            process_file(file, output, yes, config, view_metadata, dry_run, remove_gps, keep_timestamp, prefix, suffix)
         elif folder:
-            if dry_run:
-                click.echo("📝 Dry-run is only supported for individual files, not folders.")
-                return
             process_folder(folder, output, yes, config, recursive, remove_gps, keep_timestamp, prefix, suffix)
         else:
             click.echo("❌ Please specify either --file or --folder to process.")
@@ -97,59 +86,26 @@ def display_version():
             tool_version = "unknown version"
     click.echo(f"Metadata Cleaner v{tool_version}")
 
-
 def display_supported_formats():
     """Lists all supported file formats."""
     click.echo("📁 Supported File Formats:")
     for category, extensions in SUPPORTED_FORMATS.items():
         click.echo(f"📂 {category.title()}: {', '.join(extensions)}")
 
+def process_file(file: str, output: Optional[str], yes: bool, config: Optional[str], 
+                 view_metadata: bool, dry_run: bool, remove_gps: bool, 
+                 keep_timestamp: bool, prefix: Optional[str], suffix: Optional[str]):
+    """Processes a single file for metadata operations."""
+    if view_metadata:
+        metadata = extract_metadata(file)
+        click.echo(f"🔍 Metadata for {file}:\n" + json.dumps(metadata, indent=4))
+        return
 
-def load_metadata_config(config_path: Optional[str], remove_gps: bool, keep_timestamp: bool) -> Dict:
-    """
-    Loads metadata filtering configuration, either from a provided JSON file or from CLI options.
+    if dry_run:
+        metadata_comparison = dry_run_metadata_removal(file)
+        click.echo(f"📝 Dry-Run Metadata Removal for {file}:\n" + json.dumps(metadata_comparison, indent=4))
+        return
 
-    Args:
-        config_path (Optional[str]): Path to JSON config file.
-        remove_gps (bool): Flag to remove GPS metadata from images.
-        keep_timestamp (bool): Flag to preserve timestamp metadata.
-
-    Returns:
-        Dict: Parsed metadata filtering rules.
-    """
-    metadata_config = {}
-
-    if config_path:
-        try:
-            with open(config_path, 'r') as f:
-                metadata_config.update(json.load(f))
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.error(f"Error reading config file {config_path}: {e}")
-            click.echo(f"⚠️ Invalid config file: {config_path}. Using default settings.")
-
-    if remove_gps:
-        metadata_config['GPS'] = 'remove'
-    if keep_timestamp:
-        metadata_config['Timestamp'] = 'exact'
-
-    return metadata_config
-
-
-def process_single_file(file: str, output: Optional[str], yes: bool, config: Optional[str],
-                        remove_gps: bool, keep_timestamp: bool, prefix: Optional[str], suffix: Optional[str]):
-    """
-    Processes a single file to remove metadata.
-
-    Args:
-        file (str): File path to clean metadata from.
-        output (Optional[str]): Output directory.
-        yes (bool): Whether to skip confirmation prompts.
-        config (Optional[str]): Path to config file.
-        remove_gps (bool): Flag to remove GPS metadata.
-        keep_timestamp (bool): Flag to preserve timestamp metadata.
-        prefix (Optional[str]): Custom prefix for cleaned filenames.
-        suffix (Optional[str]): Custom suffix for cleaned filenames.
-    """
     if not yes and not click.confirm(f"📌 Process file: {file}?", default=True):
         click.echo("❌ Operation cancelled.")
         return
@@ -162,36 +118,39 @@ def process_single_file(file: str, output: Optional[str], yes: bool, config: Opt
     else:
         click.echo(f"⚠️ Failed to process file: {file}")
 
-
 def process_folder(folder: str, output: Optional[str], yes: bool, config: Optional[str],
                    recursive: bool, remove_gps: bool, keep_timestamp: bool,
                    prefix: Optional[str], suffix: Optional[str]):
-    """
-    Processes all supported files in a folder.
-
-    Args:
-        folder (str): Folder path to process.
-        output (Optional[str]): Output directory.
-        yes (bool): Whether to skip confirmation prompts.
-        config (Optional[str]): Path to config file.
-        recursive (bool): Whether to process files recursively.
-        remove_gps (bool): Flag to remove GPS metadata.
-        keep_timestamp (bool): Flag to preserve timestamp metadata.
-        prefix (Optional[str]): Custom prefix for cleaned filenames.
-        suffix (Optional[str]): Custom suffix for cleaned filenames.
-    """
+    """Processes all supported files in a folder."""
     if not yes and not click.confirm(f"📁 Process folder: {folder}?", default=True):
         click.echo("❌ Operation cancelled.")
         return
 
     metadata_config = load_metadata_config(config, remove_gps, keep_timestamp)
-    cleaned_files = remove_metadata_from_folder(folder, output, metadata_config, recursive, prefix, suffix)
+    cleaned_files = remove_metadata_from_folder(folder, output, recursive)
 
     click.echo("\n📊 Summary Report:")
     click.echo(f"✅ Processed {len(cleaned_files)} files")
     if cleaned_files:
         click.echo(f"Cleaned files saved in: {output if output else folder}")
 
+def load_metadata_config(config_path: Optional[str], remove_gps: bool, keep_timestamp: bool) -> Dict:
+    """Loads metadata filtering configuration from a JSON file or CLI options."""
+    metadata_config = {}
+    if config_path and os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                metadata_config.update(json.load(f))
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            logger.error(f"Error reading config file {config_path}: {e}")
+            click.echo(f"⚠️ Invalid config file: {config_path}. Using default settings.")
+
+    if remove_gps:
+        metadata_config['GPS'] = 'remove'
+    if keep_timestamp:
+        metadata_config['Timestamp'] = 'exact'
+
+    return metadata_config
 
 if __name__ == "__main__":
     main()
