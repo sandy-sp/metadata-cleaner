@@ -3,7 +3,7 @@ import os
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 import glob
-from datetime import datetime
+from datetime import datetime, timezone
 
 """
 Logger configuration for Metadata Cleaner.
@@ -26,7 +26,8 @@ os.makedirs(LOG_DIR, exist_ok=True)
 # Configure logging format (UTC timestamps for consistency)
 LOG_FORMAT = "%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S UTC"
-logging.Formatter.converter = lambda *args: datetime.utcnow().timetuple()
+# Use timezone-aware datetime
+logging.Formatter.converter = lambda *args: datetime.now(timezone.utc).timetuple()
 
 # Initialize logger
 logger = logging.getLogger("metadata_cleaner")
