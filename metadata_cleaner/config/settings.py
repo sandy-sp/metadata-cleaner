@@ -20,7 +20,7 @@ DEFAULT_OUTPUT_FOLDER: str = os.getenv("METADATA_CLEANER_OUTPUT_DIR", "cleaned")
 def str_to_bool(value: str) -> bool:
     return value.strip().lower() in {"true", "1", "yes"}
 
-ENABLE_PARALLEL_PROCESSING: bool = str_to_bool(os.getenv("METADATA_CLEANER_PARALLEL", "True")) # Enable parallel processing
+ENABLE_PARALLEL_PROCESSING: bool = str_to_bool(os.getenv("METADATA_CLEANER_PARALLEL", "True"))  # Enable parallel processing
 MAX_WORKERS: int = min(int(os.getenv("METADATA_CLEANER_WORKERS", "4")), multiprocessing.cpu_count())
 
 # Logging configuration
@@ -33,19 +33,18 @@ LOG_BACKUP_COUNT: int = int(os.getenv("METADATA_CLEANER_LOG_BACKUPS", "5"))  # K
 # Ensure log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Supported file formats, organized by file category
+# Supported file formats, updated based on `file_handlers/`
 SUPPORTED_FORMATS: Dict[str, Set[str]] = {
-    "images": {".jpg", ".jpeg", ".png", ".tiff", ".webp", ".heic"},
-    "documents": {".pdf", ".docx", ".doc", ".odt", ".epub"},
-    "audio": {".mp3", ".wav", ".flac", ".ogg", ".aac"},
-    "videos": {".mp4", ".mkv", ".mov", ".avi", ".webm"},
+    "images": {".jpg", ".jpeg", ".png", ".tiff", ".webp", ".heic", ".bmp", ".gif"},
+    "documents": {".pdf", ".docx", ".doc", ".odt", ".epub", ".csv", ".md", ".txt"},
+    "audio": {".mp3", ".wav", ".flac", ".ogg", ".aac", ".m4a", ".wma", ".aiff"},
+    "videos": {".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv"},
 }
 
 # Flatten all supported extensions into a set for easy checking
 ALL_SUPPORTED_EXTENSIONS: Set[str] = {ext for exts in SUPPORTED_FORMATS.values() for ext in exts}
 
 # Function to validate supported formats
-
 def validate_supported_formats() -> None:
     """Ensures that all file extensions are lowercase and correctly formatted."""
     for category, extensions in SUPPORTED_FORMATS.items():
