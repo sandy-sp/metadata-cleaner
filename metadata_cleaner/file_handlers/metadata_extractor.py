@@ -21,11 +21,21 @@ Improvements:
 # Mapping file extensions to metadata extraction functions
 METADATA_EXTRACTOR_MAP = {
     **{ext: "metadata_cleaner.file_handlers.image.extract_metadata" for ext in SUPPORTED_FORMATS["images"]},
-    **{ext: "metadata_cleaner.file_handlers.document.pdf_handler.extract_metadata" for ext in SUPPORTED_FORMATS["documents"] if ext == ".pdf"},
-    **{ext: "metadata_cleaner.file_handlers.document.docx_handler.extract_metadata" for ext in SUPPORTED_FORMATS["documents"] if ext in {".docx", ".doc"}},
+    **{".pdf": "metadata_cleaner.file_handlers.document.pdf_handler.extract_metadata"},
+    **{ext: "metadata_cleaner.file_handlers.document.docx_handler.extract_metadata" for ext in {".docx", ".doc"}},
     **{ext: "metadata_cleaner.file_handlers.audio.audio_handler.extract_metadata" for ext in SUPPORTED_FORMATS["audio"]},
     **{ext: "metadata_cleaner.file_handlers.video.video_handler.extract_metadata" for ext in SUPPORTED_FORMATS["videos"]},
 }
+
+def validate_file(file_path: str) -> bool:
+    """Check if the file exists and is valid."""
+    if not os.path.exists(file_path):
+        logger.error(f"❌ File not found: {file_path}")
+        return False
+    if not os.path.isfile(file_path):
+        logger.error(f"❌ Not a valid file: {file_path}")
+        return False
+    return True
 
 def extract_metadata(file_path: str) -> Optional[Dict]:
     """
@@ -37,8 +47,7 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
     Returns:
         Optional[Dict]: Extracted metadata as a dictionary, or None if unsupported.
     """
-    if not os.path.exists(file_path):
-        logger.error(f"❌ File not found: {file_path}")
+    if not validate_file(file_path):
         return None
 
     ext = os.path.splitext(file_path)[1].lower()
@@ -53,7 +62,7 @@ def extract_metadata(file_path: str) -> Optional[Dict]:
         module = importlib.import_module(module_name)
         extractor_function = getattr(module, function_name)
 
-        logger.info(f"Extracting metadata for: {file_path}")
+        logger.info(f"📂 Extracting metadata for: {file_path}")
         metadata = extractor_function(file_path)
 
         return metadata if metadata else {"message": "No metadata found."}
