@@ -98,6 +98,58 @@ def validate_rules(rules: Dict[str, Any]) -> Dict[str, Any]:
 
     return validated
 
+def filter_exif_data(exif_dict: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Filter EXIF data based on rules.
+
+    Args:
+        exif_dict (Dict[str, Any]): Original EXIF data.
+        rules (Dict[str, Any]): Filtering rules.
+
+    Returns:
+        Dict[str, Any]: Filtered EXIF data.
+    """
+    if not isinstance(exif_dict, dict):
+        raise ValueError("Invalid EXIF data format")
+
+    filtered = {k: v.copy() if isinstance(v, dict) else v for k, v in exif_dict.items()}
+
+    try:
+        # Process Orientation
+        if not rules.get("Orientation", True):
+            filtered.get("0th", {}).pop(274, None)
+        
+        # Process GPS data
+        if "GPS" in filtered:
+            gps_rules = rules.get("GPS", {})
+            filtered["GPS"] = process_gps_data(filtered.get("GPS", {}), gps_rules)
+        
+        # Process Timestamp
+        if "Exif" in filtered:
+            timestamp_rules = rules.get("Timestamp", {})
+            filtered["Exif"] = process_timestamp(filtered.get("Exif", {}), timestamp_rules)
+        
+        # Process Camera Settings
+        camera_rules = rules.get("CameraSettings", {})
+        filtered = process_camera_settings(filtered, camera_rules)
+        
+        # Remove additional metadata based on rules
+        if not rules.get("Descriptions", True):
+            filtered.pop("ImageDescription", None)
+            filtered.pop("UserComment", None)
+        
+        if not rules.get("Thumbnail", True):
+            filtered.pop("thumbnail", None)
+        
+        if not rules.get("Software", True):
+            filtered.get("0th", {}).pop(305, None)  # Software tag
+        
+    except Exception as e:
+        logger.error(f"Error filtering EXIF data: {e}", exc_info=True)
+        return exif_dict  # Return original data if filtering fails
+
+    return filtered
+
 def filter_metadata(metadata: Dict[str, Any], rules: Dict[str, Any]) -> Dict[str, Any]:
     """
     Filter metadata based on predefined rules.
@@ -188,3 +240,74 @@ def process_camera_settings(camera_data: Dict[str, Any], rules: Dict[str, Any]) 
         logger.error(f"❌ Error processing camera settings: {e}", exc_info=True)
         return camera_data
 
+def get_exif_tag_name(ifd: str, tag: int) -> str:
+    """
+    Get the name of an EXIF tag.
+
+    Args:
+        ifd (str): IFD section name.
+        tag (int): Tag number.
+
+    Returns:
+        str: Tag name or empty string if not found.
+    """
+    # Common EXIF tags mapping
+    EXIF_TAGS = {
+        "0th": {
+            271: "Make",
+            272: "Model",
+            305: "Software",
+            306: "DateTime"
+        },
+        "Exif": {
+            36867: "DateTimeOriginal",
+            33434: "ExposureTime",
+            33437: "FNumber",
+            34850: "ExposureProgram",
+            34855: "ISOSpeedRatings"
+        }
+    }
+    
+    return EXIF_TAGS.get(ifd, {}).get(tag, "")
+
+def create_filter_template(name: str) -> Dict[str, Any]:
+    """
+    Create a predefined filter template.
+
+    Args:
+        name (str): Template name ("privacy", "minimal", "strict").
+
+    Returns:
+        Dict[str, Any]: Template configuration.
+    """
+    templates = {
+        "privacy": {
+            "Orientation": True,
+            "GPS": {"mode": "remove"},
+            "Timestamp": {"mode": "date_only"},
+            "CameraSettings": {"mode": "all_except_make_model"},
+            "Descriptions": False,
+            "Thumbnail": False,
+            "Software": False
+        },
+        "minimal": {
+            "Orientation": True,
+            "GPS": {"mode": "whole_degrees", "precision": 0},
+            "Timestamp": {"mode": "date_only"},
+            "CameraSettings": {"mode": "all"},
+            "Descriptions": True,
+            "Thumbnail": False,
+            "Software": True
+        },
+        "strict": {
+            "Orientation": False,
+            "GPS": {"mode": "remove"},
+            "Timestamp": {"mode": "remove"},
+            "CameraSettings": {"mode": "remove"},
+            "Descriptions": False,
+            "Thumbnail": False,
+            "Software": False
+        }
+    }
+    
+    return templates.get(name, DEFAULT_RULES.copy())
