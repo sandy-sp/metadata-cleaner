@@ -39,20 +39,27 @@ def remove_metadata(file_path: str) -> bool:
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return False
+
     try:
         audio = File(file_path, easy=True)
         if audio is None:
             logger.error(f"Unsupported file format or file is corrupted: {file_path}")
             return False
-        
-        # Ensure ID3 tags are cleared for MP3
-        if file_path.lower().endswith('.mp3'):
-            audio.clear()
-        
+
+        # Remove all tags
         audio.delete()
         audio.save()
-        logger.info(f"Metadata removed successfully from {file_path} using Mutagen.")
+
+        # Create a new file without metadata
+        output_path = os.path.join(os.path.dirname(file_path), f"cleaned_{os.path.basename(file_path)}")
+        audio_data = audio.info.pprint().encode('utf-8')
+
+        with open(output_path, 'wb') as f:
+            f.write(audio_data)
+
+        logger.info(f"Metadata removed successfully from {file_path}")
         return True
+
     except Exception as e:
         logger.error(f"Error removing metadata using Mutagen: {e}", exc_info=True)
         return False

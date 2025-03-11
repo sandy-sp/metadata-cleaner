@@ -55,19 +55,37 @@ def remove_docx_metadata(file_path: str, output_path: Optional[str] = None) -> b
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
         return False
-    
-    # Attempt to remove metadata using 7-Zip
+
     try:
+        # Use 7-Zip first
         result = subprocess.run(['7z', 'd', file_path, 'docProps/*'], capture_output=True, text=True)
         if result.returncode == 0:
             logger.info(f"Metadata removed using 7-Zip from {file_path}")
             return True
-        else:
-            logger.warning(f"7-Zip failed: {result.stderr.strip()}")
+
+        # Fallback to python-docx
+        logger.warning("7-Zip failed, falling back to python-docx...")
+        doc = Document(file_path)
+        doc.core_properties.author = None
+        doc.core_properties.title = None
+        doc.core_properties.subject = None
+        doc.core_properties.keywords = None
+        doc.core_properties.last_modified_by = None
+        doc.core_properties.revision = None
+        doc.core_properties.created = None
+        doc.core_properties.modified = None
+
+        # Ensure output path
+        output_path = output_path or file_path
+        doc.save(output_path)
+        logger.info(f"Metadata removed using python-docx from {file_path}")
+        return True
+
+        # Fallback to dmeta if python-docx fails
+        logger.warning("python-docx failed, falling back to dmeta...")
     except Exception as e:
-        logger.error(f"Error using 7-Zip: {e}", exc_info=True)
-    
-    # Fallback to using dmeta
+        logger.error(f"Error removing metadata using python-docx: {e}", exc_info=True)
+
     try:
         from dmeta.functions import clear
         clear(file_path, in_place=True)
@@ -77,24 +95,5 @@ def remove_docx_metadata(file_path: str, output_path: Optional[str] = None) -> b
         logger.error("dmeta is not installed.")
     except Exception as e:
         logger.error(f"Error using dmeta: {e}", exc_info=True)
-    
-    # Fallback to using python-docx
-    try:
-        doc = docx.Document(file_path)
-        core_props = doc.core_properties
-        core_props.author = None
-        core_props.title = None
-        core_props.subject = None
-        core_props.keywords = None
-        core_props.last_modified_by = None
-        core_props.revision = None
-        core_props.created = None
-        core_props.modified = None
-        doc.save(file_path)
-        logger.info(f"Metadata removed using python-docx from {file_path}")
-        return True
-    except Exception as e:
-        logger.error(f"Error using python-docx: {e}", exc_info=True)
-    
-    logger.error(f"Failed to remove metadata from {file_path}")
+
     return False
