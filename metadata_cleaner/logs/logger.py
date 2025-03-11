@@ -3,6 +3,7 @@ import os
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 import glob
+from datetime import datetime
 
 """
 Logger configuration for Metadata Cleaner.
@@ -22,8 +23,10 @@ LOG_BACKUP_COUNT: int = int(os.getenv("METADATA_CLEANER_LOG_BACKUPS", "5"))  # K
 # Ensure log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Configure logging format
+# Configure logging format (UTC timestamps for consistency)
 LOG_FORMAT = "%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] %(message)s"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S UTC"
+logging.Formatter.converter = lambda *args: datetime.utcnow().timetuple()
 
 # Initialize logger
 logger = logging.getLogger("metadata_cleaner")
@@ -34,7 +37,7 @@ file_handler = RotatingFileHandler(LOG_FILE, maxBytes=LOG_ROTATION_SIZE, backupC
 console_handler = logging.StreamHandler()
 
 # Set logging format
-formatter = logging.Formatter(LOG_FORMAT)
+formatter = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
 file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
 
@@ -50,7 +53,7 @@ def set_log_level(level: str) -> None:
         for handler in logger.handlers:
             handler.setLevel(getattr(logging, level))
     else:
-        logger.warning(f"Invalid log level: {level}. Using default: {LOG_LEVEL}")
+        logger.warning(f"⚠️ Invalid log level: {level}. Using default: {LOG_LEVEL}")
 
 def get_current_log_path() -> str:
     """Returns the current log file path."""
@@ -59,29 +62,39 @@ def get_current_log_path() -> str:
 def disable_console_logging() -> None:
     """Disables logging to the console."""
     global logger
-    for handler in logger.handlers[:]:
+    for handler in list(logger.handlers):
         if isinstance(handler, logging.StreamHandler):
             logger.removeHandler(handler)
 
 def enable_debug_logging() -> None:
-    """Enables debug-level logging."""
+    """Enables debug-level logging without affecting log rotation settings."""
     set_log_level("DEBUG")
+    for handler in logger.handlers:
+        if isinstance(handler, RotatingFileHandler):
+            handler.setLevel(logging.DEBUG)
 
 def enable_log_rotation(max_size: int = LOG_ROTATION_SIZE, backup_count: int = LOG_BACKUP_COUNT) -> None:
     """Enables log file rotation."""
     global logger
-    for handler in logger.handlers[:]:
+    for handler in list(logger.handlers):
         if isinstance(handler, RotatingFileHandler):
             logger.removeHandler(handler)
+    
     file_handler = RotatingFileHandler(LOG_FILE, maxBytes=max_size, backupCount=backup_count)
-    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    file_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
     logger.addHandler(file_handler)
 
 def cleanup_old_logs():
-    """Ensure log backups do not exceed the set limit."""
+    """Ensure log backups do not exceed the set limit safely."""
     log_files = sorted(glob.glob(os.path.join(LOG_DIR, "metadata_cleaner.log*")), key=os.path.getctime)
-    while len(log_files) > LOG_BACKUP_COUNT:
-        os.remove(log_files.pop(0))
 
-# Call cleanup at the end of the logger setup
+    while len(log_files) > LOG_BACKUP_COUNT:
+        old_log = log_files.pop(0)
+        try:
+            os.remove(old_log)
+            logger.info(f"🗑 Removed old log file: {old_log}")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to delete old log file {old_log}: {e}")
+
+# Run cleanup at startup
 cleanup_old_logs()
