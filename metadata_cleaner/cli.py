@@ -111,7 +111,7 @@ def process_file(file: str, output: Optional[str], yes: bool, config: Optional[s
         return
 
     metadata_config = load_metadata_config(config, remove_gps, keep_timestamp)
-    cleaned_file = remove_metadata(file, output, metadata_config, prefix, suffix)
+    cleaned_file = remove_metadata(file, output, config_file=metadata_config)
 
     if cleaned_file:
         click.echo(f"✅ Cleaned file saved at: {cleaned_file}")

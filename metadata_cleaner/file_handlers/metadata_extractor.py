@@ -6,10 +6,10 @@ from metadata_cleaner.config.settings import SUPPORTED_FORMATS
 from metadata_cleaner.logs.logger import logger
 
 """
-Universal Metadata Extractor
+Universal Metadata Extractor & Remover
 
-This module dynamically selects the appropriate metadata extraction function 
-based on file type. If no suitable extractor is found, a warning is logged.
+This module dynamically selects the appropriate metadata extraction and removal 
+function based on file type. If no suitable handler is found, a warning is logged.
 
 Improvements:
 - Dynamic Importing: Uses importlib to load extractors dynamically.
@@ -25,6 +25,21 @@ METADATA_EXTRACTOR_MAP = {
     **{ext: "metadata_cleaner.file_handlers.document.docx_handler.extract_metadata" for ext in {".docx", ".doc"}},
     **{ext: "metadata_cleaner.file_handlers.audio.audio_handler.extract_metadata" for ext in SUPPORTED_FORMATS["audio"]},
     **{ext: "metadata_cleaner.file_handlers.video.video_handler.extract_metadata" for ext in SUPPORTED_FORMATS["videos"]},
+}
+
+# Function to dynamically import functions from their paths
+def dynamic_import(path):
+    module_name, function_name = path.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
+
+# Updated FILE_HANDLER_MAP with actual function references
+FILE_HANDLER_MAP = {
+    **{ext: dynamic_import("metadata_cleaner.file_handlers.image.image_handler.remove_image_metadata") for ext in SUPPORTED_FORMATS["images"]},
+    **{".pdf": dynamic_import("metadata_cleaner.file_handlers.document.pdf_handler.remove_pdf_metadata")},
+    **{ext: dynamic_import("metadata_cleaner.file_handlers.document.docx_handler.remove_docx_metadata") for ext in {".docx", ".doc"}},
+    **{ext: dynamic_import("metadata_cleaner.file_handlers.audio.audio_handler.remove_audio_metadata") for ext in SUPPORTED_FORMATS["audio"]},
+    **{ext: dynamic_import("metadata_cleaner.file_handlers.video.video_handler.remove_video_metadata") for ext in SUPPORTED_FORMATS["videos"]},
 }
 
 def validate_file(file_path: str) -> bool:

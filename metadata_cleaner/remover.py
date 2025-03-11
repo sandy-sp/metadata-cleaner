@@ -45,15 +45,14 @@ def dry_run_metadata_removal(file_path: str) -> Optional[Dict]:
         "after_removal": cleaned_metadata if cleaned_metadata else {"message": "Metadata successfully removed."}
     }
 
-def remove_metadata(file_path: str, output_folder: Optional[str] = None, config_file: Optional[str] = None, dry_run: bool = False) -> Optional[str]:
+def remove_metadata(file_path: str, output_folder: Optional[str] = None, config_file: Optional[str] = None) -> Optional[str]:
     """
     Removes metadata from a single file.
 
     Args:
         file_path (str): Path to the file.
-        output_folder (Optional[str]): Destination folder for cleaned file.
-        config_file (Optional[str]): Path to filtering config file.
-        dry_run (bool): If True, simulates metadata removal without modifying the file.
+        output_folder (Optional[str]): Directory to save cleaned file.
+        config_file (Optional[str]): Path to metadata filtering config file.
 
     Returns:
         Optional[str]: Path to the cleaned file if successful, else None.
@@ -69,11 +68,12 @@ def remove_metadata(file_path: str, output_folder: Optional[str] = None, config_
         logger.warning(f"⚠️ Unsupported file type for metadata removal: {ext}")
         return None
 
-    if dry_run:
-        logger.info(f"🔍 Dry-run mode: Simulating metadata removal for {file_path}")
-        return file_path
+    if output_folder is None:
+        output_folder = os.path.join(os.path.dirname(file_path), "cleaned_files")
+    
+    os.makedirs(output_folder, exist_ok=True)
 
-    output_path = os.path.join(output_folder or os.path.dirname(file_path), f"cleaned_{os.path.basename(file_path)}")
+    output_path = os.path.join(output_folder, os.path.basename(file_path))
 
     try:
         cleaned_file = remover_function(file_path, output_path)
