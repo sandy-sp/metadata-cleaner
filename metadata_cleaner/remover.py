@@ -129,32 +129,23 @@ def remove_metadata(file_path: str, output_folder: Optional[str] = None, config_
     
     try:
         cleaned_file = remover_function(file_path, output_path)
-        if cleaned_file and os.path.exists(cleaned_file):
+        if isinstance(cleaned_file, str) and os.path.exists(cleaned_file):
             logger.info(f"✅ Metadata removed successfully: {cleaned_file}")
             return cleaned_file
         else:
             logger.error(f"❌ Failed to process file: {file_path}")
-            return None
+            return None 
     except Exception as e:
         logger.error(f"Error processing file {file_path}: {e}", exc_info=True)
         return None
 
-def remove_metadata_from_folder(folder_path: str,
-                                output_folder: Optional[str] = None,
-                                config_file: Optional[str] = None,
-                                recursive: bool = False,
-                                prefix: Optional[str] = None,
-                                suffix: Optional[str] = None) -> List[str]:
+def remove_metadata_from_folder(folder_path: str, output_folder: Optional[str] = None) -> List[str]:
     """
     Remove metadata from all supported files within a folder.
 
     Args:
         folder_path (str): Path to the folder containing files.
         output_folder (Optional[str]): Destination folder for cleaned files.
-        config_file (Optional[str]): Path to metadata filtering config file.
-        recursive (bool): If True, process files in subfolders recursively.
-        prefix (Optional[str]): Custom prefix for cleaned file names.
-        suffix (Optional[str]): Custom suffix for cleaned file names.
 
     Returns:
         List[str]: A list of successfully cleaned file paths.
@@ -166,13 +157,11 @@ def remove_metadata_from_folder(folder_path: str,
     output_folder = output_folder or os.path.join(folder_path, "cleaned")
     os.makedirs(output_folder, exist_ok=True)
 
-    files_to_process = []
-    for root, _, files in os.walk(folder_path) if recursive else [(folder_path, [], os.listdir(folder_path))]:
-        for file in files:
-            file_path = os.path.join(root, file)
-            ext = os.path.splitext(file)[1].lower()
-            if ext in FILE_HANDLER_MAP:
-                files_to_process.append(file_path)
+    files_to_process = [
+        os.path.join(folder_path, f)
+        for f in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, f)) and os.path.splitext(f)[1].lower() in FILE_HANDLER_MAP
+    ]
 
     processed_files = []
     failed_files = []
@@ -180,13 +169,19 @@ def remove_metadata_from_folder(folder_path: str,
     with tqdm(total=len(files_to_process), desc="Processing Files", unit="file") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=4 if ENABLE_PARALLEL_PROCESSING else 1) as executor:
             future_to_file = {executor.submit(remove_metadata, file_path, output_folder): file_path for file_path in files_to_process}
-
+            
             for future in concurrent.futures.as_completed(future_to_file):
-                result = future.result()
-                if result:
-                    processed_files.append(result)
-                else:
-                    failed_files.append(future_to_file[future])
+                file_path = future_to_file[future]
+                try:
+                    result = future.result()
+                    if result and os.path.exists(result):
+                        processed_files.append(result)
+                    else:
+                        failed_files.append(file_path)
+                        logger.error(f"❌ Failed to process file: {file_path}")
+                except Exception as e:
+                    failed_files.append(file_path)
+                    logger.error(f"❌ Error processing file {file_path}: {e}")
                 pbar.update(1)
 
     logger.info("\n📊 Summary Report:")

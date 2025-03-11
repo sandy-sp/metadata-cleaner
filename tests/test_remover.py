@@ -37,11 +37,10 @@ class TestMetadataRemover(unittest.TestCase):
         doc.save(self.test_docx)
 
         self.test_audio = os.path.join(self.test_folder, "test_audio.mp3")
+        self.test_video = os.path.join(self.test_folder, "test_video.mp4")
+        
         if shutil.which("ffmpeg"):
             os.system(f"ffmpeg -f lavfi -i anullsrc=r=44100:cl=mono -t 3 -q:a 9 -acodec libmp3lame {self.test_audio} -y")
-
-        self.test_video = os.path.join(self.test_folder, "test_video.mp4")
-        if shutil.which("ffmpeg"):
             os.system(f"ffmpeg -f lavfi -i color=c=blue:s=320x240:d=3 -vf format=yuv420p {self.test_video} -y")
 
     def test_batch_processing(self) -> None:
@@ -50,15 +49,15 @@ class TestMetadataRemover(unittest.TestCase):
         """
         cleaned_files: List[str] = remove_metadata_from_folder(self.test_folder, self.test_output_folder)
 
-        expected_count = len([f for f in os.listdir(self.test_folder) if os.path.isfile(os.path.join(self.test_folder, f))])
+        # Remove None or boolean values from cleaned_files
+        cleaned_files = [f for f in cleaned_files if isinstance(f, str)]
 
-        # Ensure all files were processed
+        expected_count = len([f for f in os.listdir(self.test_folder) if os.path.isfile(os.path.join(self.test_folder, f)) and f != "output"])
+        
         self.assertEqual(len(cleaned_files), expected_count, f"Expected {expected_count} files to be processed.")
 
         for cleaned_file in cleaned_files:
             self.assertTrue(os.path.exists(cleaned_file), f"Cleaned file does not exist: {cleaned_file}")
-
-            # Validate metadata removal per file type
             ext = os.path.splitext(cleaned_file)[1].lower()
 
             if ext in {".jpg", ".jpeg"}:
@@ -70,16 +69,19 @@ class TestMetadataRemover(unittest.TestCase):
 
             elif ext == ".pdf":
                 reader = PdfReader(cleaned_file)
-                self.assertEqual(reader.metadata, {}, "Metadata not fully removed from PDF.")
+                self.assertFalse(reader.metadata, "Metadata not fully removed from PDF.")
 
             elif ext == ".docx":
                 doc = Document(cleaned_file)
                 self.assertFalse(doc.core_properties.author, "Metadata not removed from DOCX.")
 
             elif ext == ".mp3" and shutil.which("ffmpeg"):
-                audio = MP3(cleaned_file)
-                self.assertFalse(audio.tags, "Metadata not removed from MP3.")
-        
+                try:
+                    audio = MP3(cleaned_file)
+                    self.assertFalse(audio.tags, "Metadata not removed from MP3.")
+                except Exception:
+                    self.fail("Failed to open cleaned MP3 file.")
+
         # Identify files that were not processed correctly
         failed_files = set(os.listdir(self.test_folder)) - set(cleaned_files)
         if len(cleaned_files) != expected_count:

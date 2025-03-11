@@ -79,11 +79,8 @@ class ImageHandler:
             logger.error(f"Error extracting metadata using ExifTool: {e}", exc_info=True)
             return extract_metadata_piexif(file_path)
 
-    def remove_image_metadata(self, 
-                            file_path: str, 
-                            output_path: Optional[str] = None,
-                            config_file: Optional[str] = None,
-                            verify: bool = True) -> Optional[str]:
+    def remove_image_metadata(self, file_path: str, output_path: Optional[str] = None,
+                              config_file: Optional[str] = None, verify: bool = True) -> Optional[str]:
         """
         Remove metadata from an image file and ensure the cleaned file is saved.
 
@@ -104,46 +101,31 @@ class ImageHandler:
             logger.error(f"❌ Unsupported image format: {file_path}")
             return None
 
-        # Generate a safe output path if not provided
-        output_path = output_path or get_safe_output_path(file_path)
+        output_path = get_safe_output_path(file_path, output_path)
 
         try:
-            # Ensure output directory exists
-            output_dir = os.path.dirname(output_path)
-            os.makedirs(output_dir, exist_ok=True)
-
-            # Load filtering rules if provided
-            rules = load_filter_rules(config_file) if config_file else None
-
-            # Try ExifTool first if available
             if self.use_exiftool:
-                logger.info(f"🔄 Attempting to remove metadata using ExifTool for {file_path}")
-                result = remove_metadata_exiftool(file_path, output_path)
-                if result and os.path.exists(output_path):
-                    logger.info(f"✅ Metadata removed successfully using ExifTool: {output_path}")
-                    if verify and not verify_file_integrity(file_path, output_path):
-                        logger.error(f"⚠️ File integrity verification failed: {output_path}")
-                        return None
-                    return output_path
+                cleaned_file = remove_metadata_exiftool(file_path)
+                if cleaned_file:
+                    logger.info(f"✅ Metadata removed using ExifTool: {cleaned_file}")
                 else:
-                    logger.warning(f"⚠️ ExifTool failed to remove metadata. Falling back to Piexif...")
-
-            # Fall back to Piexif if ExifTool fails
-            logger.info(f"🔄 Attempting to remove metadata using Piexif for {file_path}")
-            result = remove_metadata_piexif(file_path, output_path)
-            if result and os.path.exists(output_path):
-                logger.info(f"✅ Metadata removed successfully using Piexif: {output_path}")
-                if verify and not verify_file_integrity(file_path, output_path):
-                    logger.error(f"⚠️ File integrity verification failed: {output_path}")
-                    return None
-                return output_path
+                    logger.warning("ExifTool failed, falling back to Piexif...")
+                    cleaned_file = remove_metadata_piexif(file_path, output_path)
             else:
-                logger.error(f"❌ Piexif also failed to remove metadata: {file_path}")
+                cleaned_file = remove_metadata_piexif(file_path, output_path)
 
-            return None  # Return None if both methods failed
+            if not cleaned_file:
+                logger.error(f"❌ Failed to remove metadata: {file_path}")
+                return None
+
+            if verify and not verify_file_integrity(file_path, cleaned_file):
+                logger.error(f"⚠️ File integrity verification failed: {cleaned_file}")
+                return None
+
+            return cleaned_file
 
         except Exception as e:
-            logger.error(f"❌ Error removing metadata from {file_path}: {e}", exc_info=True)
+            logger.error(f"❌ Error removing metadata: {file_path} - {e}", exc_info=True)
             return None
 
     def filter_metadata(self, 

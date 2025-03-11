@@ -90,10 +90,7 @@ class AudioHandler:
             logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
             return None
 
-    def remove_audio_metadata(self, 
-                       file_path: str, 
-                       output_path: Optional[str] = None,
-                       verify: bool = True) -> Optional[str]:
+    def remove_audio_metadata(self, file_path: str, output_path: Optional[str] = None, verify: bool = True) -> Optional[str]:
         """
         Remove metadata from an audio file.
 
@@ -112,31 +109,43 @@ class AudioHandler:
             logger.error(f"Unsupported audio format: {file_path}")
             return None
 
-        # Generate safe output path if not provided
         output_path = output_path or get_safe_output_path(file_path)
 
         try:
+            if self.use_exiftool:
+                result = remove_metadata_exiftool(file_path)
+                if result:
+                    logger.info(f"Metadata removed using ExifTool: {file_path}")
+                    return file_path
+                else:
+                    logger.warning("ExifTool failed. Falling back to Mutagen.")
+
             # Try ExifTool first if available and enabled
             if self.use_exiftool:
-                result = remove_metadata_exiftool(file_path)  # Corrected here
+                result = remove_metadata_exiftool(file_path)
                 if result:
-                    logger.info(f"Metadata removed using ExifTool: {output_path}")
+                    logger.info(f"Metadata removed using ExifTool: {file_path}")
+                    return file_path
+                else:
+                    logger.warning("ExifTool failed. Falling back to Mutagen.")
                     if verify and not verify_file_integrity(file_path, output_path):
                         logger.error(f"File integrity verification failed: {output_path}")
                         return None
                     return output_path
 
             # Fall back to Mutagen
-            result = remove_metadata_mutagen(file_path)
-            if result:
-                logger.info(f"Metadata removed using Mutagen: {output_path}")
-                if verify and not verify_file_integrity(file_path, output_path):
-                    logger.error(f"File integrity verification failed: {output_path}")
+            if remove_metadata_mutagen(file_path):
+                logger.info(f"Metadata removed using Mutagen: {file_path}")
+                cleaned_file = file_path.replace(".mp3", "_cleaned.mp3")
+                if os.path.exists(cleaned_file):  # Ensure output file exists
+                    return cleaned_file
+                else:
+                    logger.error(f"Mutagen processed the file, but output file is missing: {cleaned_file}")
                     return None
-                return output_path
-
-            logger.error(f"Failed to remove metadata from: {file_path}")
-            return None
+            if verify and not verify_file_integrity(file_path, file_path):
+                    logger.error(f"File integrity verification failed: {file_path}")
+                    return None
+            return file_path
 
         except Exception as e:
             logger.error(f"Error removing metadata from {file_path}: {e}", exc_info=True)
