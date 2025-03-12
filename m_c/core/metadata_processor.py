@@ -1,0 +1,47 @@
+import os
+from typing import Dict, Optional
+from metadata_cleaner.core.tool_manager import ToolManager
+from metadata_cleaner.core.file_utils import validate_file
+from metadata_cleaner.core.logger import logger
+
+class MetadataProcessor:
+    def __init__(self):
+        self.tools = ToolManager()
+
+    def view_metadata(self, file_path: str) -> Optional[Dict]:
+        """Extract metadata from a file using the best available tool."""
+        if not validate_file(file_path):
+            return None
+        
+        tool = self.tools.get_best_tool(file_path)
+        if not tool:
+            logger.error(f"No tool available to extract metadata from {file_path}")
+            return None
+        
+        return tool.extract_metadata(file_path)
+
+    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+        """Remove metadata from a file using the best tool."""
+        if not validate_file(file_path):
+            return None
+
+        tool = self.tools.get_best_tool(file_path)
+        if not tool:
+            logger.error(f"No tool available to remove metadata from {file_path}")
+            return None
+
+        return tool.remove_metadata(file_path, output_path)
+
+    def edit_metadata(self, file_path: str, metadata_changes: Dict) -> Optional[str]:
+        """Edit metadata of a file."""
+        if not validate_file(file_path):
+            return None
+
+        tool = self.tools.get_best_tool(file_path)
+        if not tool or not hasattr(tool, 'edit_metadata'):
+            logger.error(f"No tool available to edit metadata for {file_path}")
+            return None
+
+        return tool.edit_metadata(file_path, metadata_changes)
+
+metadata_processor = MetadataProcessor()

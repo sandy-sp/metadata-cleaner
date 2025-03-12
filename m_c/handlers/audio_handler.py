@@ -1,0 +1,56 @@
+import os
+from typing import Optional, Dict, Any
+from mutagen import File
+from metadata_cleaner.core.logger import logger
+from metadata_cleaner.core.file_utils import validate_file
+from metadata_cleaner.core.tool_manager import tool_manager
+
+class AudioHandler:
+    """
+    Handles metadata extraction, removal, and editing for audio files.
+    """
+    SUPPORTED_FORMATS = {"mp3", "wav", "flac", "ogg", "aac", "m4a", "wma"}
+
+    def is_supported(self, file_path: str) -> bool:
+        """Check if the file format is supported."""
+        ext = os.path.splitext(file_path)[1].lower().strip('.')
+        return ext in self.SUPPORTED_FORMATS
+
+    def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Extract metadata from an audio file using the best available tool."""
+        if not validate_file(file_path) or not self.is_supported(file_path):
+            return None
+
+        return self._extract_metadata_mutagen(file_path)
+
+    def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+        """Remove metadata from an audio file."""
+        if not validate_file(file_path) or not self.is_supported(file_path):
+            return None
+
+        return self._remove_metadata_mutagen(file_path, output_path)
+
+    def _extract_metadata_mutagen(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Extract metadata using Mutagen."""
+        try:
+            audio = File(file_path, easy=True)
+            return dict(audio) if audio else None
+        except Exception as e:
+            logger.error(f"Mutagen failed to extract metadata: {e}")
+            return None
+
+    def _remove_metadata_mutagen(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
+        """Remove metadata using Mutagen."""
+        try:
+            audio = File(file_path, easy=True)
+            if not audio:
+                return None
+            
+            audio.delete()
+            audio.save()
+            return file_path
+        except Exception as e:
+            logger.error(f"Mutagen failed to remove metadata: {e}")
+            return None
+
+audio_handler = AudioHandler()
