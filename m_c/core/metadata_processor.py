@@ -5,6 +5,7 @@ from m_c.core.file_utils import validate_file
 from m_c.core.logger import logger
 from m_c.utils.tool_utils import ToolManager
 
+
 class MetadataProcessor:
     def __init__(self):
         self.tools = ToolManager()
@@ -23,17 +24,21 @@ class MetadataProcessor:
         try:
             return tool.extract_metadata(file_path)
         except Exception as e:
-            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"Error extracting metadata from {file_path}: {e}", exc_info=True
+            )
             return None
 
-    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def delete_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Remove metadata from a file using the best available tool."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
             return None
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, 'remove_metadata'):
+        if not tool or not hasattr(tool, "remove_metadata"):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
@@ -49,17 +54,21 @@ class MetadataProcessor:
             logger.info(f"✅ Metadata cleaned: {cleaned_file}")
             return cleaned_file
         except Exception as e:
-            logger.error(f"Error removing metadata from {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"Error removing metadata from {file_path}: {e}", exc_info=True
+            )
             return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
         """Process multiple files in parallel for metadata removal."""
         logger.info(f"Processing batch of {len(files)} files in parallel.")
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             results = list(executor.map(self.delete_metadata, files))
 
-        logger.info(f"Batch processing completed. {sum(1 for r in results if r)} files cleaned.")
+        logger.info(
+            f"Batch processing completed. {sum(1 for r in results if r)} files cleaned."
+        )
         return results
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
@@ -72,7 +81,7 @@ class MetadataProcessor:
         updated_metadata = {**existing_metadata, **metadata_changes}
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, 'edit_metadata'):
+        if not tool or not hasattr(tool, "edit_metadata"):
             logger.error(f"❌ No available tool to edit metadata for {file_path}")
             return None
 
@@ -81,5 +90,6 @@ class MetadataProcessor:
         except Exception as e:
             logger.error(f"❌ Error editing metadata: {e}", exc_info=True)
             return None
+
 
 metadata_processor = MetadataProcessor()

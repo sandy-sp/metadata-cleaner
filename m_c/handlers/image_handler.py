@@ -5,11 +5,13 @@ import piexif
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
 
+
 class ImageHandler(BaseHandler):
     """
     Handles metadata extraction, removal, and editing for image files.
     Uses ExifTool and Piexif.
     """
+
     SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp"}
 
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
@@ -18,7 +20,9 @@ class ImageHandler(BaseHandler):
             return None
         return self._extract_metadata_piexif(file_path)
 
-    def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def remove_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Remove metadata from an image file."""
         if not self.validate(file_path):
             return None
@@ -34,7 +38,9 @@ class ImageHandler(BaseHandler):
             logger.error(f"Failed to extract metadata: {e}")
             return None
 
-    def _remove_metadata_piexif(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
+    def _remove_metadata_piexif(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
         """Remove metadata using Piexif."""
         try:
             img = Image.open(file_path)
@@ -47,5 +53,6 @@ class ImageHandler(BaseHandler):
         except Exception as e:
             logger.error(f"Failed to remove metadata: {e}")
             return None
+
 
 image_handler = ImageHandler()

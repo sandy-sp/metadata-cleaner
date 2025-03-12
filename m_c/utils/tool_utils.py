@@ -4,8 +4,10 @@ from m_c.handlers.document_handler import DocumentHandler
 from m_c.handlers.audio_handler import AudioHandler
 from m_c.handlers.video_handler import VideoHandler
 
+
 class ToolManager:
     """Manages tool availability and selection."""
+
     _cached_tools = None  # Cache for tool availability
 
     def check_tools(self):
@@ -14,13 +16,13 @@ class ToolManager:
             self._cached_tools = {
                 "ExifTool": shutil.which("exiftool") is not None,
                 "FFmpeg": shutil.which("ffmpeg") is not None,
-                "Mutagen": True  # Mutagen is a Python module, always available if installed
+                "Mutagen": True,  # Mutagen is a Python module, always available if installed
             }
         return self._cached_tools
 
     def get_best_tool(self, file_path: str):
         """Return best tool for given file type."""
-        ext = file_path.split('.')[-1].lower()
+        ext = file_path.split(".")[-1].lower()
         if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
             return ImageHandler()
         elif ext in ["pdf", "docx", "txt"]:
@@ -30,5 +32,6 @@ class ToolManager:
         elif ext in ["mp4", "mkv", "avi"]:
             return VideoHandler()
         return None
+
 
 tool_manager = ToolManager()

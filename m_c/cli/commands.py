@@ -3,12 +3,14 @@ import json
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.cli.utils import format_metadata_output
 
+
 @click.command()
 @click.argument("file")
 def view_metadata(file):
     """Command to view metadata."""
     metadata = MetadataProcessor.view_metadata(file)
     click.echo(format_metadata_output(metadata))
+
 
 @click.command()
 @click.argument("file")
@@ -20,6 +22,7 @@ def delete_metadata(file, output):
         click.echo(f"Metadata removed: {result}")
     else:
         click.echo("Failed to remove metadata.")
+
 
 @click.command()
 @click.argument("file")

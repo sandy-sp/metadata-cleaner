@@ -21,9 +21,13 @@ SUPPORTED_FORMATS = {
     "images": {".jpg", ".jpeg", ".png", ".tiff", ".webp"},
     "documents": {".pdf", ".docx", ".txt"},
     "audio": {".mp3", ".wav", ".flac"},
-    "videos": {".mp4", ".mkv", ".avi"}
+    "videos": {".mp4", ".mkv", ".avi"},
 }
 
 # Parallel processing settings
-ENABLE_PARALLEL_PROCESSING = os.getenv("METADATA_CLEANER_PARALLEL", "True").lower() in {"true", "1", "yes"}
+ENABLE_PARALLEL_PROCESSING = os.getenv("METADATA_CLEANER_PARALLEL", "True").lower() in {
+    "true",
+    "1",
+    "yes",
+}
 MAX_WORKERS = int(os.getenv("METADATA_CLEANER_WORKERS", "4"))

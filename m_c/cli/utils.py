@@ -1,5 +1,6 @@
 import json
 
+
 def format_metadata_output(metadata):
     """Formats metadata output for CLI display."""
     if metadata:

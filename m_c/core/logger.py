@@ -21,7 +21,9 @@ logger = logging.getLogger("metadata_cleaner")
 logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
 # Create handlers
-file_handler = RotatingFileHandler(LOG_FILE, maxBytes=LOG_ROTATION_SIZE, backupCount=LOG_BACKUP_COUNT)
+file_handler = RotatingFileHandler(
+    LOG_FILE, maxBytes=LOG_ROTATION_SIZE, backupCount=LOG_BACKUP_COUNT
+)
 console_handler = logging.StreamHandler()
 
 # Set logging format
@@ -32,6 +34,7 @@ console_handler.setFormatter(formatter)
 # Attach handlers to the logger
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
+
 
 def set_log_level(level: str) -> None:
     """Dynamically set log level."""

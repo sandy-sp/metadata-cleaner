@@ -7,6 +7,7 @@ from m_c.core.file_utils import validate_file, get_safe_output_path
 from m_c.core.logger import logger
 from m_c.utils.tool_utils import ToolManager
 
+
 class TestMetadataCleaner(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -59,16 +60,23 @@ class TestMetadataCleaner(unittest.TestCase):
     def test_remove_metadata(self):
         """Test metadata removal for all file types."""
         for category, file_path in self.test_files.items():
-            cleaned_file_path = os.path.join(self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}")
+            cleaned_file_path = os.path.join(
+                self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}"
+            )
 
             output_file = self.processor.delete_metadata(file_path, cleaned_file_path)
             self.assertIsNotNone(output_file, f"Failed to clean {category} file")
-            self.assertTrue(os.path.exists(cleaned_file_path), f"Cleaned file missing: {cleaned_file_path}")
+            self.assertTrue(
+                os.path.exists(cleaned_file_path),
+                f"Cleaned file missing: {cleaned_file_path}",
+            )
 
     def test_edit_metadata(self):
         """Test metadata editing."""
         metadata_changes = {"Author": "Test User"}
-        output_file = self.processor.edit_metadata(self.test_files["document"], metadata_changes)
+        output_file = self.processor.edit_metadata(
+            self.test_files["document"], metadata_changes
+        )
         self.assertTrue(os.path.exists(output_file))
 
     def test_handle_corrupt_file(self):
@@ -100,7 +108,9 @@ class TestMetadataCleaner(unittest.TestCase):
         self.processor.delete_metadata(original_file, cleaned_file)
 
         self.assertTrue(os.path.exists(cleaned_file))
-        self.assertEqual(self.compute_hash(original_file), self.compute_hash(cleaned_file))
+        self.assertEqual(
+            self.compute_hash(original_file), self.compute_hash(cleaned_file)
+        )
 
     def test_fallback_mechanism(self):
         """Test if fallback tools work when the primary tool fails."""
@@ -122,7 +132,11 @@ class TestMetadataCleaner(unittest.TestCase):
 
     def test_clean_all_files_in_sample(self):
         """Test cleaning all files in the 'sample' directory and saving to 'cleaned'."""
-        files = [f for f in os.listdir(self.test_dir) if os.path.isfile(os.path.join(self.test_dir, f))]
+        files = [
+            f
+            for f in os.listdir(self.test_dir)
+            if os.path.isfile(os.path.join(self.test_dir, f))
+        ]
 
         for file in files:
             file_path = os.path.join(self.test_dir, file)
@@ -133,17 +147,33 @@ class TestMetadataCleaner(unittest.TestCase):
             output_file = self.processor.delete_metadata(file_path, cleaned_file_path)
 
             self.assertIsNotNone(output_file, f"Failed to clean: {file_path}")
-            self.assertTrue(os.path.exists(cleaned_file_path), f"Cleaned file missing: {cleaned_file_path}")
+            self.assertTrue(
+                os.path.exists(cleaned_file_path),
+                f"Cleaned file missing: {cleaned_file_path}",
+            )
 
     def test_validate_cleaned_files(self):
         """Ensure cleaned files exist and have valid content."""
-        cleaned_files = [f for f in os.listdir(self.cleaned_dir) if os.path.isfile(os.path.join(self.cleaned_dir, f))]
-        original_files = [f for f in os.listdir(self.test_dir) if os.path.isfile(os.path.join(self.test_dir, f))]
+        cleaned_files = [
+            f
+            for f in os.listdir(self.cleaned_dir)
+            if os.path.isfile(os.path.join(self.cleaned_dir, f))
+        ]
+        original_files = [
+            f
+            for f in os.listdir(self.test_dir)
+            if os.path.isfile(os.path.join(self.test_dir, f))
+        ]
 
         logger.info(f"Original files count: {len(original_files)}")
         logger.info(f"Cleaned files count: {len(cleaned_files)}")
 
-        self.assertEqual(len(cleaned_files), len(original_files), "Mismatch between cleaned and original files")
+        self.assertEqual(
+            len(cleaned_files),
+            len(original_files),
+            "Mismatch between cleaned and original files",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

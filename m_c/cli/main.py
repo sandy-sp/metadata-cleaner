@@ -3,10 +3,12 @@ import json
 import os
 from m_c.core.metadata_processor import MetadataProcessor
 
+
 @click.group()
 def cli():
     """Metadata Cleaner - View, Remove, and Edit Metadata"""
     pass
+
 
 @cli.command()
 @click.argument("file")
@@ -22,6 +24,7 @@ def view(file):
     else:
         click.echo("⚠️ No metadata found or unsupported file format.")
 
+
 @cli.command()
 @click.argument("file")
 @click.option("--output", default=None, help="Output file path")
@@ -36,6 +39,7 @@ def delete(file, output):
         click.echo(f"✅ Metadata removed: {result}")
     else:
         click.echo("⚠️ Metadata removal failed. Check logs for details.")
+
 
 if __name__ == "__main__":
     cli()
