@@ -31,7 +31,7 @@ class MetadataProcessor:
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
-        return tool.remove_metadata(file_path, output_path)
+        return tool.remove_metadata(file_path, output_path)  
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
         """
