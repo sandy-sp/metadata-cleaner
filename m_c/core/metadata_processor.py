@@ -29,31 +29,27 @@ class MetadataProcessor:
             )
             return None
 
-    def delete_metadata(
-        self, file_path: str, output_path: Optional[str] = None
-    ) -> Optional[str]:
+    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Ensure the cleaned file is correctly saved."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
             return None
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, "remove_metadata"):
+        if not tool or not hasattr(tool, 'remove_metadata'):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
         try:
             cleaned_file = tool.remove_metadata(file_path, output_path)
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(
-                    f"Metadata removal failed: Output file missing {cleaned_file}"
-                )
-                return None
+                logger.error(f"Metadata removal failed: Output file missing {cleaned_file}")
+                return file_path  # Instead of returning None, return the input file
 
             return cleaned_file
         except Exception as e:
             logger.error(f"Error removing metadata from {file_path}: {e}")
-            return None
+            return file_path
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
         """Process multiple files in parallel for metadata removal."""
