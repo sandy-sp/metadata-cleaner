@@ -5,7 +5,6 @@ from m_c.handlers.audio_handler import AudioHandler
 from m_c.handlers.video_handler import VideoHandler
 from m_c.core.logger import logger
 
-
 class ToolManager:
     """Manages tool availability and selection."""
 
@@ -19,7 +18,6 @@ class ToolManager:
                 "FFmpeg": shutil.which("ffmpeg") is not None,
                 "Mutagen": True,  # Mutagen is a Python module, always available if installed
             }
-
         logger.info(f"Tool Availability Check: {self._cached_tools}")
         return self._cached_tools
 
@@ -34,7 +32,7 @@ class ToolManager:
             return AudioHandler()
         elif ext in ["mp4", "mkv", "avi"]:
             return VideoHandler()
+        logger.warning(f"No tool found for file type: {ext}")
         return None
-
 
 tool_manager = ToolManager()
