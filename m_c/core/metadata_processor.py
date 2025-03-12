@@ -29,14 +29,10 @@ class MetadataProcessor:
 
             return metadata
         except Exception as e:
-            logger.error(
-                f"Error extracting metadata from {file_path}: {e}", exc_info=True
-            )
+            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
             return {}
 
-    def delete_metadata(
-        self, file_path: str, output_path: Optional[str] = None
-    ) -> Optional[str]:
+    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Ensure the cleaned file is correctly saved."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
@@ -48,17 +44,17 @@ class MetadataProcessor:
             return None
 
         try:
+            logger.info(f"Removing metadata from: {file_path}, saving to: {output_path}")
             cleaned_file = tool.remove_metadata(file_path, output_path)
+            
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(
-                    f"Metadata removal failed: Output file missing {cleaned_file}"
-                )
-                return file_path  # Instead of returning None, return the input file
+                logger.error(f"Metadata removal failed: Output file missing {cleaned_file}. Input: {file_path}, Expected Output: {output_path}")
+                return None
 
             return cleaned_file
         except Exception as e:
-            logger.error(f"Error removing metadata from {file_path}: {e}")
-            return file_path
+            logger.error(f"Error removing metadata from {file_path}: {e}", exc_info=True)
+            return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
         """Process multiple files in parallel for metadata removal."""
@@ -67,9 +63,7 @@ class MetadataProcessor:
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             results = list(executor.map(self.delete_metadata, files))
 
-        logger.info(
-            f"Batch processing completed. {sum(1 for r in results if r)} files cleaned."
-        )
+        logger.info(f"Batch processing completed. {sum(1 for r in results if r)} files cleaned.")
         return results
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
@@ -77,7 +71,7 @@ class MetadataProcessor:
         existing_metadata = self.view_metadata(file_path)
         if not existing_metadata:
             logger.error(f"❌ Cannot edit metadata: No metadata found in {file_path}")
-            return file_path  # Return the original file path instead of None
+            return file_path
 
         updated_metadata = {**existing_metadata, **metadata_changes}
 
@@ -89,7 +83,7 @@ class MetadataProcessor:
         try:
             return tool.edit_metadata(file_path, updated_metadata)
         except Exception as e:
-            logger.error(f"❌ Error editing metadata: {e}")
+            logger.error(f"❌ Error editing metadata: {e}", exc_info=True)
             return file_path
 
 
