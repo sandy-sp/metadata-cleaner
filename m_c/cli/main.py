@@ -1,5 +1,6 @@
 import click
 import json
+import os
 from m_c.core.metadata_processor import MetadataProcessor
 
 @click.group()
@@ -11,37 +12,30 @@ def cli():
 @click.argument("file")
 def view(file):
     """View metadata of a file"""
-    metadata = MetadataProcessor.view_metadata(file)
+    if not os.path.exists(file):
+        click.echo("❌ Error: File does not exist.")
+        return
+
+    metadata = MetadataProcessor().view_metadata(file)
     if metadata:
         click.echo(json.dumps(metadata, indent=4))
     else:
-        click.echo("No metadata found or unsupported file format.")
+        click.echo("⚠️ No metadata found or unsupported file format.")
 
 @cli.command()
 @click.argument("file")
 @click.option("--output", default=None, help="Output file path")
 def delete(file, output):
     """Remove metadata from a file"""
-    result = MetadataProcessor.delete_metadata(file, output)
-    if result:
-        click.echo(f"Metadata removed: {result}")
-    else:
-        click.echo("Failed to remove metadata.")
+    if not os.path.exists(file):
+        click.echo("❌ Error: File does not exist.")
+        return
 
-@cli.command()
-@click.argument("file")
-@click.option("--changes", type=str, help="JSON string of metadata changes")
-def edit(file, changes):
-    """Edit metadata of a file"""
-    try:
-        changes_dict = json.loads(changes)
-        result = MetadataProcessor.edit_metadata(file, changes_dict)
-        if result:
-            click.echo(f"Metadata updated: {result}")
-        else:
-            click.echo("Failed to edit metadata.")
-    except json.JSONDecodeError:
-        click.echo("Invalid JSON format for metadata changes.")
+    result = MetadataProcessor().delete_metadata(file, output)
+    if result:
+        click.echo(f"✅ Metadata removed: {result}")
+    else:
+        click.echo("⚠️ Metadata removal failed. Check logs for details.")
 
 if __name__ == "__main__":
     cli()
