@@ -153,7 +153,7 @@ class TestMetadataCleaner(unittest.TestCase):
             )
 
     def test_validate_cleaned_files(self):
-        """Ensure cleaned files exist and have valid content."""
+        """Ensure the cleaned files match the original count."""
         cleaned_files = [
             f
             for f in os.listdir(self.cleaned_dir)
@@ -165,8 +165,10 @@ class TestMetadataCleaner(unittest.TestCase):
             if os.path.isfile(os.path.join(self.test_dir, f))
         ]
 
-        logger.info(f"Original files count: {len(original_files)}")
-        logger.info(f"Cleaned files count: {len(cleaned_files)}")
+        if len(cleaned_files) != len(original_files):
+            logger.warning(
+                f"Expected {len(original_files)} cleaned files, but found {len(cleaned_files)}"
+            )
 
         self.assertEqual(
             len(cleaned_files),

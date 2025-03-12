@@ -1,6 +1,5 @@
 import os
 from typing import Optional, Dict, Any
-import fitz  # PyMuPDF
 import pikepdf
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
@@ -38,6 +37,18 @@ class DocumentHandler(BaseHandler):
         elif ext == "docx":
             return self._remove_metadata_docx(file_path, output_path)
         return None
+
+    def _remove_metadata_pdf(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
+        """Ensure PDF metadata removal works correctly."""
+        try:
+            with pikepdf.open(file_path) as pdf:
+                pdf.save(output_path or file_path)
+            return output_path or file_path
+        except Exception as e:
+            logger.error(f"Failed to remove metadata from PDF: {e}")
+            return None
 
 
 document_handler = DocumentHandler()

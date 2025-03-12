@@ -15,9 +15,16 @@ class ImageHandler(BaseHandler):
     SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp"}
 
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
-        """Extract metadata from an image file."""
+        """Try extracting metadata with a fallback method if ExifTool is missing."""
         if not self.validate(file_path):
             return None
+        from m_c.utils.tool_utils import ToolManager
+        try:
+            if ToolManager().check_tools()["ExifTool"]:
+                return self._extract_metadata_exiftool(file_path)
+        except Exception:
+            logger.warning(f"ExifTool failed, using fallback method for {file_path}")
+
         return self._extract_metadata_piexif(file_path)
 
     def remove_metadata(

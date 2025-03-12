@@ -32,7 +32,7 @@ class MetadataProcessor:
     def delete_metadata(
         self, file_path: str, output_path: Optional[str] = None
     ) -> Optional[str]:
-        """Remove metadata from a file using the best available tool."""
+        """Ensure the cleaned file is correctly saved."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
             return None
@@ -43,20 +43,16 @@ class MetadataProcessor:
             return None
 
         try:
-            if output_path:
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
             cleaned_file = tool.remove_metadata(file_path, output_path)
-
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(f"Metadata removal failed for: {file_path}")
+                logger.error(
+                    f"Metadata removal failed: Output file missing {cleaned_file}"
+                )
                 return None
 
-            logger.info(f"✅ Metadata cleaned: {cleaned_file}")
             return cleaned_file
         except Exception as e:
-            logger.error(
-                f"Error removing metadata from {file_path}: {e}", exc_info=True
-            )
+            logger.error(f"Error removing metadata from {file_path}: {e}")
             return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
@@ -72,11 +68,11 @@ class MetadataProcessor:
         return results
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
-        """Edit metadata while preserving existing metadata."""
+        """Ensure metadata editing works even if no initial metadata exists."""
         existing_metadata = self.view_metadata(file_path)
-        if not existing_metadata:
-            logger.error(f"❌ Unable to retrieve existing metadata for {file_path}")
-            return None
+        if existing_metadata is None:
+            logger.error(f"❌ Cannot edit metadata: No metadata found in {file_path}")
+            return None  # Avoid crashing
 
         updated_metadata = {**existing_metadata, **metadata_changes}
 
@@ -88,7 +84,7 @@ class MetadataProcessor:
         try:
             return tool.edit_metadata(file_path, updated_metadata)
         except Exception as e:
-            logger.error(f"❌ Error editing metadata: {e}", exc_info=True)
+            logger.error(f"❌ Error editing metadata: {e}")
             return None
 
 

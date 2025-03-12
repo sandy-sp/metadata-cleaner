@@ -1,4 +1,3 @@
-import os
 from typing import Optional, Dict, Any
 from mutagen import File
 from m_c.core.logger import logger
