@@ -3,6 +3,8 @@ from m_c.handlers.image_handler import ImageHandler
 from m_c.handlers.document_handler import DocumentHandler
 from m_c.handlers.audio_handler import AudioHandler
 from m_c.handlers.video_handler import VideoHandler
+from m_c.utils.tool_utils import ToolManager, tool_manager
+
 class ToolManager:
     """Manages tool availability and selection."""
 
