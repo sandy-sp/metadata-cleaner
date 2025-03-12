@@ -1,5 +1,6 @@
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, List
+import concurrent.futures
 from metadata_cleaner.core.tool_manager import ToolManager
 from metadata_cleaner.core.file_utils import validate_file
 from metadata_cleaner.core.logger import logger
@@ -43,5 +44,11 @@ class MetadataProcessor:
             return None
 
         return tool.edit_metadata(file_path, metadata_changes)
+    
+    def process_batch(files: List[str]):
+        """Process multiple files in parallel for metadata removal."""
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(metadata_processor.delete_metadata, files))
+        return results
 
 metadata_processor = MetadataProcessor()
