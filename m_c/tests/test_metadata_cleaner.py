@@ -5,69 +5,83 @@ import hashlib
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
 from m_c.core.logger import logger
-from m_c.core.tool_manager import ToolManager
+from m_c.utils.tool_utils import ToolManager
 
 class TestMetadataCleaner(unittest.TestCase):
-    def setUp(self):
-        """Setup test files and directories."""
-        self.test_image = "test_image.jpg"
-        self.test_doc = "test_document.pdf"
-        self.test_audio = "test_audio.mp3"
-        self.test_video = "test_video.mp4"
-        
+    @classmethod
+    def setUpClass(cls):
+        """Setup test files and directories before all tests."""
+        cls.test_dir = "m_c/tests/sample"
+        cls.cleaned_dir = os.path.join(cls.test_dir, "cleaned")
+
+        # Create necessary directories
+        os.makedirs(cls.test_dir, exist_ok=True)
+        os.makedirs(cls.cleaned_dir, exist_ok=True)
+
+        # Define test files
+        cls.test_files = {
+            "image": os.path.join(cls.test_dir, "sample.jpg"),
+            "document": os.path.join(cls.test_dir, "sample.pdf"),
+            "audio": os.path.join(cls.test_dir, "sample.mp3"),
+            "video": os.path.join(cls.test_dir, "sample.mp4"),
+        }
+
         # Create dummy test files
-        for file in [self.test_image, self.test_doc, self.test_audio, self.test_video]:
+        for file in cls.test_files.values():
             with open(file, "w") as f:
                 f.write("Dummy file content")
-    
-    def tearDown(self):
-        """Cleanup test files."""
-        for file in [self.test_image, self.test_doc, self.test_audio, self.test_video]:
-            if os.path.exists(file):
-                os.remove(file)
-    
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up after all tests."""
+        if os.path.exists(cls.cleaned_dir):
+            shutil.rmtree(cls.cleaned_dir)
+
     def test_validate_file(self):
         """Test file validation function."""
-        self.assertTrue(validate_file(self.test_image))
+        for file in self.test_files.values():
+            self.assertTrue(validate_file(file))
         self.assertFalse(validate_file("non_existent_file.txt"))
-    
+
     def test_get_safe_output_path(self):
         """Test safe output path generation."""
-        output_path = get_safe_output_path(self.test_image, prefix="cleaned_")
+        output_path = get_safe_output_path(self.test_files["image"], prefix="cleaned_")
         self.assertTrue(output_path.startswith("cleaned_"))
-    
+
     def test_view_metadata(self):
         """Test metadata extraction."""
-        metadata = MetadataProcessor.view_metadata(self.test_image)
+        metadata = MetadataProcessor.view_metadata(self.test_files["image"])
         self.assertIsInstance(metadata, dict)
-    
+
     def test_remove_metadata(self):
-        """Test metadata removal."""
-        output_file = MetadataProcessor.delete_metadata(self.test_image)
-        self.assertTrue(os.path.exists(output_file))
-    
+        """Test metadata removal for all file types."""
+        for category, file_path in self.test_files.items():
+            cleaned_file_path = os.path.join(self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}")
+
+            output_file = MetadataProcessor.delete_metadata(file_path, cleaned_file_path)
+            self.assertIsNotNone(output_file, f"Failed to clean {category} file")
+            self.assertTrue(os.path.exists(cleaned_file_path), f"Cleaned file missing: {cleaned_file_path}")
+
     def test_edit_metadata(self):
         """Test metadata editing."""
         metadata_changes = {"Author": "Test User"}
-        output_file = MetadataProcessor.edit_metadata(self.test_doc, metadata_changes)
+        output_file = MetadataProcessor.edit_metadata(self.test_files["document"], metadata_changes)
         self.assertTrue(os.path.exists(output_file))
-    
-    def test_handle_corrupt_file(self):  # Add `self`
-        """Test if the tool correctly handles a corrupt file."""
-        corrupt_file = "corrupt.jpg"
+
+    def test_handle_corrupt_file(self):
+        """Test handling of a corrupt file."""
+        corrupt_file = os.path.join(self.test_dir, "corrupt.jpg")
 
         # Create a dummy corrupt file
         with open(corrupt_file, "wb") as f:
             f.write(b"corrupt data")
 
         result = MetadataProcessor.view_metadata(corrupt_file)
-
-        # Expected to return None or an error message
-        assert result is None or "error" in str(result).lower()
+        self.assertTrue(result is None or "error" in str(result).lower())
 
         os.remove(corrupt_file)
 
-    def compute_hash(file_path):
+    def compute_hash(self, file_path):
         """Compute SHA-256 hash of a file."""
         sha256 = hashlib.sha256()
         with open(file_path, "rb") as f:
@@ -75,39 +89,51 @@ class TestMetadataCleaner(unittest.TestCase):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def test_no_data_loss_after_removal(self):  # Add `self`
+    def test_no_data_loss_after_removal(self):
         """Ensure the cleaned file maintains data integrity (except metadata)."""
-        original_file = "sample.jpg"
-        cleaned_file = "sample_cleaned.jpg"
-
-        # Copy a sample image for testing
-        shutil.copyfile("test_files/sample.jpg", original_file)
+        original_file = self.test_files["image"]
+        cleaned_file = os.path.join(self.cleaned_dir, "sample_cleaned.jpg")
 
         MetadataProcessor.delete_metadata(original_file, cleaned_file)
 
-        # Ensure the file exists
-        assert os.path.exists(cleaned_file)
+        self.assertTrue(os.path.exists(cleaned_file))
+        self.assertEqual(self.compute_hash(original_file), self.compute_hash(cleaned_file))
 
-        # Verify file integrity
-        assert self.compute_hash(original_file) == self.compute_hash(cleaned_file)
-
-        os.remove(original_file)
-        os.remove(cleaned_file)
-
-    def test_fallback_mechanism(self):  # Add `self`
+    def test_fallback_mechanism(self):
         """Test if fallback tools work when the primary tool fails."""
-        test_file = "test_image.jpg"
-        shutil.copyfile("test_files/sample.jpg", test_file)
+        test_file = self.test_files["image"]
+        shutil.copyfile(test_file, os.path.join(self.test_dir, "fallback_test.jpg"))
 
         # Simulate failure by disabling ExifTool
-        ToolManager.check_tools["ExifTool"] = False
+        tool_manager = ToolManager()
+        tool_manager._cached_tools["ExifTool"] = False
 
         metadata = MetadataProcessor.view_metadata(test_file)
+        self.assertIsNotNone(metadata, "Fallback mechanism failed to extract metadata")
 
-        # Ensure metadata is still extracted via fallback tools (Piexif)
-        assert metadata is not None
+        os.remove(os.path.join(self.test_dir, "fallback_test.jpg"))
 
-        os.remove(test_file)
+    def test_clean_all_files_in_sample(self):
+        """Test cleaning all files in the 'sample' directory and saving to 'cleaned'."""
+        files = [f for f in os.listdir(self.test_dir) if os.path.isfile(os.path.join(self.test_dir, f))]
+
+        for file in files:
+            file_path = os.path.join(self.test_dir, file)
+            cleaned_file_path = os.path.join(self.cleaned_dir, file)
+
+            self.assertTrue(validate_file(file_path), f"Invalid file: {file_path}")
+
+            output_file = MetadataProcessor.delete_metadata(file_path, cleaned_file_path)
+
+            self.assertIsNotNone(output_file, f"Failed to clean: {file_path}")
+            self.assertTrue(os.path.exists(cleaned_file_path), f"Cleaned file missing: {cleaned_file_path}")
+
+    def test_validate_cleaned_files(self):
+        """Ensure cleaned files exist and have valid content."""
+        cleaned_files = [f for f in os.listdir(self.cleaned_dir) if os.path.isfile(os.path.join(self.cleaned_dir, f))]
+        original_files = [f for f in os.listdir(self.test_dir) if os.path.isfile(os.path.join(self.test_dir, f))]
+
+        self.assertEqual(len(cleaned_files), len(original_files) - 1, "Mismatch between cleaned and original files")
 
 if __name__ == "__main__":
     unittest.main()
