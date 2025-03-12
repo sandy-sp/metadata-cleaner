@@ -1,4 +1,8 @@
 import shutil
+from m_c.handlers.image_handler import image_handler
+from m_c.handlers.document_handler import document_handler
+from m_c.handlers.audio_handler import audio_handler
+from m_c.handlers.video_handler import video_handler
 
 class ToolManager:
     """Manages tool availability and selection."""
@@ -16,20 +20,18 @@ class ToolManager:
         return self._cached_tools
 
     def get_best_tool(self, file_path: str):
-        """Returns the best tool available for the given file type."""
+        """Returns the best tool object for the given file type."""
         ext = file_path.split('.')[-1].lower()
-        
-        # Ensure tools are checked only once per session
         tools = self.check_tools()
 
         if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
-            return "ExifTool" if tools["ExifTool"] else "Piexif"
+            return image_handler  # Return actual image handler object
         elif ext in ["pdf", "docx", "txt"]:
-            return "PyMuPDF"
+            return document_handler
         elif ext in ["mp3", "wav", "flac"]:
-            return "Mutagen"
+            return audio_handler
         elif ext in ["mp4", "mkv", "avi"]:
-            return "FFmpeg"
+            return video_handler
         return None  # No suitable tool found
 
 tool_manager = ToolManager()
