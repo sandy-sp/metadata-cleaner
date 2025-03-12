@@ -1,6 +1,6 @@
 import click
 import json
-from metadata_cleaner.core.metadata_processor import metadata_processor
+from m_c.core.metadata_processor import metadata_processor
 
 @click.group()
 def cli():

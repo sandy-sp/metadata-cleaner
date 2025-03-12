@@ -1,9 +1,9 @@
 import os
 import unittest
 import hashlib
-from metadata_cleaner.core.metadata_processor import metadata_processor
-from metadata_cleaner.core.file_utils import validate_file, get_safe_output_path
-from metadata_cleaner.core.logger import logger
+from m_c.core.metadata_processor import metadata_processor
+from m_c.core.file_utils import validate_file, get_safe_output_path
+from m_c.core.logger import logger
 
 class TestMetadataCleaner(unittest.TestCase):
     def setUp(self):

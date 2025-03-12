@@ -2,9 +2,9 @@ import os
 from typing import Optional, Dict, Any
 from PIL import Image
 import piexif
-from metadata_cleaner.core.logger import logger
-from metadata_cleaner.core.file_utils import validate_file
-from metadata_cleaner.core.tool_manager import tool_manager
+from m_c.core.logger import logger
+from m_c.core.file_utils import validate_file
+from m_c.core.tool_manager import tool_manager
 
 class ImageHandler:
     """

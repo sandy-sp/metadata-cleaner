@@ -1,7 +1,7 @@
 import click
 import json
-from metadata_cleaner.core.metadata_processor import metadata_processor
-from metadata_cleaner.cli.utils import format_metadata_output
+from m_c.core.metadata_processor import metadata_processor
+from m_c.cli.utils import format_metadata_output
 
 @click.command()
 @click.argument("file")

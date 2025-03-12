@@ -1,7 +1,7 @@
 import os
 import hashlib
 from typing import Optional
-from metadata_cleaner.core.logger import logger
+from m_c.core.logger import logger
 
 def validate_file(file_path: str) -> bool:
     """Check if the file exists and is accessible."""
