@@ -18,14 +18,19 @@ class ImageHandler(BaseHandler):
         """Try extracting metadata with a fallback method if ExifTool is missing."""
         if not self.validate(file_path):
             return None
-        from m_c.utils.tool_utils import ToolManager
+
         try:
             if ToolManager().check_tools()["ExifTool"]:
                 return self._extract_metadata_exiftool(file_path)
         except Exception:
             logger.warning(f"ExifTool failed, using fallback method for {file_path}")
-
-        return self._extract_metadata_piexif(file_path)
+        
+        # Ensure a fallback method is used
+        metadata = self._extract_metadata_piexif(file_path)
+        if metadata is None:
+            logger.warning(f"Fallback metadata extraction failed for {file_path}")
+        
+        return metadata
 
     def remove_metadata(
         self, file_path: str, output_path: Optional[str] = None
