@@ -1,36 +1,35 @@
 import shutil
-from metadata_cleaner.handlers import image_handler, document_handler, audio_handler, video_handler
 
 class ToolManager:
-    def __init__(self):
-        self.tools = {
-            "image": image_handler,
-            "document": document_handler,
-            "audio": audio_handler,
-            "video": video_handler
-        }
-        self.available_tools = self.check_tools()
+    """Manages tool availability and selection."""
+    
+    _cached_tools = None  # Cache for tool availability
 
     def check_tools(self):
-        """Check if external tools are available on the system."""
-        return {
-            "ExifTool": shutil.which("exiftool") is not None,
-            "FFmpeg": shutil.which("ffmpeg") is not None,
-            "Mutagen": True  # Python module, always available if installed
-        }
+        """Check for available tools and cache the results."""
+        if self._cached_tools is None:
+            self._cached_tools = {
+                "ExifTool": shutil.which("exiftool") is not None,
+                "FFmpeg": shutil.which("ffmpeg") is not None,
+                "Mutagen": True  # Mutagen is a Python module, always available if installed
+            }
+        return self._cached_tools
 
     def get_best_tool(self, file_path: str):
-        """Return the best available tool based on file type."""
+        """Returns the best tool available for the given file type."""
         ext = file_path.split('.')[-1].lower()
+        
+        # Ensure tools are checked only once per session
+        tools = self.check_tools()
+
         if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
-            return self.tools["image"]
+            return "ExifTool" if tools["ExifTool"] else "Piexif"
         elif ext in ["pdf", "docx", "txt"]:
-            return self.tools["document"]
+            return "PyMuPDF"
         elif ext in ["mp3", "wav", "flac"]:
-            return self.tools["audio"]
+            return "Mutagen"
         elif ext in ["mp4", "mkv", "avi"]:
-            return self.tools["video"]
-        else:
-            return None
+            return "FFmpeg"
+        return None  # No suitable tool found
 
 tool_manager = ToolManager()
