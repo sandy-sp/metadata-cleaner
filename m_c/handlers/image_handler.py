@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import Optional, Dict, Any
 from PIL import Image
 import piexif
@@ -40,30 +41,29 @@ class ImageHandler(BaseHandler):
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Remove metadata from an image file using Piexif."""
+        """Remove metadata from an image file and save a new cleaned copy."""
         if not self.validate(file_path):
             return None
 
         try:
-            with Image.open(file_path) as img:
-                img.info.pop("exif", None)  # Remove EXIF metadata
-                
-                if not output_path:
-                    base, ext = os.path.splitext(file_path)
-                    output_path = f"{base}_cleaned{ext}"
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
+            # Copy the original file before processing
+            shutil.copyfile(file_path, output_path)
+
+            with Image.open(output_path) as img:
+                img.info.pop("exif", None)  # Remove metadata
                 img.save(output_path)
 
-                if not os.path.exists(output_path):
-                    logger.warning(f"Retrying metadata removal using ExifTool for {file_path}")
-                    return self._remove_metadata_exiftool(file_path, output_path)
+            if not os.path.exists(output_path):
+                logger.error(f"❌ Image metadata removal failed: {output_path} does not exist.")
+                return None
 
-                return output_path
-        except UnidentifiedImageError:
-            logger.error(f"Cannot identify image file: {file_path}. It may be corrupted or unsupported.")
-            return None
+            logger.info(f"✅ Image metadata removed successfully: {output_path}")
+            return output_path
         except Exception as e:
-            logger.error(f"Error removing metadata from {file_path}: {e}", exc_info=True)
+            logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
             return None
 
     def _remove_metadata_piexif(

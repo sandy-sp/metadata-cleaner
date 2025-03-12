@@ -58,18 +58,23 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIsInstance(metadata, dict)
 
     def test_remove_metadata(self):
-        """Test metadata removal for all file types."""
+        """Test metadata removal for all file types while preserving originals."""
         for category, file_path in self.test_files.items():
             cleaned_file_path = os.path.join(
                 self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}"
             )
 
+            # Ensure original file exists before processing
+            self.assertTrue(os.path.exists(file_path), f"Original {category} file is missing: {file_path}")
+
             output_file = self.processor.delete_metadata(file_path, cleaned_file_path)
+
+            # Ensure a cleaned file was successfully created
             self.assertIsNotNone(output_file, f"Failed to clean {category} file")
-            self.assertTrue(
-                os.path.exists(cleaned_file_path),
-                f"Cleaned file missing: {cleaned_file_path}",
-            )
+            self.assertTrue(os.path.exists(cleaned_file_path), f"Cleaned file missing: {cleaned_file_path}")
+
+            # Verify that the original file remains unchanged
+            self.assertTrue(os.path.exists(file_path), f"Original {category} file was modified or deleted.")
 
     def test_edit_metadata(self):
         """Test metadata editing."""

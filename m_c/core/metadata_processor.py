@@ -34,10 +34,16 @@ class MetadataProcessor:
             return {}
 
     def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Ensure the cleaned file is correctly saved."""
+        """Ensure the cleaned file is correctly saved without modifying the original."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
             return None
+
+        # Ensure output path is set correctly in 'cleaned/' directory
+        if output_path is None:
+            cleaned_dir = os.path.join(os.path.dirname(file_path), "cleaned")
+            os.makedirs(cleaned_dir, exist_ok=True)
+            output_path = os.path.join(cleaned_dir, os.path.basename(file_path))
 
         tool = self.tools.get_best_tool(file_path)
         if not tool or not hasattr(tool, "remove_metadata"):
