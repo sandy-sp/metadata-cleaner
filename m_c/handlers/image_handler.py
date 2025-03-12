@@ -33,20 +33,23 @@ class ImageHandler(BaseHandler):
         """Remove metadata from an image file and save a new cleaned copy."""
         if not self.validate(file_path):
             return None
+
         try:
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            shutil.copyfile(file_path, output_path)
-            with Image.open(output_path) as img:
+            logger.debug(f"Opening image file: {file_path}")
+            with Image.open(file_path) as img:
                 img = img.convert("RGB")
                 img.info.pop("exif", None)
                 img.save(output_path)
+
             if os.path.exists(output_path):
                 logger.info(f"✅ Image metadata removed: {output_path}")
                 return output_path
+
         except UnidentifiedImageError:
             logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
         except Exception as e:
             logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
+
         return None
 
     def _remove_metadata_piexif(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
