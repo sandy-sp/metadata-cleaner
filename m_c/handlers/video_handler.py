@@ -50,9 +50,7 @@ class VideoHandler(BaseHandler):
             logger.error(f"Failed to extract metadata from video file: {e}")
             return None
 
-    def _remove_metadata_ffmpeg(
-        self, file_path: str, output_path: Optional[str]
-    ) -> Optional[str]:
+    def _remove_metadata_ffmpeg(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Remove metadata using FFmpeg."""
         try:
             if not output_path:
@@ -61,25 +59,25 @@ class VideoHandler(BaseHandler):
 
             command = [
                 "ffmpeg",
-                "-i",
-                file_path,
-                "-map_metadata",
-                "-1",
-                "-c:v",
-                "copy",
-                "-c:a",
-                "copy",
+                "-i", file_path,
+                "-map_metadata", "-1",
+                "-c:v", "copy",
+                "-c:a", "copy",
                 output_path,
-                "-y",
+                "-y"
             ]
 
-            subprocess.run(
+            result = subprocess.run(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-                check=True,
+                text=True
             )
+
+            if result.returncode != 0:
+                logger.error(f"FFmpeg error:\n{result.stderr}")
+                return None
+
             return output_path
         except Exception as e:
             logger.error(f"Failed to remove metadata from video file: {e}")
