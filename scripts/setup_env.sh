@@ -6,8 +6,12 @@ echo "🚀 Setting up the Metadata Cleaner Development Environment using Poetry.
 
 # Check if Poetry is installed
 if ! command -v poetry &> /dev/null; then
-    echo "❌ Poetry is not installed. Please install Poetry first: https://python-poetry.org/docs/#installation"
-    exit 1
+    echo "❌ Poetry is not installed. Installing Poetry..."
+    curl -sSL https://install.python-poetry.org | python3 -
+    export PATH="$HOME/.local/bin:$PATH"
+    echo "✅ Poetry installed successfully!"
+else
+    echo "✅ Poetry is already installed."
 fi
 
 # Install project dependencies using Poetry
