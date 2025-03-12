@@ -35,7 +35,6 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-
 def set_log_level(level: str) -> None:
     """Dynamically set log level."""
     level = level.upper()
