@@ -53,6 +53,7 @@ class ImageHandler(BaseHandler):
             shutil.copyfile(file_path, output_path)
 
             with Image.open(output_path) as img:
+                img = img.convert("RGB")  # Ensure image is valid
                 img.info.pop("exif", None)  # Remove metadata
                 img.save(output_path)
 
@@ -62,6 +63,9 @@ class ImageHandler(BaseHandler):
 
             logger.info(f"✅ Image metadata removed successfully: {output_path}")
             return output_path
+        except UnidentifiedImageError:
+            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            return None
         except Exception as e:
             logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
             return None
