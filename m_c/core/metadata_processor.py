@@ -46,14 +46,15 @@ class MetadataProcessor:
         try:
             logger.info(f"Removing metadata from: {file_path}, saving to: {output_path}")
             cleaned_file = tool.remove_metadata(file_path, output_path)
-            
+
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(f"Metadata removal failed: Output file missing {cleaned_file}. Input: {file_path}, Expected Output: {output_path}")
+                logger.error(f"❌ Metadata removal failed: Output file missing {cleaned_file}. Input: {file_path}, Expected Output: {output_path}")
                 return None
 
+            logger.info(f"✅ Metadata successfully removed: {cleaned_file}")
             return cleaned_file
         except Exception as e:
-            logger.error(f"Error removing metadata from {file_path}: {e}", exc_info=True)
+            logger.error(f"❌ Error removing metadata from {file_path}: {e}", exc_info=True)
             return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:

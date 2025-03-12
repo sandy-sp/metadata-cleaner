@@ -3,6 +3,7 @@ from m_c.handlers.image_handler import ImageHandler
 from m_c.handlers.document_handler import DocumentHandler
 from m_c.handlers.audio_handler import AudioHandler
 from m_c.handlers.video_handler import VideoHandler
+from m_c.core.logger import logger
 
 
 class ToolManager:
@@ -18,6 +19,8 @@ class ToolManager:
                 "FFmpeg": shutil.which("ffmpeg") is not None,
                 "Mutagen": True,  # Mutagen is a Python module, always available if installed
             }
+
+        logger.info(f"Tool Availability Check: {self._cached_tools}")
         return self._cached_tools
 
     def get_best_tool(self, file_path: str):
