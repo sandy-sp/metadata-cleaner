@@ -1,8 +1,9 @@
 import os
 import hashlib
+import logging
 from typing import Optional
-from m_c.core.logger import logger
 
+logger = logging.getLogger("metadata_cleaner")
 
 def validate_file(file_path: str) -> bool:
     """Check if the file exists and is accessible."""
@@ -17,7 +18,6 @@ def validate_file(file_path: str) -> bool:
         return False
     return True
 
-
 def get_file_checksum(file_path: str) -> Optional[str]:
     """Generate SHA-256 checksum for file integrity verification using chunking."""
     try:
@@ -30,26 +30,18 @@ def get_file_checksum(file_path: str) -> Optional[str]:
         logger.error(f"Error generating checksum for {file_path}: {e}")
         return None
 
-
-def get_safe_output_path(
-    input_path: str,
-    output_dir: Optional[str] = None,
-    prefix: str = "",
-    suffix: str = "",
-) -> str:
+def get_safe_output_path(input_path: str, output_dir: Optional[str] = None, prefix: str = "", suffix: str = "") -> str:
     """Generate a safe output path to avoid overwriting files."""
     base_name = os.path.basename(input_path)
     name, ext = os.path.splitext(base_name)
-
     output_dir = output_dir or os.path.dirname(input_path)
-
     output_name = f"{prefix}{name}{suffix}{ext}"
     output_path = os.path.join(output_dir, output_name)
-
+    
     counter = 1
     while os.path.exists(output_path):
         output_name = f"{prefix}{name}{suffix}_{counter}{ext}"
         output_path = os.path.join(output_dir, output_name)
         counter += 1
-
+    
     return output_path
