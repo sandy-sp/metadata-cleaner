@@ -140,6 +140,9 @@ class TestMetadataCleaner(unittest.TestCase):
         cleaned_files = [f for f in os.listdir(self.cleaned_dir) if os.path.isfile(os.path.join(self.cleaned_dir, f))]
         original_files = [f for f in os.listdir(self.test_dir) if os.path.isfile(os.path.join(self.test_dir, f))]
 
+        logger.info(f"Original files count: {len(original_files)}")
+        logger.info(f"Cleaned files count: {len(cleaned_files)}")
+
         self.assertEqual(len(cleaned_files), len(original_files), "Mismatch between cleaned and original files")
 
 if __name__ == "__main__":

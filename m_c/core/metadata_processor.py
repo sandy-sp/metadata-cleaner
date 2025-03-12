@@ -22,16 +22,26 @@ class MetadataProcessor:
         return tool.extract_metadata(file_path)
 
     def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Remove metadata from a file using the best tool."""
+        """Remove metadata and ensure the output directory exists."""
         if not validate_file(file_path):
+            logger.error(f"Invalid file: {file_path}")
             return None
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool:
+        if not tool or not hasattr(tool, 'remove_metadata'):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
-        return tool.remove_metadata(file_path, output_path)  
+        if output_path:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)  # ✅ Ensure output directory exists
+
+        cleaned_file = tool.remove_metadata(file_path, output_path)
+        if not cleaned_file or not os.path.exists(cleaned_file):
+            logger.error(f"Metadata removal failed for: {file_path}")
+            return None
+
+        logger.info(f"✅ Metadata cleaned: {cleaned_file}")
+        return cleaned_file
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
         """
