@@ -4,7 +4,6 @@ from typing import Optional, Dict, Any
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
 
-
 class VideoHandler(BaseHandler):
     """
     Handles metadata extraction, removal, and editing for video files.
@@ -19,9 +18,7 @@ class VideoHandler(BaseHandler):
             return None
         return self._extract_metadata_ffmpeg(file_path)
 
-    def remove_metadata(
-        self, file_path: str, output_path: Optional[str] = None
-    ) -> Optional[str]:
+    def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Remove metadata from a video file using FFmpeg."""
         if not self.validate(file_path):
             return None
@@ -46,13 +43,13 @@ class VideoHandler(BaseHandler):
                 check=True,
             )
             return result.stdout if result.stdout else None
+        except subprocess.CalledProcessError as e:
+            logger.error(f"FFmpeg failed to extract metadata: {e}")
         except Exception as e:
             logger.error(f"Failed to extract metadata from video file: {e}")
-            return None
+        return None
 
-    def _remove_metadata_ffmpeg(
-        self, file_path: str, output_path: Optional[str]
-    ) -> Optional[str]:
+    def _remove_metadata_ffmpeg(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
         """Remove metadata using FFmpeg with improved error handling."""
         try:
             if not output_path:
@@ -77,17 +74,13 @@ class VideoHandler(BaseHandler):
                 command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
             )
 
-            if (
-                "moov atom not found" in result.stderr
-                or "Invalid data found" in result.stderr
-            ):
+            if "moov atom not found" in result.stderr or "Invalid data found" in result.stderr:
                 logger.error(f"❌ FFmpeg failed: {result.stderr.strip()}")
                 return None  # Fail gracefully instead of crashing
 
             return output_path
         except Exception as e:
             logger.error(f"Failed to remove metadata from video: {e}")
-            return None
-
+        return None
 
 video_handler = VideoHandler()
