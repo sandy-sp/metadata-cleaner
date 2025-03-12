@@ -4,7 +4,7 @@ from PIL import Image
 import piexif
 from m_c.core.logger import logger
 from m_c.core.file_utils import validate_file
-from m_c.core.tool_manager import tool_manager
+from m_c.core.tool_manager import ToolManager
 
 class ImageHandler:
     """
@@ -22,7 +22,7 @@ class ImageHandler:
         if not validate_file(file_path) or not self.is_supported(file_path):
             return None
 
-        if tool_manager.available_tools["ExifTool"]:
+        if ToolManager.available_tools["ExifTool"]:
             return self._extract_metadata_exiftool(file_path)
         
         return self._extract_metadata_piexif(file_path)
@@ -32,7 +32,7 @@ class ImageHandler:
         if not validate_file(file_path) or not self.is_supported(file_path):
             return None
 
-        if tool_manager.available_tools["ExifTool"]:
+        if ToolManager.available_tools["ExifTool"]:
             return self._remove_metadata_exiftool(file_path, output_path)
         
         return self._remove_metadata_piexif(file_path, output_path)

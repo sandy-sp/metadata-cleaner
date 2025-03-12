@@ -3,7 +3,7 @@ import subprocess
 from typing import Optional, Dict, Any
 from m_c.core.logger import logger
 from m_c.core.file_utils import validate_file
-from m_c.core.tool_manager import tool_manager
+from m_c.core.tool_manager import ToolManager
 
 class VideoHandler:
     """
@@ -21,7 +21,7 @@ class VideoHandler:
         if not validate_file(file_path) or not self.is_supported(file_path):
             return None
 
-        if not tool_manager.available_tools["FFmpeg"]:
+        if not ToolManager.available_tools["FFmpeg"]:
             logger.error("FFmpeg is not installed or available.")
             return None
 
@@ -32,7 +32,7 @@ class VideoHandler:
         if not validate_file(file_path) or not self.is_supported(file_path):
             return None
 
-        if not tool_manager.available_tools["FFmpeg"]:
+        if not ToolManager.available_tools["FFmpeg"]:
             logger.error("FFmpeg is not installed or available.")
             return None
 

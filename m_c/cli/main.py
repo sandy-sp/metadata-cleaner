@@ -1,6 +1,6 @@
 import click
 import json
-from m_c.core.metadata_processor import metadata_processor
+from m_c.core.metadata_processor import MetadataProcessor
 
 @click.group()
 def cli():
@@ -11,7 +11,7 @@ def cli():
 @click.argument("file")
 def view(file):
     """View metadata of a file"""
-    metadata = metadata_processor.view_metadata(file)
+    metadata = MetadataProcessor.view_metadata(file)
     if metadata:
         click.echo(json.dumps(metadata, indent=4))
     else:
@@ -22,7 +22,7 @@ def view(file):
 @click.option("--output", default=None, help="Output file path")
 def delete(file, output):
     """Remove metadata from a file"""
-    result = metadata_processor.delete_metadata(file, output)
+    result = MetadataProcessor.delete_metadata(file, output)
     if result:
         click.echo(f"Metadata removed: {result}")
     else:
@@ -35,7 +35,7 @@ def edit(file, changes):
     """Edit metadata of a file"""
     try:
         changes_dict = json.loads(changes)
-        result = metadata_processor.edit_metadata(file, changes_dict)
+        result = MetadataProcessor.edit_metadata(file, changes_dict)
         if result:
             click.echo(f"Metadata updated: {result}")
         else:

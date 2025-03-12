@@ -1,8 +1,8 @@
 import shutil
-from m_c.handlers.image_handler import image_handler
-from m_c.handlers.document_handler import document_handler
-from m_c.handlers.audio_handler import audio_handler
-from m_c.handlers.video_handler import video_handler
+from m_c.handlers.image_handler import ImageHandler
+from m_c.handlers.document_handler import DocumentHandler
+from m_c.handlers.audio_handler import AudioHandler
+from m_c.handlers.video_handler import VideoHandler
 
 class ToolManager:
     """Manages tool availability and selection."""
@@ -25,13 +25,13 @@ class ToolManager:
         tools = self.check_tools()
 
         if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
-            return image_handler  # Return actual image handler object
+            return ImageHandler 
         elif ext in ["pdf", "docx", "txt"]:
-            return document_handler
+            return DocumentHandler
         elif ext in ["mp3", "wav", "flac"]:
-            return audio_handler
+            return AudioHandler
         elif ext in ["mp4", "mkv", "avi"]:
-            return video_handler
-        return None  # No suitable tool found
+            return VideoHandler
+        return None
 
 tool_manager = ToolManager()

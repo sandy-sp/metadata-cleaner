@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any
 from mutagen import File
 from m_c.core.logger import logger
 from m_c.core.file_utils import validate_file
-from m_c.core.tool_manager import tool_manager
+from m_c.core.tool_manager import ToolManager
 
 class AudioHandler:
     """
