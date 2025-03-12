@@ -30,10 +30,14 @@ class MetadataProcessor:
 
             return metadata
         except Exception as e:
-            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"Error extracting metadata from {file_path}: {e}", exc_info=True
+            )
             return {}
 
-    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def delete_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Ensure the cleaned file is correctly saved without modifying the original."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
@@ -51,17 +55,23 @@ class MetadataProcessor:
             return None
 
         try:
-            logger.info(f"Removing metadata from: {file_path}, saving to: {output_path}")
+            logger.info(
+                f"Removing metadata from: {file_path}, saving to: {output_path}"
+            )
             cleaned_file = tool.remove_metadata(file_path, output_path)
 
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(f"❌ Metadata removal failed: {file_path}. Expected output: {output_path}")
+                logger.error(
+                    f"❌ Metadata removal failed: {file_path}. Expected output: {output_path}"
+                )
                 return None
 
             logger.info(f"✅ Metadata successfully removed: {cleaned_file}")
             return cleaned_file
         except Exception as e:
-            logger.error(f"❌ Error removing metadata from {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"❌ Error removing metadata from {file_path}: {e}", exc_info=True
+            )
             return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
@@ -83,7 +93,9 @@ class MetadataProcessor:
                 logger.error(f"❌ Error processing file {file}: {e}", exc_info=True)
                 results.append(None)
 
-        logger.info(f"Batch processing completed. {len([r for r in results if r])} out of {len(files)} files cleaned successfully.")
+        logger.info(
+            f"Batch processing completed. {len([r for r in results if r])} out of {len(files)} files cleaned successfully."
+        )
         return results
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):

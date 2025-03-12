@@ -40,7 +40,9 @@ class ImageHandler(BaseHandler):
     # Allow truncated images to be processed (optional)
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def remove_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Remove metadata from an image file and save a new cleaned copy."""
         if not self.validate(file_path):
             return None
@@ -58,16 +60,22 @@ class ImageHandler(BaseHandler):
                 img.save(output_path)
 
             if not os.path.exists(output_path):
-                logger.error(f"❌ Image metadata removal failed: {output_path} does not exist.")
+                logger.error(
+                    f"❌ Image metadata removal failed: {output_path} does not exist."
+                )
                 return None
 
             logger.info(f"✅ Image metadata removed successfully: {output_path}")
             return output_path
         except UnidentifiedImageError:
-            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            logger.error(
+                f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format."
+            )
             return None
         except Exception as e:
-            logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"❌ Error processing image file {file_path}: {e}", exc_info=True
+            )
             return None
 
     def _remove_metadata_piexif(
@@ -96,7 +104,7 @@ class ImageHandler(BaseHandler):
             return None
 
     def _extract_metadata_piexif(self, file_path: str) -> Optional[Dict[str, Any]]:
-        """Extract metadata using Piexif."""
+        """Extract metadata using Piexif with corruption handling."""
         try:
             img = Image.open(file_path)
             exif_data = img.info.get("exif", None)
@@ -106,7 +114,9 @@ class ImageHandler(BaseHandler):
 
             return piexif.load(exif_data)
         except UnidentifiedImageError:
-            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            logger.error(
+                f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format."
+            )
             return None
         except Exception as e:
             logger.error(f"Failed to extract metadata with Piexif: {e}")

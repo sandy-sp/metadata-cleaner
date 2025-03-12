@@ -50,8 +50,10 @@ class VideoHandler(BaseHandler):
             logger.error(f"Failed to extract metadata from video file: {e}")
             return None
 
-    def _remove_metadata_ffmpeg(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Remove metadata using FFmpeg."""
+    def _remove_metadata_ffmpeg(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
+        """Remove metadata using FFmpeg with improved error handling."""
         try:
             if not output_path:
                 base, ext = os.path.splitext(file_path)
@@ -59,28 +61,32 @@ class VideoHandler(BaseHandler):
 
             command = [
                 "ffmpeg",
-                "-i", file_path,
-                "-map_metadata", "-1",
-                "-c:v", "copy",
-                "-c:a", "copy",
+                "-i",
+                file_path,
+                "-map_metadata",
+                "-1",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "copy",
                 output_path,
-                "-y"
+                "-y",
             ]
 
             result = subprocess.run(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
             )
 
-            if result.returncode != 0:
-                logger.error(f"FFmpeg error:\n{result.stderr}")
-                return None
+            if (
+                "moov atom not found" in result.stderr
+                or "Invalid data found" in result.stderr
+            ):
+                logger.error(f"❌ FFmpeg failed: {result.stderr.strip()}")
+                return None  # Fail gracefully instead of crashing
 
             return output_path
         except Exception as e:
-            logger.error(f"Failed to remove metadata from video file: {e}")
+            logger.error(f"Failed to remove metadata from video: {e}")
             return None
 
 
