@@ -50,19 +50,19 @@ class TestMetadataCleaner(unittest.TestCase):
         output_file = metadata_processor.edit_metadata(self.test_doc, metadata_changes)
         self.assertTrue(os.path.exists(output_file))
     
-    def test_handle_corrupt_file():
+    def test_handle_corrupt_file(self):  # Add `self`
         """Test if the tool correctly handles a corrupt file."""
         corrupt_file = "corrupt.jpg"
-        
+
         # Create a dummy corrupt file
         with open(corrupt_file, "wb") as f:
             f.write(b"corrupt data")
 
         result = metadata_processor.view_metadata(corrupt_file)
-        
+
         # Expected to return None or an error message
         assert result is None or "error" in str(result).lower()
-        
+
         os.remove(corrupt_file)
 
     def compute_hash(file_path):
@@ -73,26 +73,26 @@ class TestMetadataCleaner(unittest.TestCase):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def test_no_data_loss_after_removal():
+    def test_no_data_loss_after_removal(self):  # Add `self`
         """Ensure the cleaned file maintains data integrity (except metadata)."""
         original_file = "sample.jpg"
         cleaned_file = "sample_cleaned.jpg"
-        
+
         # Copy a sample image for testing
         shutil.copyfile("test_files/sample.jpg", original_file)
-        
+
         metadata_processor.delete_metadata(original_file, cleaned_file)
-        
+
         # Ensure the file exists
         assert os.path.exists(cleaned_file)
-        
+
         # Verify file integrity
-        assert compute_hash(original_file) == compute_hash(cleaned_file)
-        
+        assert self.compute_hash(original_file) == self.compute_hash(cleaned_file)
+
         os.remove(original_file)
         os.remove(cleaned_file)
 
-    def test_fallback_mechanism():
+    def test_fallback_mechanism(self):  # Add `self`
         """Test if fallback tools work when the primary tool fails."""
         test_file = "test_image.jpg"
         shutil.copyfile("test_files/sample.jpg", test_file)
@@ -101,7 +101,7 @@ class TestMetadataCleaner(unittest.TestCase):
         tool_manager._cached_tools["ExifTool"] = False
 
         metadata = metadata_processor.view_metadata(test_file)
-        
+
         # Ensure metadata is still extracted via fallback tools (Piexif)
         assert metadata is not None
 
