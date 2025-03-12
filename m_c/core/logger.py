@@ -6,14 +6,14 @@ from logging.handlers import RotatingFileHandler
 LOG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
 LOG_FILE = os.path.join(LOG_DIR, "metadata_cleaner.log")
 LOG_LEVEL = os.getenv("METADATA_CLEANER_LOG_LEVEL", "INFO").upper()
-LOG_ROTATION_SIZE = 10 * 1024 * 1024  # 10MB
-LOG_BACKUP_COUNT = 5  # Keep last 5 log files
+LOG_ROTATION_SIZE = 5 * 1024 * 1024  # 5MB max log size
+LOG_BACKUP_COUNT = 3  # Keep last 3 logs
 
 # Ensure log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configure logging format
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+LOG_FORMAT = "%(asctime)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # Initialize logger
@@ -34,7 +34,7 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 def set_log_level(level: str) -> None:
-    """Dynamically sets the log level."""
+    """Dynamically set log level."""
     level = level.upper()
     if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         logger.setLevel(getattr(logging, level))
