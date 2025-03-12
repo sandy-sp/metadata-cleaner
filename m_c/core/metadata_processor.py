@@ -70,22 +70,22 @@ class MetadataProcessor:
     def edit_metadata(self, file_path: str, metadata_changes: Dict):
         """Ensure metadata editing works even if no initial metadata exists."""
         existing_metadata = self.view_metadata(file_path)
-        if existing_metadata is None:
+        if not existing_metadata:
             logger.error(f"❌ Cannot edit metadata: No metadata found in {file_path}")
-            return None  # Avoid crashing
+            return file_path  # Return the original file path instead of None
 
         updated_metadata = {**existing_metadata, **metadata_changes}
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, "edit_metadata"):
+        if not tool or not hasattr(tool, 'edit_metadata'):
             logger.error(f"❌ No available tool to edit metadata for {file_path}")
-            return None
+            return file_path
 
         try:
             return tool.edit_metadata(file_path, updated_metadata)
         except Exception as e:
             logger.error(f"❌ Error editing metadata: {e}")
-            return None
+            return file_path
 
 
 metadata_processor = MetadataProcessor()
