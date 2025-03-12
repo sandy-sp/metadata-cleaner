@@ -50,9 +50,10 @@ class DocumentHandler(BaseHandler):
                 logger.error(f"❌ PDF metadata removal failed: Output file not found {output_path}")
                 return None
 
+            logger.info(f"✅ PDF metadata successfully removed: {output_path}")
             return output_path
         except Exception as e:
-            logger.error(f"❌ Failed to remove metadata from PDF: {e}")
+            logger.error(f"❌ Failed to remove metadata from PDF: {e}", exc_info=True)
             return None
 
 

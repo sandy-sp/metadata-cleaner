@@ -4,6 +4,7 @@ from typing import Dict, Optional, List
 from m_c.core.file_utils import validate_file
 from m_c.core.logger import logger
 from m_c.utils.tool_utils import ToolManager
+from m_c.core.file_utils import get_safe_output_path
 
 
 class MetadataProcessor:
@@ -58,13 +59,25 @@ class MetadataProcessor:
             return None
 
     def process_batch(self, files: List[str]) -> List[Optional[str]]:
-        """Process multiple files in parallel for metadata removal."""
-        logger.info(f"Processing batch of {len(files)} files in parallel.")
+        """Process multiple files sequentially for metadata removal to ensure correct execution."""
+        logger.info(f"Processing batch of {len(files)} files sequentially.")
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            results = list(executor.map(self.delete_metadata, files))
+        results = []
+        for file in files:
+            logger.info(f"Processing file: {file}")
+            try:
+                output_path = get_safe_output_path(file, output_dir="cleaned_files")
+                result = self.delete_metadata(file, output_path)
+                if result:
+                    results.append(result)
+                    logger.info(f"✅ Successfully processed: {file} -> {result}")
+                else:
+                    logger.error(f"❌ Failed to process file: {file}")
+            except Exception as e:
+                logger.error(f"❌ Error processing file {file}: {e}", exc_info=True)
+                results.append(None)
 
-        logger.info(f"Batch processing completed. {sum(1 for r in results if r)} files cleaned.")
+        logger.info(f"Batch processing completed. {len([r for r in results if r])} out of {len(files)} files cleaned successfully.")
         return results
 
     def edit_metadata(self, file_path: str, metadata_changes: Dict):

@@ -96,7 +96,14 @@ class ImageHandler(BaseHandler):
         try:
             img = Image.open(file_path)
             exif_data = img.info.get("exif", None)
-            return piexif.load(exif_data) if exif_data else None
+            if exif_data is None:
+                logger.warning(f"No EXIF data found for {file_path}")
+                return {}
+
+            return piexif.load(exif_data)
+        except UnidentifiedImageError:
+            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            return None
         except Exception as e:
             logger.error(f"Failed to extract metadata with Piexif: {e}")
             return None
