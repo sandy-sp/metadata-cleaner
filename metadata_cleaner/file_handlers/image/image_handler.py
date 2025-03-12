@@ -19,6 +19,7 @@ from metadata_cleaner.core.metadata_utils import (
     verify_file_integrity
 )
 
+
 class ImageHandler:
     """
     Unified handler for image metadata operations.
@@ -71,8 +72,9 @@ class ImageHandler:
                 if metadata:
                     logger.info(f"✅ Metadata extracted using ExifTool: {file_path}")
                     return metadata
+                else:
+                    logger.warning(f"⚠️ ExifTool failed on {file_path}, attempting Piexif...")
 
-            logger.warning("⚠️ ExifTool failed, falling back to Piexif...")
             metadata = extract_metadata_piexif(file_path)
             if metadata:
                 logger.info(f"✅ Metadata extracted using Piexif: {file_path}")
@@ -107,6 +109,7 @@ class ImageHandler:
             return None
 
         output_path = get_safe_output_path(file_path, output_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)  # Ensure output directory exists
 
         logger.info(f"📂 Removing metadata from: {file_path}")
 
@@ -116,7 +119,7 @@ class ImageHandler:
                 if cleaned_file:
                     logger.info(f"✅ Metadata removed using ExifTool: {cleaned_file}")
                 else:
-                    logger.warning("⚠️ ExifTool failed, falling back to Piexif...")
+                    logger.warning(f"⚠️ ExifTool failed on {file_path}, attempting Piexif...")
                     cleaned_file = remove_metadata_piexif(file_path, output_path)
             else:
                 cleaned_file = remove_metadata_piexif(file_path, output_path)
