@@ -91,5 +91,15 @@ class ImageHandler(BaseHandler):
             logger.error(f"Piexif failed to remove metadata: {e}")
             return None
 
+    def _extract_metadata_piexif(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Extract metadata using Piexif."""
+        try:
+            img = Image.open(file_path)
+            exif_data = img.info.get("exif", None)
+            return piexif.load(exif_data) if exif_data else None
+        except Exception as e:
+            logger.error(f"Failed to extract metadata with Piexif: {e}")
+            return None
+
 
 image_handler = ImageHandler()

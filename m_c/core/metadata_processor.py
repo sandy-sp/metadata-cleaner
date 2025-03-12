@@ -48,7 +48,7 @@ class MetadataProcessor:
             cleaned_file = tool.remove_metadata(file_path, output_path)
 
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(f"❌ Metadata removal failed: Output file missing {cleaned_file}. Input: {file_path}, Expected Output: {output_path}")
+                logger.error(f"❌ Metadata removal failed: {file_path}. Expected output: {output_path}")
                 return None
 
             logger.info(f"✅ Metadata successfully removed: {cleaned_file}")
