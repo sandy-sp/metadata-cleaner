@@ -45,15 +45,16 @@ class DocumentHandler(BaseHandler):
         try:
             with pikepdf.open(file_path) as pdf:
                 pdf.remove_metadata()  # Explicitly remove metadata
-                pdf.save(output_path or file_path)
+                output_path = output_path or file_path
+                pdf.save(output_path)
 
-            if not os.path.exists(output_path or file_path):
+            if not os.path.exists(output_path):
                 logger.error(
                     f"PDF metadata removal failed: Output file not found {output_path}"
                 )
                 return None
 
-            return output_path or file_path
+            return output_path
         except Exception as e:
             logger.error(f"Failed to remove metadata from PDF: {e}")
             return None

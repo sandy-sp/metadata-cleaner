@@ -31,6 +31,7 @@ class ImageHandler(BaseHandler):
         metadata = self._extract_metadata_piexif(file_path)
         if metadata is None:
             logger.warning(f"Fallback metadata extraction failed for {file_path}")
+            return {}
 
         return metadata
 
