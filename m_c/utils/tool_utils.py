@@ -1,13 +1,8 @@
 import shutil
-from m_c.handlers.image_handler import ImageHandler
-from m_c.handlers.document_handler import DocumentHandler
-from m_c.handlers.audio_handler import AudioHandler
-from m_c.handlers.video_handler import VideoHandler
-from m_c.utils.tool_utils import ToolManager, tool_manager
 
 class ToolManager:
     """Manages tool availability and selection."""
-    
+
     _cached_tools = None  # Cache for tool availability
 
     def check_tools(self):
@@ -26,12 +21,16 @@ class ToolManager:
         tools = self.check_tools()
 
         if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
-            return ImageHandler 
+            from m_c.handlers.image_handler import ImageHandler
+            return ImageHandler
         elif ext in ["pdf", "docx", "txt"]:
+            from m_c.handlers.document_handler import DocumentHandler
             return DocumentHandler
         elif ext in ["mp3", "wav", "flac"]:
+            from m_c.handlers.audio_handler import AudioHandler
             return AudioHandler
         elif ext in ["mp4", "mkv", "avi"]:
+            from m_c.handlers.video_handler import VideoHandler
             return VideoHandler
         return None
 

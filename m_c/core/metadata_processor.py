@@ -1,9 +1,9 @@
 import os
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, TYPE_CHECKING
 import concurrent.futures
-from m_c.core.tool_manager import ToolManager
 from m_c.core.file_utils import validate_file
 from m_c.core.logger import logger
+from m_c.utils.tool_utils import ToolManager
 
 class MetadataProcessor:
     def __init__(self):

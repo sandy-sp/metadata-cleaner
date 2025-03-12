@@ -1,9 +1,11 @@
 import os
+import shutil
 import unittest
 import hashlib
-from m_c.core.metadata_processor import metadata_processor
+from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
 from m_c.core.logger import logger
+from m_c.core.tool_manager import ToolManager
 
 class TestMetadataCleaner(unittest.TestCase):
     def setUp(self):
@@ -36,18 +38,18 @@ class TestMetadataCleaner(unittest.TestCase):
     
     def test_view_metadata(self):
         """Test metadata extraction."""
-        metadata = metadata_processor.view_metadata(self.test_image)
+        metadata = MetadataProcessor.view_metadata(self.test_image)
         self.assertIsInstance(metadata, dict)
     
     def test_remove_metadata(self):
         """Test metadata removal."""
-        output_file = metadata_processor.delete_metadata(self.test_image)
+        output_file = MetadataProcessor.delete_metadata(self.test_image)
         self.assertTrue(os.path.exists(output_file))
     
     def test_edit_metadata(self):
         """Test metadata editing."""
         metadata_changes = {"Author": "Test User"}
-        output_file = metadata_processor.edit_metadata(self.test_doc, metadata_changes)
+        output_file = MetadataProcessor.edit_metadata(self.test_doc, metadata_changes)
         self.assertTrue(os.path.exists(output_file))
     
     def test_handle_corrupt_file(self):  # Add `self`
@@ -58,7 +60,7 @@ class TestMetadataCleaner(unittest.TestCase):
         with open(corrupt_file, "wb") as f:
             f.write(b"corrupt data")
 
-        result = metadata_processor.view_metadata(corrupt_file)
+        result = MetadataProcessor.view_metadata(corrupt_file)
 
         # Expected to return None or an error message
         assert result is None or "error" in str(result).lower()
@@ -81,7 +83,7 @@ class TestMetadataCleaner(unittest.TestCase):
         # Copy a sample image for testing
         shutil.copyfile("test_files/sample.jpg", original_file)
 
-        metadata_processor.delete_metadata(original_file, cleaned_file)
+        MetadataProcessor.delete_metadata(original_file, cleaned_file)
 
         # Ensure the file exists
         assert os.path.exists(cleaned_file)
@@ -98,9 +100,9 @@ class TestMetadataCleaner(unittest.TestCase):
         shutil.copyfile("test_files/sample.jpg", test_file)
 
         # Simulate failure by disabling ExifTool
-        tool_manager._cached_tools["ExifTool"] = False
+        ToolManager.check_tools["ExifTool"] = False
 
-        metadata = metadata_processor.view_metadata(test_file)
+        metadata = MetadataProcessor.view_metadata(test_file)
 
         # Ensure metadata is still extracted via fallback tools (Piexif)
         assert metadata is not None

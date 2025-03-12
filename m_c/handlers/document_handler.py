@@ -5,7 +5,7 @@ import pikepdf
 from pypdf import PdfReader, PdfWriter
 from m_c.core.logger import logger
 from m_c.core.file_utils import validate_file
-from m_c.core.tool_manager import ToolManager
+from m_c.utils.tool_utils import ToolManager
 
 class DocumentHandler:
     """
