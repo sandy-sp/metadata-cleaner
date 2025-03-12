@@ -38,12 +38,21 @@ class DocumentHandler(BaseHandler):
             return self._remove_metadata_docx(file_path, output_path)
         return None
 
-    def _remove_metadata_pdf(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
+    def _remove_metadata_pdf(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
         """Ensure PDF metadata removal works correctly."""
         try:
             with pikepdf.open(file_path) as pdf:
                 pdf.remove_metadata()  # Explicitly remove metadata
                 pdf.save(output_path or file_path)
+
+            if not os.path.exists(output_path or file_path):
+                logger.error(
+                    f"PDF metadata removal failed: Output file not found {output_path}"
+                )
+                return None
+
             return output_path or file_path
         except Exception as e:
             logger.error(f"Failed to remove metadata from PDF: {e}")

@@ -155,18 +155,26 @@ class TestMetadataCleaner(unittest.TestCase):
     def test_validate_cleaned_files(self):
         """Ensure the cleaned files match the original count."""
         cleaned_files = [
-            f for f in os.listdir(self.cleaned_dir)
+            f
+            for f in os.listdir(self.cleaned_dir)
             if os.path.isfile(os.path.join(self.cleaned_dir, f))
         ]
         original_files = [
-            f for f in os.listdir(self.test_dir)
+            f
+            for f in os.listdir(self.test_dir)
             if os.path.isfile(os.path.join(self.test_dir, f))
         ]
 
         if len(cleaned_files) != len(original_files):
-            logger.warning(f"Expected {len(original_files)} cleaned files, but found {len(cleaned_files)}")
-        
-        self.assertEqual(len(cleaned_files), len(original_files), "Mismatch between cleaned and original files")
+            logger.warning(
+                f"Expected {len(original_files)} cleaned files, but found {len(cleaned_files)}"
+            )
+
+        self.assertEqual(
+            len(cleaned_files),
+            len(original_files),
+            "Mismatch between cleaned and original files",
+        )
 
 
 if __name__ == "__main__":

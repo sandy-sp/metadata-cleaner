@@ -21,16 +21,17 @@ class ImageHandler(BaseHandler):
 
         try:
             from m_c.utils.tool_utils import ToolManager
+
             if ToolManager().check_tools()["ExifTool"]:
                 return self._extract_metadata_exiftool(file_path)
         except Exception:
             logger.warning(f"ExifTool failed, using fallback method for {file_path}")
-        
+
         # Ensure a fallback method is used
         metadata = self._extract_metadata_piexif(file_path)
         if metadata is None:
             logger.warning(f"Fallback metadata extraction failed for {file_path}")
-        
+
         return metadata
 
     def remove_metadata(
@@ -51,7 +52,9 @@ class ImageHandler(BaseHandler):
             logger.error(f"Failed to extract metadata: {e}")
             return None
 
-    def _remove_metadata_piexif(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
+    def _remove_metadata_piexif(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
         """Remove metadata using Piexif."""
         try:
             img = Image.open(file_path)
@@ -62,10 +65,17 @@ class ImageHandler(BaseHandler):
                 output_path = f"{base}_cleaned{ext}"
 
             img.save(output_path)
+
+            if not os.path.exists(output_path):
+                logger.warning(
+                    f"Retrying metadata removal using ExifTool for {file_path}"
+                )
+                return self._remove_metadata_exiftool(file_path, output_path)
+
             return output_path
         except Exception as e:
             logger.error(f"Piexif failed to remove metadata: {e}")
-            return file_path  # Instead of returning None, return original file path
+            return None
 
 
 image_handler = ImageHandler()

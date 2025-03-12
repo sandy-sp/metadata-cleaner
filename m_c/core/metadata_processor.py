@@ -14,39 +14,45 @@ class MetadataProcessor:
         """Extract metadata from a file using the best available tool."""
         if not validate_file(file_path):
             logger.error(f"File validation failed: {file_path}")
-            return {}
+            return None
 
         tool = self.tools.get_best_tool(file_path)
         if not tool:
             logger.error(f"No tool available to extract metadata from {file_path}")
-            return {}
+            return None
 
         try:
             metadata = tool.extract_metadata(file_path)
-            if metadata is None:
+            if not metadata:
                 logger.warning(f"No metadata found for {file_path}")
-                return {}
+                return None
 
             return metadata
         except Exception as e:
-            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
-            return {}
+            logger.error(
+                f"Error extracting metadata from {file_path}: {e}", exc_info=True
+            )
+            return None
 
-    def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def delete_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Ensure the cleaned file is correctly saved."""
         if not validate_file(file_path):
             logger.error(f"Invalid file: {file_path}")
             return None
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, 'remove_metadata'):
+        if not tool or not hasattr(tool, "remove_metadata"):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
         try:
             cleaned_file = tool.remove_metadata(file_path, output_path)
             if not cleaned_file or not os.path.exists(cleaned_file):
-                logger.error(f"Metadata removal failed: Output file missing {cleaned_file}")
+                logger.error(
+                    f"Metadata removal failed: Output file missing {cleaned_file}"
+                )
                 return file_path  # Instead of returning None, return the input file
 
             return cleaned_file
@@ -76,7 +82,7 @@ class MetadataProcessor:
         updated_metadata = {**existing_metadata, **metadata_changes}
 
         tool = self.tools.get_best_tool(file_path)
-        if not tool or not hasattr(tool, 'edit_metadata'):
+        if not tool or not hasattr(tool, "edit_metadata"):
             logger.error(f"❌ No available tool to edit metadata for {file_path}")
             return file_path
 
