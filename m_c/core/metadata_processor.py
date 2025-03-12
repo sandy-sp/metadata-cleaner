@@ -14,20 +14,23 @@ class MetadataProcessor:
         """Extract metadata from a file using the best available tool."""
         if not validate_file(file_path):
             logger.error(f"File validation failed: {file_path}")
-            return None
+            return {}
 
         tool = self.tools.get_best_tool(file_path)
         if not tool:
             logger.error(f"No tool available to extract metadata from {file_path}")
-            return None
+            return {}
 
         try:
-            return tool.extract_metadata(file_path)
+            metadata = tool.extract_metadata(file_path)
+            if metadata is None:
+                logger.warning(f"No metadata found for {file_path}")
+                return {}
+
+            return metadata
         except Exception as e:
-            logger.error(
-                f"Error extracting metadata from {file_path}: {e}", exc_info=True
-            )
-            return None
+            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
+            return {}
 
     def delete_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Ensure the cleaned file is correctly saved."""
