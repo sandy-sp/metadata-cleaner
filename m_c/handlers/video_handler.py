@@ -21,6 +21,41 @@ class VideoHandler(BaseHandler):
     def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
         """Remove metadata from a video file using FFmpeg."""
         if not self.validate(file_path):
+            logger.error(f"🚨 Validation failed for {file_path}")
+            return None
+
+        try:
+            if not output_path:
+                base, ext = os.path.splitext(file_path)
+                output_path = f"{base}_cleaned{ext}"
+
+            logger.debug(f"🔍 Removing metadata from video file: {file_path}")
+
+            command = [
+                "ffmpeg",
+                "-i", file_path,
+                "-map_metadata", "-1",
+                "-c:v", "copy",
+                "-c:a", "copy",
+                output_path,
+                "-y"
+            ]
+
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            if "moov atom not found" in result.stderr or "Invalid data found" in result.stderr:
+                logger.error(f"❌ FFmpeg failed: {result.stderr.strip()}")
+                return None
+
+            if os.path.exists(output_path):
+                logger.info(f"✅ Video metadata removed successfully: {output_path}")
+                return output_path
+            else:
+                logger.error(f"❌ Video was not saved properly: {output_path}")
+
+        except Exception as e:
+            logger.error(f"❌ Error processing video file {file_path}: {e}", exc_info=True)
+        if not self.validate(file_path):
             return None
         return self._remove_metadata_ffmpeg(file_path, output_path)
 

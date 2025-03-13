@@ -17,7 +17,7 @@ class TestMetadataCleaner(unittest.TestCase):
         os.makedirs(cls.cleaned_dir, exist_ok=True)
 
         cls.test_files = {
-            "image": os.path.join(cls.test_dir, "sample.jpg"),
+            "image": os.path.join(cls.test_dir, "sample1.jpg"),
             "document": os.path.join(cls.test_dir, "sample.pdf"),
             "audio": os.path.join(cls.test_dir, "sample.mp3"),
             "video": os.path.join(cls.test_dir, "sample.mp4"),

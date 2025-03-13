@@ -35,8 +35,12 @@ class AudioHandler(BaseHandler):
             
             audio.delete()
             audio.save()
-            logger.info(f"✅ Metadata successfully removed: {file_path}")
-            return file_path
+            if File(file_path):
+                logger.info(f"✅ Metadata successfully removed: {file_path}")
+                return file_path
+            else:
+                logger.error(f"❌ Audio file was not saved properly after metadata removal: {file_path}")
+                return None
         except Exception as e:
             logger.error(f"❌ Failed to remove metadata from audio file {file_path}: {e}", exc_info=True)
             return None

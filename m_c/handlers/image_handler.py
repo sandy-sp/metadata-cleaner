@@ -30,20 +30,29 @@ class ImageHandler(BaseHandler):
     ImageFile.LOAD_TRUNCATED_IMAGES = True  # Allow processing truncated images
 
     def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Remove metadata from an image file and save a new cleaned copy."""
+        """Remove metadata from an image file and save a new cleaned copy without corrupting it."""
         if not self.validate(file_path):
+            logger.error(f"🚨 Validation failed for {file_path}")
             return None
 
         try:
-            logger.debug(f"Opening image file: {file_path}")
+            logger.debug(f"🔍 Attempting to open image file: {file_path}")
+
             with Image.open(file_path) as img:
-                img = img.convert("RGB")
-                img.info.pop("exif", None)
-                img.save(output_path)
+                img = img.convert("RGB")  # Convert to ensure compatibility
+                exif_data = img.info.get("exif")
+
+                # Save image WITHOUT EXIF data
+                if exif_data:
+                    img.save(output_path, "jpeg", exif=None)
+                else:
+                    img.save(output_path, "jpeg")  # No metadata in the first place
 
             if os.path.exists(output_path):
-                logger.info(f"✅ Image metadata removed: {output_path}")
+                logger.info(f"✅ Image metadata removed successfully: {output_path}")
                 return output_path
+            else:
+                logger.error(f"❌ Image was not saved properly: {output_path}")
 
         except UnidentifiedImageError:
             logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
