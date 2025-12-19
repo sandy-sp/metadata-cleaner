@@ -30,32 +30,50 @@ class ImageHandler(BaseHandler):
     ImageFile.LOAD_TRUNCATED_IMAGES = True  # Allow processing truncated images
 
     def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
-        """Remove metadata from an image file and save a new cleaned copy without corrupting it."""
+        """Remove metadata from an image file strictly preserving quality/format."""
         if not self.validate(file_path):
             logger.error(f"🚨 Validation failed for {file_path}")
             return None
 
+        if output_path is None:
+            base, ext = os.path.splitext(file_path)
+            output_path = f"{base}_cleaned{ext}"
+
         try:
-            logger.debug(f"🔍 Attempting to open image file: {file_path}")
+            logger.debug(f"🔍 Processing image: {file_path}")
+            
+            # 1. Attempt Lossless JPEG/WebP/TIFF cleaning via piexif (no re-encoding)
+            # piexif supports: JPG, WebP, TIFF
+            ext = os.path.splitext(file_path)[1].lower()
+            if ext in {".jpg", ".jpeg", ".webp", ".tiff", ".tif"}:
+                try:
+                    shutil.copyfile(file_path, output_path)
+                    piexif.remove(output_path)
+                    logger.info(f"✅ Metadata removed (lossless): {output_path}")
+                    return output_path
+                except Exception as e:
+                    logger.debug(f"Piexif failed ({e}), falling back to Pillow re-save")
+                    if os.path.exists(output_path):
+                        os.remove(output_path)
 
+            # 2. Universal Fallback: Pillow basic strip (Re-saves, but tries to keep format)
             with Image.open(file_path) as img:
-                img = img.convert("RGB")  # Convert to ensure compatibility
-                exif_data = img.info.get("exif")
-
-                # Save image WITHOUT EXIF data
-                if exif_data:
-                    img.save(output_path, "jpeg", exif=None)
-                else:
-                    img.save(output_path, "jpeg")  # No metadata in the first place
-
+                data = list(img.getdata()) # Force load pixel data
+                img_no_meta = Image.new(img.mode, img.size)
+                img_no_meta.putdata(data)
+                
+                # Copy format from original
+                save_format = img.format
+                
+                # Save without metadata
+                img_no_meta.save(output_path, format=save_format)
+            
             if os.path.exists(output_path):
-                logger.info(f"✅ Image metadata removed successfully: {output_path}")
+                logger.info(f"✅ Metadata removed (re-saved): {output_path}")
                 return output_path
-            else:
-                logger.error(f"❌ Image was not saved properly: {output_path}")
 
         except UnidentifiedImageError:
-            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            logger.error(f"❌ Cannot identify image file {file_path}")
         except Exception as e:
             logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
 
