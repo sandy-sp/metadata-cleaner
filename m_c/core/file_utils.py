@@ -45,3 +45,29 @@ def get_safe_output_path(input_path: str, output_dir: Optional[str] = None, pref
         counter += 1
     
     return output_path
+
+ALL_SUPPORTED_EXTENSIONS = {
+    # Images
+    ".jpg", ".jpeg", ".png", ".tiff", ".webp",
+    # Documents
+    ".pdf", ".docx", ".txt",
+    # Video/Audio
+    ".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv", ".mp3", ".wav", ".flac"
+}
+
+def get_supported_files(path: str) -> list[str]:
+    """
+    Get all supported files from a directory recursively, or return the file itself.
+    """
+    if os.path.isfile(path):
+        return [path]
+    
+    files_list = []
+    if os.path.isdir(path):
+        for root, _, files in os.walk(path):
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext in ALL_SUPPORTED_EXTENSIONS:
+                    files_list.append(os.path.join(root, file))
+    
+    return sorted(files_list)

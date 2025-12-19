@@ -173,5 +173,34 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIsNone(result)
         self.assertFalse(os.path.exists(dry_run_output))
 
+    
+    def test_recursive_scanning(self):
+        """Test recursive file scanning logic."""
+        # Create nested directory
+        nested_dir = os.path.join(self.test_dir, "nested")
+        subdir = os.path.join(nested_dir, "subdir")
+        os.makedirs(subdir, exist_ok=True)
+        
+        # Create dummy files
+        files = [
+            os.path.join(nested_dir, "file1.jpg"),
+            os.path.join(subdir, "file2.pdf"),
+            os.path.join(nested_dir, "skip.unknown")
+        ]
+        
+        for f in files:
+            with open(f, "w") as fh:
+                fh.write("dummy")
+                
+        # Import the helper to test it directly
+        from m_c.core.file_utils import get_supported_files
+        
+        found_files = get_supported_files(nested_dir)
+        
+        # Should find jpg and pdf, ignore unknown
+        self.assertEqual(len(found_files), 2)
+        self.assertTrue(any(f.endswith("file1.jpg") for f in found_files))
+        self.assertTrue(any(f.endswith("file2.pdf") for f in found_files))
+
 if __name__ == "__main__":
     unittest.main()
