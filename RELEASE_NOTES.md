@@ -1,17 +1,5 @@
 # Release Notes
 
-## v3.2.0
-**Release Date**: 2025-12-18
-
-### 🚀 New Features
-- **AVIF Support**: Added support for `.avif` images via ExifTool (Lossless).
-- **Tool Robustness**: Added strict checks for `ffmpeg` and `ffprobe`. The application now provides clear instructions if these external tools are missing, preventing runtime crashes.
-
-### 🐛 Bug Fixes
-- **Extension Validation**: Verified and ensured file extension checks are case-insensitive (e.g. `.JPG` vs `.jpg`).
-
----
-
 ## v3.1.0
 **Release Date**: 2025-12-18
 
