@@ -32,10 +32,40 @@ poetry install
 poetry run metadata-cleaner --help
 ```
 
+
 ### **2️⃣ Install via PyPI**
 ```bash
 pip install metadata-cleaner
 metadata-cleaner --help
+```
+
+---
+
+## 🛠️ Development & Testing
+
+This project uses a generic `manage.py` script for development tasks (compatible with Linux, Mac, and Windows).
+
+### **Setup Environment**
+```bash
+# Check deps & Install packages
+python3 manage.py install
+```
+
+### **Running Tests**
+```bash
+python3 manage.py test
+```
+
+### **Other Commands**
+```bash
+# Lint code
+python3 manage.py lint
+
+# Security audit
+python3 manage.py check
+
+# Clean artifacts
+python3 manage.py clean
 ```
 
 ---
