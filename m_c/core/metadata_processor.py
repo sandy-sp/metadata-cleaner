@@ -36,7 +36,7 @@ class MetadataProcessor:
             return {}
 
     def delete_metadata(
-        self, file_path: str, output_path: Optional[str] = None
+        self, file_path: str, output_path: Optional[str] = None, dry_run: bool = False
     ) -> Optional[str]:
         """Ensure the cleaned file is correctly saved without modifying the original."""
         if not validate_file(file_path):
@@ -52,6 +52,12 @@ class MetadataProcessor:
         tool = self.tools.get_best_tool(file_path)
         if not tool or not hasattr(tool, "remove_metadata"):
             logger.error(f"No tool available to remove metadata from {file_path}")
+            return None
+            
+        if dry_run:
+            logger.info(f"🐛 [DRY-RUN] Will remove metadata from: {file_path}")
+            logger.info(f"🐛 [DRY-RUN] Using tool: {tool.__class__.__name__}")
+            logger.info(f"🐛 [DRY-RUN] Output will be: {output_path}")
             return None
 
         try:

@@ -156,5 +156,22 @@ class TestMetadataCleaner(unittest.TestCase):
         # Existing test logic was fragile. Let's simplify or skip if untestable reliably.
         pass
 
+    
+    def test_dry_run_mechanism(self):
+        """Test dry run flag does not modify files."""
+        # Use existing image test file
+        test_file = self.test_files["image"]
+        dry_run_output = os.path.join(self.cleaned_dir, "dry_run_output.jpg")
+        
+        # Ensure it doesn't exist
+        if os.path.exists(dry_run_output):
+            os.remove(dry_run_output)
+            
+        result = self.processor.delete_metadata(test_file, dry_run_output, dry_run=True)
+        
+        # Should return None and NOT create file
+        self.assertIsNone(result)
+        self.assertFalse(os.path.exists(dry_run_output))
+
 if __name__ == "__main__":
     unittest.main()

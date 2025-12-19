@@ -25,11 +25,14 @@ def view_metadata(file):
 @click.command()
 @click.argument("file")
 @click.option("--output", default=None, help="Output file path")
-def delete_metadata(file, output):
+@click.option("--dry-run", is_flag=True, help="Simulate execution without modifying files.")
+def delete_metadata(file, output, dry_run):
     """Command to remove metadata."""
     try:
-        result = MetadataProcessor().delete_metadata(file, output)
-        if result:
+        result = MetadataProcessor().delete_metadata(file, output, dry_run=dry_run)
+        if dry_run:
+             click.echo("Dry run complete. No files changed.")
+        elif result:
             click.echo(f"Metadata removed: {result}")
         else:
             click.echo("Failed to remove metadata. Check logs for details.")

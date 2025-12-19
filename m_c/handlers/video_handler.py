@@ -31,15 +31,17 @@ class VideoHandler(BaseHandler):
 
             logger.debug(f"🔍 Removing metadata from video file: {file_path}")
 
+            # Use stream copy to prevent re-encoding (Lossless)
             command = [
                 "ffmpeg",
                 "-i", file_path,
                 "-map_metadata", "-1",
-                "-c:v", "copy",
-                "-c:a", "copy",
+                "-c", "copy",  # Copy ALL streams (video, audio, subtitles)
                 output_path,
                 "-y"
             ]
+            
+            logger.debug(f"Video Command: {' '.join(command)}")
 
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
