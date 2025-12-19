@@ -157,6 +157,18 @@ class TestMetadataCleaner(unittest.TestCase):
         pass
 
     
+    def test_avif_recognition(self):
+        """Verify AVIF files are recognized by ImageHandler."""
+        from m_c.handlers.image_handler import image_handler
+        self.assertIn("avif", image_handler.SUPPORTED_FORMATS)
+        
+        # Test file validation
+        avif_path = os.path.join(self.test_dir, "test.avif")
+        with open(avif_path, "wb") as f:
+            f.write(b"dummy binary data")
+            
+        self.assertTrue(image_handler.is_supported(avif_path))
+
     def test_dry_run_mechanism(self):
         """Test dry run flag does not modify files."""
         # Use existing image test file

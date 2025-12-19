@@ -263,3 +263,64 @@ m_c/tests/sample/sample.mp4: Invalid data found when processing input
 2025-12-18 23:48:32 | INFO | tool_utils.py:21 | Tool Availability Check: {'ExifTool': True, 'FFmpeg': True, 'Mutagen': True}
 2025-12-18 23:48:32 | WARNING | image_handler.py:27 | ExifTool failed, using fallback method for m_c/tests/sample/sample1.jpg
 2025-12-18 23:48:32 | WARNING | image_handler.py:105 | No EXIF data found for m_c/tests/sample/sample1.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:58 | 🐛 [DRY-RUN] Will remove metadata from: m_c/tests/sample/sample1.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:59 | 🐛 [DRY-RUN] Using tool: ImageHandler
+2025-12-19 01:04:59 | INFO | metadata_processor.py:60 | 🐛 [DRY-RUN] Output will be: m_c/tests/sample/cleaned/dry_run_output.jpg
+2025-12-19 01:04:59 | ERROR | metadata_processor.py:118 | ❌ No available tool to edit metadata for m_c/tests/sample/sample.pdf
+2025-12-19 01:04:59 | INFO | metadata_processor.py:64 | Removing metadata from: m_c/tests/sample/sample1.jpg, saving to: m_c/tests/sample/cleaned/quality_test_cleaned.jpg
+2025-12-19 01:04:59 | INFO | image_handler.py:58 | ✅ Metadata removed (lossless): m_c/tests/sample/cleaned/quality_test_cleaned.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:75 | ✅ Metadata successfully removed: m_c/tests/sample/cleaned/quality_test_cleaned.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:64 | Removing metadata from: m_c/tests/sample/sample1.jpg, saving to: m_c/tests/sample/cleaned/cleaned_sample1.jpg
+2025-12-19 01:04:59 | INFO | image_handler.py:58 | ✅ Metadata removed (lossless): m_c/tests/sample/cleaned/cleaned_sample1.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:75 | ✅ Metadata successfully removed: m_c/tests/sample/cleaned/cleaned_sample1.jpg
+2025-12-19 01:04:59 | INFO | metadata_processor.py:64 | Removing metadata from: m_c/tests/sample/sample.pdf, saving to: m_c/tests/sample/cleaned/cleaned_sample.pdf
+2025-12-19 01:04:59 | INFO | document_handler.py:128 | ✅ PDF metadata successfully removed: m_c/tests/sample/cleaned/cleaned_sample.pdf
+2025-12-19 01:04:59 | INFO | document_handler.py:99 | ✅ Document metadata removed successfully: m_c/tests/sample/cleaned/cleaned_sample.pdf
+2025-12-19 01:04:59 | INFO | metadata_processor.py:75 | ✅ Metadata successfully removed: m_c/tests/sample/cleaned/cleaned_sample.pdf
+2025-12-19 01:04:59 | INFO | metadata_processor.py:64 | Removing metadata from: m_c/tests/sample/sample.mp3, saving to: m_c/tests/sample/cleaned/cleaned_sample.mp3
+2025-12-19 01:04:59 | ERROR | audio_handler.py:45 | ❌ Failed to remove metadata from audio file m_c/tests/sample/sample.mp3: can't sync to MPEG frame
+Traceback (most recent call last):
+  File "/media/sp/SinisterPuppy/SP/sandy-sp/repos/metadata-cleaner/m_c/handlers/audio_handler.py", line 31, in remove_metadata
+    audio = File(file_path, easy=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/_util.py", line 164, in wrapper_func
+    return func(h, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/_file.py", line 302, in File
+    return Kind(fileobj, filename=filething.filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/_file.py", line 48, in __init__
+    self.load(*args, **kwargs)
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/_util.py", line 156, in wrapper
+    return func(self, h, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/id3/_file.py", line 420, in load
+    self.info = self._Info(fileobj, offset)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/_util.py", line 185, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sp/.cache/pypoetry/virtualenvs/metadata-cleaner-zep1j4kP-py3.12/lib/python3.12/site-packages/mutagen/mp3/__init__.py", line 401, in __init__
+    raise HeaderNotFoundError("can't sync to MPEG frame")
+mutagen.mp3.HeaderNotFoundError: can't sync to MPEG frame
+2025-12-19 01:04:59 | ERROR | metadata_processor.py:70 | ❌ Metadata removal failed: m_c/tests/sample/sample.mp3. Expected output: m_c/tests/sample/cleaned/cleaned_sample.mp3
+2025-12-19 01:04:59 | INFO | metadata_processor.py:64 | Removing metadata from: m_c/tests/sample/sample.mp4, saving to: m_c/tests/sample/cleaned/cleaned_sample.mp4
+2025-12-19 01:04:59 | ERROR | video_handler.py:49 | ❌ FFmpeg failed: ffmpeg version 5.1.7-0+deb12u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --disable-sndio --enable-libjxl --enable-pocketsphinx --enable-librsvg --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  WARNING: library configuration mismatch
+  avcodec     configuration: --prefix=/usr --extra-version=0+deb12u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --disable-sndio --enable-libjxl --enable-pocketsphinx --enable-librsvg --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared --enable-version3 --disable-doc --disable-programs --enable-libaribb24 --enable-libopencore_amrnb --enable-libopencore_amrwb --enable-libtesseract --enable-libvo_amrwbenc --enable-libsmbclient
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x558053298880] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x558053298880] moov atom not found
+m_c/tests/sample/sample.mp4: Invalid data found when processing input
+2025-12-19 01:04:59 | ERROR | metadata_processor.py:70 | ❌ Metadata removal failed: m_c/tests/sample/sample.mp4. Expected output: m_c/tests/sample/cleaned/cleaned_sample.mp4
+2025-12-19 01:04:59 | ERROR | file_utils.py:11 | File not found: non_existent_file.txt
+2025-12-19 01:04:59 | INFO | tool_utils.py:21 | Tool Availability Check: {'ExifTool': True, 'FFmpeg': True, 'Mutagen': True}

@@ -13,8 +13,8 @@ class ImageHandler(BaseHandler):
     Uses ExifTool and Piexif.
     """
 
-    SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp"}
-
+    SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp", "avif"}
+    
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Extract metadata with fallback methods."""
         if not self.validate(file_path):
@@ -42,9 +42,15 @@ class ImageHandler(BaseHandler):
         try:
             logger.debug(f"🔍 Processing image: {file_path}")
             
+            ext = os.path.splitext(file_path)[1].lower()
+            
+            # 0. Handle AVIF via ExifTool (Lossless, Pillow support is basic/experimental)
+            if ext == ".avif":
+                logger.info(f"Using ExifTool for AVIF: {file_path}")
+                return self._remove_metadata_exiftool(file_path, output_path)
+
             # 1. Attempt Lossless JPEG/WebP/TIFF cleaning via piexif (no re-encoding)
             # piexif supports: JPG, WebP, TIFF
-            ext = os.path.splitext(file_path)[1].lower()
             if ext in {".jpg", ".jpeg", ".webp", ".tiff", ".tif"}:
                 try:
                     shutil.copyfile(file_path, output_path)

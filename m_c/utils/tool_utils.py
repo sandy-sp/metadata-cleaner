@@ -24,7 +24,7 @@ class ToolManager:
     def get_best_tool(self, file_path: str):
         """Return best tool for given file type."""
         ext = file_path.split(".")[-1].lower()
-        if ext in ["jpg", "jpeg", "png", "tiff", "webp"]:
+        if ext in ["jpg", "jpeg", "png", "tiff", "webp", "avif"]:
             return ImageHandler()
         elif ext in ["pdf", "docx", "txt"]:
             return DocumentHandler()
