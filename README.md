@@ -89,14 +89,39 @@ metadata-cleaner view sample.jpg
 ```bash
 metadata-cleaner delete sample.jpg
 ```
-**Output:**
+
+### **Batch & Recursive Processing**
+```bash
+# Process a folder recursively
+metadata-cleaner delete ./my_photos --dry-run
+# Remove dry-run to apply changes
+metadata-cleaner delete ./my_photos
 ```
-✅ Metadata removed: sample_cleaned.jpg
+**Features:**
+- 📂 Recursively finds all supported files (Images, Docs, Video).
+- 🧬 **Lossless Video**: Preserves all video/audio streams via copy (no re-encoding).
+- 🐛 **Dry Run**: Use `--dry-run` to see what would happen.
+
+---
+
+## 🐳 Docker Usage
+
+You can run Metadata Cleaner without installing dependencies using Docker.
+
+### **1️⃣ Build the Image**
+```bash
+docker build -t metadata-cleaner .
 ```
 
-### **Batch Processing**
+### **2️⃣ Run Commands**
+Map your local data folder to `/data` in the container.
+
 ```bash
-metadata-cleaner delete --folder my_photos --recursive
+# Clean a directory
+docker run --rm -v $(pwd)/photos:/data metadata-cleaner delete /data
+
+# View metadata
+docker run --rm -v $(pwd)/sample.jpg:/file.jpg metadata-cleaner view /file.jpg
 ```
 ---
 

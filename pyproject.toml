@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "metadata-cleaner"
-version = "3.0.0"
+version = "3.1.0"
 description = "A CLI tool to remove, edit, or selectively filter metadata from images, documents, audio, and video files."
 authors = ["Sandeep Paidipati <sandeep.paidipati@gmail.com>"]
 license = "MIT"
