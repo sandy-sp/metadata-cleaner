@@ -16,6 +16,7 @@ class ToolManager:
             self._cached_tools = {
                 "ExifTool": shutil.which("exiftool") is not None,
                 "FFmpeg": shutil.which("ffmpeg") is not None,
+                "FFprobe": shutil.which("ffprobe") is not None,
                 "Mutagen": True,  # Mutagen is a Python module, always available if installed
             }
         logger.info(f"Tool Availability Check: {self._cached_tools}")

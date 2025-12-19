@@ -16,6 +16,13 @@ class VideoHandler(BaseHandler):
         """Extract metadata from a video file using FFmpeg."""
         if not self.validate(file_path):
             return None
+            
+        from m_c.utils.tool_utils import ToolManager
+        tools = ToolManager().check_tools()
+        if not tools["FFprobe"] or not tools["FFmpeg"]:
+             logger.error("🚨 FFmpeg/FFprobe not found. Please install them to process videos.")
+             return None
+             
         return self._extract_metadata_ffmpeg(file_path)
 
     def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
@@ -23,6 +30,11 @@ class VideoHandler(BaseHandler):
         if not self.validate(file_path):
             logger.error(f"🚨 Validation failed for {file_path}")
             return None
+            
+        from m_c.utils.tool_utils import ToolManager
+        if not ToolManager().check_tools()["FFmpeg"]:
+             logger.error("🚨 FFmpeg not found. Please install it to process videos.")
+             return None
 
         try:
             if not output_path:
