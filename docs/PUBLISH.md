@@ -1,27 +1,43 @@
 # Publishing Guide
 
-Follow these steps to build and publish the `dco` package to PyPI.
+Follow these steps to build and publish `metadata-cleaner`.
 
-## 1. Install Build Tools
-Ensure you have the latest build and upload tools installed.
+## 1. Install Dependencies
+
+Install project and development dependencies with Poetry.
+
 ```bash
-pip install build twine
+poetry install --with dev
 ```
 
-## 2. Build the Package
-Generate the distribution archives (`.whl` and `.tar.gz`) in the `dist/` directory.
+## 2. Verify Locally
+
+Run the same checks used by CI and the release workflow.
+
 ```bash
-python -m build
+poetry check --lock
+poetry run pytest
+poetry run flake8 m_c manage.py
+poetry run pip-audit
 ```
 
-## 3. Local Verification
-Install the newly built wheel locally to ensure it works before uploading.
+## 3. Build the Package
+
+Generate the source distribution and wheel in `dist/`.
+
 ```bash
-pip install dist/dco-0.1.0-py3-none-any.whl
+poetry build
 ```
 
-## 4. Upload to PyPI
-Upload the distribution files to the Python Package Index.
+## 4. Publish a Release
+
+The GitHub release workflow publishes to PyPI when a `v*` tag is pushed.
+
 ```bash
-twine upload dist/*
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
+
+Before tagging, update `pyproject.toml` and `RELEASE_NOTES.md`, run the full
+verification suite, and make sure `PYPI_API_TOKEN` is configured in the
+repository secrets.

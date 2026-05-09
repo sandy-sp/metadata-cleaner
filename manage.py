@@ -90,8 +90,7 @@ def test():
 def lint():
     """Run linting checks (flake8)."""
     log("Running linting (flake8)...", GREEN)
-    # Check if flake8 is available in project
-    run_command(["poetry", "run", "flake8", "m_c"])
+    run_command(["poetry", "run", "flake8", "m_c", "manage.py"])
 
 
 def check():
