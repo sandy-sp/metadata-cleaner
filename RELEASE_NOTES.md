@@ -1,6 +1,7 @@
 # Release Notes
 
-## Unreleased
+## v3.2.0
+**Release Date**: 2026-05-09
 
 ### Security
 - Refreshed the dependency lockfile to patched versions for Pillow, pypdf,
