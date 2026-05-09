@@ -20,18 +20,22 @@ def _parse_json_option(json_string: str) -> Optional[dict]:
 
 
 def _batch_output_path(
-    input_root: str, file_path: str, output_root: Optional[str]
+    input_root: str,
+    file_path: str,
+    output_root: Optional[str],
+    create_dirs: bool = True,
 ) -> str:
     if output_root is None:
         return get_safe_output_path(
             file_path,
             output_dir=os.path.join(os.path.dirname(file_path), "cleaned"),
+            create_dirs=create_dirs,
         )
 
     base_root = input_root if os.path.isdir(input_root) else os.path.dirname(file_path)
     relative_path = os.path.relpath(file_path, start=base_root or ".")
     target_path = os.path.join(output_root, relative_path)
-    return get_safe_output_path(target_path)
+    return get_safe_output_path(target_path, create_dirs=create_dirs)
 
 
 @click.group()
@@ -78,7 +82,12 @@ def delete(path, output, dry_run):
     with tqdm(total=len(files_to_process)) as pbar:
         for file_path in files_to_process:
             try:
-                output_path = _batch_output_path(path, file_path, output)
+                output_path = _batch_output_path(
+                    path,
+                    file_path,
+                    output,
+                    create_dirs=not dry_run,
+                )
                 result = processor.delete_metadata(
                     file_path,
                     output_path,

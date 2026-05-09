@@ -42,22 +42,26 @@ class MetadataProcessor:
             logger.error(f"Invalid file: {file_path}")
             return None
 
-        # Ensure output path is set correctly in 'cleaned/' directory
-        if output_path is None:
-            cleaned_dir = os.path.join(os.path.dirname(file_path), "cleaned")
-            os.makedirs(cleaned_dir, exist_ok=True)
-            output_path = os.path.join(cleaned_dir, os.path.basename(file_path))
-
         tool = self.tools.get_best_tool(file_path)
         if not tool or not hasattr(tool, "remove_metadata"):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
 
+        default_output_path = os.path.join(
+            os.path.dirname(file_path), "cleaned", os.path.basename(file_path)
+        )
+        target_output_path = output_path or default_output_path
+
         if dry_run:
             logger.info(f"[DRY-RUN] Will remove metadata from: {file_path}")
             logger.info(f"[DRY-RUN] Using tool: {tool.__class__.__name__}")
-            logger.info(f"[DRY-RUN] Output will be: {output_path}")
+            logger.info(f"[DRY-RUN] Output will be: {target_output_path}")
             return None
+
+        if output_path is None:
+            cleaned_dir = os.path.dirname(default_output_path)
+            os.makedirs(cleaned_dir, exist_ok=True)
+            output_path = default_output_path
 
         try:
             logger.info(

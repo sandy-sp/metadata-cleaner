@@ -1,11 +1,15 @@
 import os
 import shutil
 import unittest
+from click.testing import CliRunner
+import docx
 from PIL import Image
 import pypdf
 
+from m_c.cli.main import cli
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
+from m_c.handlers.base_handler import BaseHandler
 
 
 class TestMetadataCleaner(unittest.TestCase):
@@ -25,6 +29,7 @@ class TestMetadataCleaner(unittest.TestCase):
             "audio": os.path.join(cls.test_dir, "sample.mp3"),
             "video": os.path.join(cls.test_dir, "sample.mp4"),
         }
+        cls.test_docx = os.path.join(cls.test_dir, "sample.docx")
 
         # Create VALID JPEG (1x1 red pixel)
         img = Image.new("RGB", (100, 100), color="red")
@@ -35,6 +40,15 @@ class TestMetadataCleaner(unittest.TestCase):
         writer.add_blank_page(width=72, height=72)
         with open(cls.test_files["document"], "wb") as f:
             writer.write(f)
+
+        # Create VALID DOCX with core metadata.
+        document = docx.Document()
+        document.add_paragraph("Metadata Cleaner test document.")
+        core_props = document.core_properties
+        core_props.author = "Test Author"
+        core_props.last_modified_by = "Test Editor"
+        core_props.title = "Test Title"
+        document.save(cls.test_docx)
 
         # Create dummy audio/video files for graceful-failure checks.
         for key in ["audio", "video"]:
@@ -164,6 +178,85 @@ class TestMetadataCleaner(unittest.TestCase):
         # Should return None and NOT create file
         self.assertIsNone(result)
         self.assertFalse(os.path.exists(dry_run_output))
+
+    def test_dry_run_does_not_create_default_output_directory(self):
+        """Dry runs should not create the default cleaned output directory."""
+        source_dir = os.path.join(self.test_dir, "dry-run-source")
+        os.makedirs(source_dir, exist_ok=True)
+        source_file = os.path.join(source_dir, "photo.jpg")
+        Image.new("RGB", (10, 10), color="blue").save(source_file, "jpeg")
+
+        default_cleaned_dir = os.path.join(source_dir, "cleaned")
+        result = self.processor.delete_metadata(source_file, dry_run=True)
+
+        self.assertIsNone(result)
+        self.assertFalse(os.path.exists(default_cleaned_dir))
+
+    def test_docx_metadata_removal_clears_core_properties(self):
+        """DOCX cleaning should preserve content and clear common core metadata."""
+        cleaned_docx = os.path.join(self.cleaned_dir, "cleaned_sample.docx")
+        output_file = self.processor.delete_metadata(self.test_docx, cleaned_docx)
+
+        self.assertEqual(output_file, cleaned_docx)
+        self.assertTrue(os.path.exists(output_file))
+
+        cleaned_document = docx.Document(output_file)
+        cleaned_props = cleaned_document.core_properties
+        paragraphs = [paragraph.text for paragraph in cleaned_document.paragraphs]
+
+        self.assertIn("Metadata Cleaner test document.", paragraphs)
+        self.assertEqual(cleaned_props.author, "")
+        self.assertEqual(cleaned_props.last_modified_by, "")
+        self.assertEqual(cleaned_props.title, "")
+        self.assertEqual(cleaned_props.created.year, 1980)
+        self.assertEqual(cleaned_props.modified.year, 1980)
+
+    def test_in_place_output_path_is_rejected(self):
+        """Handlers should reject an output path that equals the input path."""
+        handler = BaseHandler()
+
+        with self.assertRaises(ValueError):
+            handler.prepare_output_path(self.test_files["image"], self.test_files["image"])
+
+        result = self.processor.delete_metadata(
+            self.test_files["image"],
+            self.test_files["image"],
+        )
+        self.assertIsNone(result)
+        self.assertTrue(os.path.exists(self.test_files["image"]))
+
+    def test_cli_delete_dry_run_directory_has_no_file_system_side_effects(self):
+        """CLI dry-run mode should not create an output directory."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs(os.path.join("inputs", "nested"), exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--output", "outputs", "--dry-run"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn(
+                "Dry run complete. 1 files would be processed.",
+                result.output,
+            )
+            self.assertFalse(os.path.exists("outputs"))
+
+    def test_cli_rejects_invalid_edit_json(self):
+        """CLI edit command should fail gracefully for invalid JSON."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["edit", self.test_files["document"], "--changes", "{invalid"],
+        )
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("Invalid JSON format", result.output)
 
     def test_recursive_scanning(self):
         """Test recursive file scanning logic."""

@@ -38,12 +38,14 @@ def get_safe_output_path(
     output_dir: Optional[str] = None,
     prefix: str = "",
     suffix: str = "",
+    create_dirs: bool = True,
 ) -> str:
     """Generate a safe output path to avoid overwriting files."""
     base_name = os.path.basename(input_path)
     name, ext = os.path.splitext(base_name)
     output_dir = output_dir or os.path.dirname(input_path)
-    os.makedirs(output_dir or ".", exist_ok=True)
+    if create_dirs:
+        os.makedirs(output_dir or ".", exist_ok=True)
     output_name = f"{prefix}{name}{suffix}{ext}"
     output_path = os.path.join(output_dir, output_name)
 

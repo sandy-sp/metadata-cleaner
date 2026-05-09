@@ -20,12 +20,12 @@ def log(msg, color=RESET):
 
 def run_command(command, cwd=None, exit_on_fail=True):
     """Run a shell command and optionally exit on failure."""
-    log(f"🚀 Running: {' '.join(command)}", BOLD)
+    log(f"Running: {' '.join(command)}", BOLD)
     try:
         subprocess.check_call(command, cwd=cwd)
         return True
     except subprocess.CalledProcessError as e:
-        log(f"❌ Command failed: {' '.join(command)}", RED)
+        log(f"Command failed: {' '.join(command)}", RED)
         if exit_on_fail:
             sys.exit(e.returncode)
         return False
@@ -37,22 +37,22 @@ def check_command_exists(cmd):
 
 def install():
     """Install dependencies and check system tools."""
-    log("📦 Starting installation...", GREEN)
+    log("Starting installation...", GREEN)
 
     # 1. Check/Install Poetry
     if not check_command_exists("poetry"):
         log(
-            "⚠️ Poetry not found. Please install Poetry first: https://python-poetry.org/docs/",
+            "Poetry not found. Please install Poetry first: https://python-poetry.org/docs/",
             YELLOW,
         )
         sys.exit(1)
         # Note: Auto-installing poetry is risky across platforms (win/mac/linux differences),
         # simpler to ask user to have the package manager installed.
     else:
-        log("✅ Poetry is installed.", GREEN)
+        log("Poetry is installed.", GREEN)
 
     # 2. Install Project Dependencies
-    log("📥 Installing project dependencies...", GREEN)
+    log("Installing project dependencies...", GREEN)
     run_command(["poetry", "install"])
 
     # 3. Check System Dependencies (ffmpeg, exiftool)
@@ -60,13 +60,13 @@ def install():
     missing = []
     for dep in sys_deps:
         if check_command_exists(dep):
-            log(f"✅ System check: {dep} is found.", GREEN)
+            log(f"System check: {dep} is found.", GREEN)
         else:
-            log(f"❌ System check: {dep} is MISSING.", RED)
+            log(f"System check: {dep} is MISSING.", RED)
             missing.append(dep)
 
     if missing:
-        log(f"\n⚠️ Missing system tools: {', '.join(missing)}", YELLOW)
+        log(f"\nMissing system tools: {', '.join(missing)}", YELLOW)
         if platform.system() == "Linux":
             log("   Run: sudo apt install " + " ".join(missing), BOLD)
         elif platform.system() == "Darwin":
@@ -78,35 +78,35 @@ def install():
             YELLOW,
         )
 
-    log("\n✅ Installation steps completed.", GREEN)
+    log("\nInstallation steps completed.", GREEN)
 
 
 def test():
     """Run tests via pytest."""
-    log("🧪 Running tests...", GREEN)
+    log("Running tests...", GREEN)
     run_command(["poetry", "run", "pytest"])
 
 
 def lint():
     """Run linting checks (flake8)."""
-    log("🔍 Running linting (flake8)...", GREEN)
+    log("Running linting (flake8)...", GREEN)
     # Check if flake8 is available in project
     run_command(["poetry", "run", "flake8", "m_c"])
 
 
 def check():
     """Run security checks."""
-    log("🛡️ Running security checks...", GREEN)
+    log("Running security checks...", GREEN)
 
     if run_command(["poetry", "run", "pip-audit"], exit_on_fail=False):
-        log("✅ pip-audit passed.", GREEN)
+        log("pip-audit passed.", GREEN)
     else:
-        log("⚠️ pip-audit issues found.", YELLOW)
+        log("pip-audit issues found.", YELLOW)
 
 
 def clean():
     """Remove temporary build artifacts."""
-    log("🧹 Cleaning up...", GREEN)
+    log("Cleaning up...", GREEN)
 
     for root, dirs, files in os.walk("."):
         for d in dirs:
@@ -123,7 +123,7 @@ def clean():
                 log(f"   Removing file: {path}")
                 os.remove(path)
 
-    log("✅ Clean complete.", GREEN)
+    log("Clean complete.", GREEN)
 
 
 def main():
