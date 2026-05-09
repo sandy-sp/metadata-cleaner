@@ -9,69 +9,51 @@ jobs:
   publish_and_release:
     name: Publish Package and Create GitHub Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      # 1) Check out your repo code
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # 2) Install system deps (like libjpeg) if needed
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libjpeg-dev zlib1g-dev
+          sudo apt-get install -y ffmpeg libimage-exiftool-perl libjpeg-dev zlib1g-dev
 
-      # 3) Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.13"
 
-      # 4) Install Poetry
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          poetry --version
+        run: pipx install poetry==2.2.1
 
-      # 5) Install and Build
-      - name: Install Dependencies and Build Package
+      - name: Install Dependencies
+        run: poetry install --with dev
+
+      - name: Run Tests
+        run: poetry run pytest
+
+      - name: Run Lint
+        run: poetry run flake8 m_c manage.py
+
+      - name: Audit Dependencies
+        run: poetry run pip-audit
+
+      - name: Build Package
         run: |
-          poetry install --no-root
           poetry build
 
-      # 6) Publish to PyPI
       - name: Publish Package to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           poetry publish --username __token__ --password "$POETRY_PYPI_TOKEN_PYPI" --no-interaction
 
-      # 7) Create a GitHub Release with the new tag
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}   # e.g. "v2.0.0"
-          release_name: "Release ${{ github.ref_name }}"
-          body: |
-            # Release Notes
-            - Summary of changes in version ${{ github.ref_name }}
-             ## Updates in this Release:
-            - Improved selective metadata filtering.
-            - Added recursive folder processing.
-            - Expanded image format support (including WEBP & HEIC).
-            - Enhanced logging and error reporting.
-            
-            ## Installation:
-            Install via pip:
-            ```
-            pip install metadata-cleaner
-            ```
-            Or use Poetry:
-            ```
-            poetry install && poetry run metadata-cleaner --help
-            ```
+          generate_release_notes: true
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

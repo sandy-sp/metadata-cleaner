@@ -34,6 +34,13 @@ venv/
 Thumbs.db
 
 # Logs
-.log/
+*.log
+logs/
+m_c/logs/
+
+# Local agent/memory state
+.brain/
+.agents/
+.codex/
 
 metadata-cleaner.code-workspace

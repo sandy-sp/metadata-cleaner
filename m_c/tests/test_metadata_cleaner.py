@@ -1,15 +1,12 @@
 import os
 import shutil
 import unittest
-import hashlib
 from PIL import Image
-import io
 import pypdf
 
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
-from m_c.core.logger import logger
-from m_c.utils.tool_utils import ToolManager
+
 
 class TestMetadataCleaner(unittest.TestCase):
     @classmethod
@@ -32,18 +29,16 @@ class TestMetadataCleaner(unittest.TestCase):
         # Create VALID JPEG (1x1 red pixel)
         img = Image.new("RGB", (100, 100), color="red")
         img.save(cls.test_files["image"], "jpeg", quality=100)
-        
+
         # Create VALID PDF
         writer = pypdf.PdfWriter()
         writer.add_blank_page(width=72, height=72)
         with open(cls.test_files["document"], "wb") as f:
             writer.write(f)
 
-        # Create Dummy Audio/Video (since we only validate extension for now in base check, 
-        # but robust implementation might need headers. Keeping text for now as low risk 
-        # unless FFmpeg checks strictly.)
+        # Create dummy audio/video files for graceful-failure checks.
         for key in ["audio", "video"]:
-             with open(cls.test_files[key], "w") as f:
+            with open(cls.test_files[key], "w") as f:
                 f.write("Dummy file content")
 
         cls.processor = MetadataProcessor()
@@ -70,7 +65,7 @@ class TestMetadataCleaner(unittest.TestCase):
         metadata = self.processor.view_metadata(self.test_files["image"])
         # Should be dict (even if empty)
         self.assertIsInstance(metadata, dict)
-        
+
         # specific check for pdf
         pdf_meta = self.processor.view_metadata(self.test_files["document"])
         self.assertIsInstance(pdf_meta, dict)
@@ -78,12 +73,14 @@ class TestMetadataCleaner(unittest.TestCase):
     def test_remove_metadata(self):
         """Test metadata removal for all file types while preserving originals."""
         for category, file_path in self.test_files.items():
-            cleaned_file_path = os.path.join(self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}")
+            cleaned_file_path = os.path.join(
+                self.cleaned_dir, f"cleaned_{os.path.basename(file_path)}"
+            )
             if os.path.exists(cleaned_file_path):
                 os.remove(cleaned_file_path)
-            
+
             output_file = self.processor.delete_metadata(file_path, cleaned_file_path)
-            
+
             # Allow skipping audio/video if tools missing, but Image/Doc MUST succeed
             if category in ["image", "document"]:
                 self.assertIsNotNone(output_file, f"Failed to clean {category}")
@@ -92,11 +89,9 @@ class TestMetadataCleaner(unittest.TestCase):
 
     def test_edit_metadata(self):
         """Test metadata editing."""
-        # Only implemented for PDF currently in this test scope or if doc handler supports it
-        # DocumentHandler supports PDF and DOCX.
-        metadata_changes = {"/Title": "Test User"} # PDF keys often start with /
-        # We try generic dict, handler handles mapping
-        output_file = self.processor.edit_metadata(self.test_files["document"], {"Title": "My Title"})
+        output_file = self.processor.edit_metadata(
+            self.test_files["document"], {"Title": "My Title"}
+        )
         # Not all handlers might support edit, but if it returns path, it exists
         if output_file:
             self.assertTrue(os.path.exists(output_file))
@@ -105,46 +100,31 @@ class TestMetadataCleaner(unittest.TestCase):
         """Ensure the cleaned file maintains pixel data integrity."""
         original_file = self.test_files["image"]
         cleaned_file = os.path.join(self.cleaned_dir, "quality_test_cleaned.jpg")
-        
+
         self.processor.delete_metadata(original_file, cleaned_file)
         self.assertTrue(os.path.exists(cleaned_file))
-        
+
         # Verify pixels are identical
-        with Image.open(original_file) as img_orig, Image.open(cleaned_file) as img_clean:
+        with Image.open(original_file) as img_orig, Image.open(
+            cleaned_file
+        ) as img_clean:
             # Convert both to same mode/data to compare pixels
-            # Note: JPEG is lossy, but "lossless" metadata removal means 
-            # the JPEG IMAGE data is untouched. 
+            # Note: JPEG is lossy, but "lossless" metadata removal means
+            # the JPEG IMAGE data is untouched.
             # However, opening and re-saving (fallback) alters pixels.
             # Shutil copy + piexif remove (primary path) KEEPS pixels identical.
             # So if our primary path works, this assertion passes.
             # If fallback works, this assertion MIGHT fail if pixels change.
             # Our goal is NO pixel change.
-            
+
             # Check format
             self.assertEqual(img_orig.format, img_clean.format)
-            
+
             # Check size
             self.assertEqual(img_orig.size, img_clean.size)
-            
-            # Check content (tobytes) - strictly identical for lossless copy
-            # But header differences (metadata) mean file bytes differ.
-            # Pixel bytes might be identical if decoded?
-            # No, if we use header manipulation, the encoded image data stream is identical.
-            # If we decoded and re-encoded, they will differ.
-            
-            # To verify "lossless" removal of JPEG, we can check the JPEG quant tables or just raw pixel diff?
-            # Actually, `tobytes()` returns raw pixel data. If re-encoded with same quality, it changes slightly usually.
-            # If strictly copied, `tobytes()` matches.
-            
-            # Let's rely on visual (pixels) equality for fallback cases, 
-            # but ideally we want bit-exact matches for the encoded steam? 
-            # Hard to check encoded stream easily without parsing.
-            # Let's check pixel equality.
-            
-            diff = list(set(list(img_orig.getdata())) - set(list(img_clean.getdata())))
-            # Iterate and compare?
-            # ImageChops.difference
+
             from PIL import ImageChops
+
             diff = ImageChops.difference(img_orig, img_clean)
             if diff.getbbox():
                 # Pixels differ
@@ -156,17 +136,17 @@ class TestMetadataCleaner(unittest.TestCase):
         # Existing test logic was fragile. Let's simplify or skip if untestable reliably.
         pass
 
-    
     def test_avif_recognition(self):
         """Verify AVIF files are recognized by ImageHandler."""
         from m_c.handlers.image_handler import image_handler
+
         self.assertIn("avif", image_handler.SUPPORTED_FORMATS)
-        
+
         # Test file validation
         avif_path = os.path.join(self.test_dir, "test.avif")
         with open(avif_path, "wb") as f:
             f.write(b"dummy binary data")
-            
+
         self.assertTrue(image_handler.is_supported(avif_path))
 
     def test_dry_run_mechanism(self):
@@ -174,45 +154,45 @@ class TestMetadataCleaner(unittest.TestCase):
         # Use existing image test file
         test_file = self.test_files["image"]
         dry_run_output = os.path.join(self.cleaned_dir, "dry_run_output.jpg")
-        
+
         # Ensure it doesn't exist
         if os.path.exists(dry_run_output):
             os.remove(dry_run_output)
-            
+
         result = self.processor.delete_metadata(test_file, dry_run_output, dry_run=True)
-        
+
         # Should return None and NOT create file
         self.assertIsNone(result)
         self.assertFalse(os.path.exists(dry_run_output))
 
-    
     def test_recursive_scanning(self):
         """Test recursive file scanning logic."""
         # Create nested directory
         nested_dir = os.path.join(self.test_dir, "nested")
         subdir = os.path.join(nested_dir, "subdir")
         os.makedirs(subdir, exist_ok=True)
-        
+
         # Create dummy files
         files = [
             os.path.join(nested_dir, "file1.jpg"),
             os.path.join(subdir, "file2.pdf"),
-            os.path.join(nested_dir, "skip.unknown")
+            os.path.join(nested_dir, "skip.unknown"),
         ]
-        
+
         for f in files:
             with open(f, "w") as fh:
                 fh.write("dummy")
-                
+
         # Import the helper to test it directly
         from m_c.core.file_utils import get_supported_files
-        
+
         found_files = get_supported_files(nested_dir)
-        
+
         # Should find jpg and pdf, ignore unknown
         self.assertEqual(len(found_files), 2)
         self.assertTrue(any(f.endswith("file1.jpg") for f in found_files))
         self.assertTrue(any(f.endswith("file2.pdf") for f in found_files))
+
 
 if __name__ == "__main__":
     unittest.main()

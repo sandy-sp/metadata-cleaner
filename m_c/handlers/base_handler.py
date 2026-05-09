@@ -1,7 +1,11 @@
+import json
 import os
+import shutil
+import subprocess
 from typing import Optional
 from m_c.core.logger import logger
 from m_c.core.file_utils import validate_file
+
 
 class BaseHandler:
     """
@@ -10,6 +14,21 @@ class BaseHandler:
     """
 
     SUPPORTED_FORMATS = set()
+
+    def prepare_output_path(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> str:
+        """Return a writable output path and refuse destructive in-place edits."""
+        if output_path is None:
+            base, ext = os.path.splitext(file_path)
+            output_path = f"{base}_cleaned{ext}"
+
+        if os.path.abspath(file_path) == os.path.abspath(output_path):
+            raise ValueError("Output path must be different from input path")
+
+        output_dir = os.path.dirname(os.path.abspath(output_path))
+        os.makedirs(output_dir, exist_ok=True)
+        return output_path
 
     def is_supported(self, file_path: str) -> bool:
         """Check if the file format is supported."""
@@ -30,14 +49,12 @@ class BaseHandler:
 
     def _extract_metadata_exiftool(self, file_path: str):
         """Extract metadata using ExifTool."""
-        import subprocess
-        import json
         try:
             result = subprocess.run(
                 ["exiftool", "-j", file_path],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             data = json.loads(result.stdout)
             return data[0] if data else {}
@@ -45,28 +62,23 @@ class BaseHandler:
             logger.error(f"ExifTool extraction failed for {file_path}: {e}")
             return None
 
-    def _remove_metadata_exiftool(self, file_path: str, output_path: Optional[str] = None):
+    def _remove_metadata_exiftool(
+        self, file_path: str, output_path: Optional[str] = None
+    ):
         """Remove metadata using ExifTool."""
-        import subprocess
-        import shutil
-        
-        if output_path and output_path != file_path:
-            shutil.copy(file_path, output_path)
-            target = output_path
-        else:
-            target = file_path
-            
+        target = self.prepare_output_path(file_path, output_path)
+        shutil.copy2(file_path, target)
+
         try:
-            # -all= removes all metadata
-            # -overwrite_original forces inplace update (we copied already if needed)
             subprocess.run(
                 ["exiftool", "-all=", "-overwrite_original", target],
                 check=True,
-                capture_output=True
+                capture_output=True,
+                text=True,
             )
             return target
         except subprocess.CalledProcessError as e:
-            logger.error(f"ExifTool removal failed for {file_path}: {e}")
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            logger.error(f"ExifTool removal failed for {file_path}: {e.stderr}")
+            if os.path.exists(target):
+                os.remove(target)
             return None

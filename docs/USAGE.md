@@ -1,45 +1,66 @@
+# Metadata Cleaner Usage
 
-# 📄 Metadata Cleaner - Usage Guide 🧹🔍
+## Install
 
-## 🚀 Installation
-1. **Poetry-based Setup**
-   ```bash
-   git clone https://github.com/sandy-sp/metadata-cleaner.git
-   cd metadata-cleaner
-   poetry install
-   ```
+```bash
+pip install metadata-cleaner
+```
 
-2. **PyPI Installation**
-   ```bash
-   pip install metadata-cleaner
-   ```
+For local development:
 
----
+```bash
+poetry install --with dev
+poetry run metadata-cleaner --help
+```
 
-## 📖 CLI Commands
+## Commands
 
-### **View Metadata**
+View metadata:
+
 ```bash
 metadata-cleaner view my_photo.jpg
 ```
 
-### **Remove Metadata**
+Remove metadata from one file:
+
 ```bash
 metadata-cleaner delete my_photo.jpg
 ```
 
-### **Batch Processing**
+Remove metadata and choose an output file:
+
 ```bash
-metadata-cleaner delete --folder images --recursive
+metadata-cleaner delete my_photo.jpg --output cleaned/my_photo.jpg
 ```
 
----
+Process a directory recursively:
 
-## 📊 Debugging & Logging
+```bash
+metadata-cleaner delete ./images --output ./cleaned-images
+```
 
-### **Enable Debug Mode**
+Preview work without creating files:
+
+```bash
+metadata-cleaner delete ./images --dry-run
+```
+
+Edit metadata for formats with editing support:
+
+```bash
+metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
+```
+
+## Logging
+
+Logs are written to stderr by default. To opt into file logging:
+
+```bash
+METADATA_CLEANER_LOG_FILE=./metadata-cleaner.log metadata-cleaner delete sample.jpg
+```
+
+To increase verbosity:
+
 ```bash
 METADATA_CLEANER_LOG_LEVEL=DEBUG metadata-cleaner view sample.jpg
 ```
-
----

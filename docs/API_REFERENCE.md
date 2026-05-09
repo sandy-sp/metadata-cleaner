@@ -1,42 +1,42 @@
+# Metadata Cleaner API Reference
 
-# 📄 Metadata Cleaner - API Reference 🧹
+The main programmatic entry point is `m_c.core.metadata_processor.MetadataProcessor`.
 
-## 📌 Overview
+## `view_metadata(file_path: str) -> dict`
 
-The API provides **programmatic access** to:
-- Extracting metadata (`view_metadata`)
-- Removing metadata (`delete_metadata`)
-- Editing metadata (`edit_metadata`)
+Extract metadata from a supported file. Returns an empty dictionary when the file
+has no metadata or the format is unsupported.
 
----
-
-## 📂 Core Functions
-
-### **1️⃣ `view_metadata(file_path: str) -> Optional[Dict]`**
-Extracts metadata from a file.
-
-#### ✅ Example:
 ```python
-from metadata_cleaner.metadata_processor import MetadataProcessor
+from m_c.core.metadata_processor import MetadataProcessor
 
 metadata = MetadataProcessor().view_metadata("image.jpg")
 print(metadata)
 ```
 
-### **2️⃣ `delete_metadata(file_path: str, output_path: Optional[str] = None) -> Optional[str]`**
-Removes metadata and returns the path of the cleaned file.
+## `delete_metadata(file_path: str, output_path: str | None = None, dry_run: bool = False) -> str | None`
 
-#### ✅ Example:
+Remove metadata and write a cleaned copy. When `output_path` is omitted, the
+cleaned file is written under a `cleaned/` directory next to the source file.
+
 ```python
+from m_c.core.metadata_processor import MetadataProcessor
+
 cleaned_file = MetadataProcessor().delete_metadata("image.jpg")
-print(f"Cleaned file saved at: {cleaned_file}")
+print(cleaned_file)
 ```
 
-### **3️⃣ `edit_metadata(file_path: str, metadata_changes: Dict) -> Optional[str]`**
-Edits metadata while preserving existing metadata.
+## `edit_metadata(file_path: str, metadata_changes: dict) -> str | None`
 
-#### ✅ Example:
+Edit metadata for formats whose handler supports editing. Currently this is most
+useful for audio files through Mutagen.
+
 ```python
-changes = {"Author": "New Name"}
-updated_file = MetadataProcessor().edit_metadata("document.pdf", changes)
+from m_c.core.metadata_processor import MetadataProcessor
+
+updated_file = MetadataProcessor().edit_metadata(
+    "song.mp3",
+    {"artist": "Unknown"},
+)
+print(updated_file)
 ```

@@ -1,5 +1,4 @@
 import os
-import concurrent.futures
 from typing import Dict, Optional, List
 from m_c.core.file_utils import validate_file
 from m_c.core.logger import logger
@@ -53,11 +52,11 @@ class MetadataProcessor:
         if not tool or not hasattr(tool, "remove_metadata"):
             logger.error(f"No tool available to remove metadata from {file_path}")
             return None
-            
+
         if dry_run:
-            logger.info(f"🐛 [DRY-RUN] Will remove metadata from: {file_path}")
-            logger.info(f"🐛 [DRY-RUN] Using tool: {tool.__class__.__name__}")
-            logger.info(f"🐛 [DRY-RUN] Output will be: {output_path}")
+            logger.info(f"[DRY-RUN] Will remove metadata from: {file_path}")
+            logger.info(f"[DRY-RUN] Using tool: {tool.__class__.__name__}")
+            logger.info(f"[DRY-RUN] Output will be: {output_path}")
             return None
 
         try:
@@ -68,15 +67,16 @@ class MetadataProcessor:
 
             if not cleaned_file or not os.path.exists(cleaned_file):
                 logger.error(
-                    f"❌ Metadata removal failed: {file_path}. Expected output: {output_path}"
+                    f"Metadata removal failed: {file_path}. "
+                    f"Expected output: {output_path}"
                 )
                 return None
 
-            logger.info(f"✅ Metadata successfully removed: {cleaned_file}")
+            logger.info(f"Metadata successfully removed: {cleaned_file}")
             return cleaned_file
         except Exception as e:
             logger.error(
-                f"❌ Error removing metadata from {file_path}: {e}", exc_info=True
+                f"Error removing metadata from {file_path}: {e}", exc_info=True
             )
             return None
 
@@ -92,15 +92,17 @@ class MetadataProcessor:
                 result = self.delete_metadata(file, output_path)
                 if result:
                     results.append(result)
-                    logger.info(f"✅ Successfully processed: {file} -> {result}")
+                    logger.info(f"Successfully processed: {file} -> {result}")
                 else:
-                    logger.error(f"❌ Failed to process file: {file}")
+                    logger.error(f"Failed to process file: {file}")
             except Exception as e:
-                logger.error(f"❌ Error processing file {file}: {e}", exc_info=True)
+                logger.error(f"Error processing file {file}: {e}", exc_info=True)
                 results.append(None)
 
         logger.info(
-            f"Batch processing completed. {len([r for r in results if r])} out of {len(files)} files cleaned successfully."
+            "Batch processing completed. "
+            f"{len([r for r in results if r])} out of {len(files)} files "
+            "cleaned successfully."
         )
         return results
 
@@ -108,21 +110,21 @@ class MetadataProcessor:
         """Ensure metadata editing works even if no initial metadata exists."""
         existing_metadata = self.view_metadata(file_path)
         if not existing_metadata:
-            logger.error(f"❌ Cannot edit metadata: No metadata found in {file_path}")
-            return file_path
+            logger.error(f"Cannot edit metadata: No metadata found in {file_path}")
+            return None
 
         updated_metadata = {**existing_metadata, **metadata_changes}
 
         tool = self.tools.get_best_tool(file_path)
         if not tool or not hasattr(tool, "edit_metadata"):
-            logger.error(f"❌ No available tool to edit metadata for {file_path}")
-            return file_path
+            logger.error(f"No available tool to edit metadata for {file_path}")
+            return None
 
         try:
             return tool.edit_metadata(file_path, updated_metadata)
         except Exception as e:
-            logger.error(f"❌ Error editing metadata: {e}", exc_info=True)
-            return file_path
+            logger.error(f"Error editing metadata: {e}", exc_info=True)
+            return None
 
 
 metadata_processor = MetadataProcessor()

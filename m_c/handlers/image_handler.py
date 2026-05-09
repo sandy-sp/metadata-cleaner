@@ -5,7 +5,11 @@ from PIL import Image
 import piexif
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
-from PIL import UnidentifiedImageError, ImageFile
+from PIL import UnidentifiedImageError
+from PIL.Image import DecompressionBombError
+
+Image.MAX_IMAGE_PIXELS = 100_000_000
+
 
 class ImageHandler(BaseHandler):
     """
@@ -14,85 +18,85 @@ class ImageHandler(BaseHandler):
     """
 
     SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp", "avif"}
-    
+
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Extract metadata with fallback methods."""
         if not self.validate(file_path):
             return None
         try:
             from m_c.utils.tool_utils import ToolManager
+
             if ToolManager().check_tools()["ExifTool"]:
                 return self._extract_metadata_exiftool(file_path)
         except Exception:
             logger.warning(f"ExifTool failed, using fallback method for {file_path}")
         return self._extract_metadata_piexif(file_path) or {}
 
-    ImageFile.LOAD_TRUNCATED_IMAGES = True  # Allow processing truncated images
-
-    def remove_metadata(self, file_path: str, output_path: Optional[str] = None) -> Optional[str]:
+    def remove_metadata(
+        self, file_path: str, output_path: Optional[str] = None
+    ) -> Optional[str]:
         """Remove metadata from an image file strictly preserving quality/format."""
         if not self.validate(file_path):
-            logger.error(f"🚨 Validation failed for {file_path}")
+            logger.error(f"Validation failed for {file_path}")
             return None
 
-        if output_path is None:
-            base, ext = os.path.splitext(file_path)
-            output_path = f"{base}_cleaned{ext}"
+        output_path = self.prepare_output_path(file_path, output_path)
 
         try:
-            logger.debug(f"🔍 Processing image: {file_path}")
-            
+            logger.debug(f"Processing image: {file_path}")
             ext = os.path.splitext(file_path)[1].lower()
-            
-            # 0. Handle AVIF via ExifTool (Lossless, Pillow support is basic/experimental)
+
             if ext == ".avif":
                 logger.info(f"Using ExifTool for AVIF: {file_path}")
                 return self._remove_metadata_exiftool(file_path, output_path)
 
-            # 1. Attempt Lossless JPEG/WebP/TIFF cleaning via piexif (no re-encoding)
-            # piexif supports: JPG, WebP, TIFF
             if ext in {".jpg", ".jpeg", ".webp", ".tiff", ".tif"}:
                 try:
-                    shutil.copyfile(file_path, output_path)
+                    shutil.copy2(file_path, output_path)
                     piexif.remove(output_path)
-                    logger.info(f"✅ Metadata removed (lossless): {output_path}")
+                    logger.info(f"Image metadata removed losslessly: {output_path}")
                     return output_path
                 except Exception as e:
                     logger.debug(f"Piexif failed ({e}), falling back to Pillow re-save")
                     if os.path.exists(output_path):
                         os.remove(output_path)
 
-            # 2. Universal Fallback: Pillow basic strip (Re-saves, but tries to keep format)
             with Image.open(file_path) as img:
-                data = list(img.getdata()) # Force load pixel data
-                img_no_meta = Image.new(img.mode, img.size)
-                img_no_meta.putdata(data)
-                
-                # Copy format from original
+                img.load()
                 save_format = img.format
-                
-                # Save without metadata
-                img_no_meta.save(output_path, format=save_format)
-            
+                image_without_metadata = Image.new(img.mode, img.size)
+                image_without_metadata.putdata(list(img.getdata()))
+
+                if "transparency" in img.info:
+                    image_without_metadata.info["transparency"] = img.info[
+                        "transparency"
+                    ]
+
+                image_without_metadata.save(output_path, format=save_format)
+
             if os.path.exists(output_path):
-                logger.info(f"✅ Metadata removed (re-saved): {output_path}")
+                logger.info(f"Image metadata removed by re-save: {output_path}")
                 return output_path
 
+        except DecompressionBombError:
+            logger.error(f"Image is too large to process safely: {file_path}")
         except UnidentifiedImageError:
-            logger.error(f"❌ Cannot identify image file {file_path}")
+            logger.error(f"Cannot identify image file {file_path}")
         except Exception as e:
-            logger.error(f"❌ Error processing image file {file_path}: {e}", exc_info=True)
+            logger.error(f"Error processing image file {file_path}: {e}", exc_info=True)
 
+        if os.path.exists(output_path):
+            os.remove(output_path)
         return None
 
-    def _remove_metadata_piexif(self, file_path: str, output_path: Optional[str]) -> Optional[str]:
+    def _remove_metadata_piexif(
+        self, file_path: str, output_path: Optional[str]
+    ) -> Optional[str]:
         """Remove metadata using Piexif."""
         try:
             img = Image.open(file_path)
             img.info.pop("exif", None)
-            if not output_path:
-                base, ext = os.path.splitext(file_path)
-                output_path = f"{base}_cleaned{ext}"
+            output_path = self.prepare_output_path(file_path, output_path)
             img.save(output_path)
             if os.path.exists(output_path):
                 return output_path
@@ -112,9 +116,13 @@ class ImageHandler(BaseHandler):
                 return {}
             return piexif.load(exif_data)
         except UnidentifiedImageError:
-            logger.error(f"❌ Cannot identify image file {file_path}. Possible corruption or unsupported format.")
+            logger.error(
+                f"Cannot identify image file {file_path}. "
+                "Possible corruption or unsupported format."
+            )
         except Exception as e:
             logger.error(f"Failed to extract metadata with Piexif: {e}")
         return None
+
 
 image_handler = ImageHandler()

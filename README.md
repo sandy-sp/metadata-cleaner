@@ -1,149 +1,113 @@
-# 🧹 Metadata Cleaner 🔍
+# Metadata Cleaner
 
-[![Build Status](https://github.com/sandy-sp/metadata-cleaner/actions/workflows/release-and-publish.yml/badge.svg)](https://github.com/sandy-sp/metadata-cleaner/actions)
+[![CI](https://github.com/sandy-sp/metadata-cleaner/actions/workflows/ci.yml/badge.svg)](https://github.com/sandy-sp/metadata-cleaner/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/release/sandy-sp/metadata-cleaner.svg)](https://github.com/sandy-sp/metadata-cleaner/releases)
 [![PyPI version](https://badge.fury.io/py/metadata-cleaner.svg)](https://pypi.org/project/metadata-cleaner/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 📌 Overview
+Metadata Cleaner is a privacy-focused CLI for viewing and removing metadata from
+local files. It writes cleaned copies by default and avoids modifying originals
+in-place.
 
-**Metadata Cleaner** is a powerful **CLI tool** that **removes, edits, and views metadata** in:
-- **Images:** JPG, PNG, TIFF, WEBP
-- **Documents:** PDF, DOCX, TXT
-- **Audio:** MP3, WAV, FLAC
-- **Videos:** MP4, MKV, AVI
+## Supported Files
 
-It features:
-- ✅ **Batch processing** for multiple files.
-- 🔄 **Recursive folder scanning**.
-- ⚡ **Parallel execution** for performance.
-- 📜 **Selective metadata filtering**.
-- 📊 **Detailed logging & error handling**.
+- Images: JPG, JPEG, PNG, TIFF, WEBP, AVIF
+- Documents: PDF, DOCX, TXT
+- Audio: MP3, WAV, FLAC, OGG, AAC, M4A, WMA
+- Video: MP4, MKV, MOV, AVI, WEBM, FLV
 
----
+Video support requires `ffmpeg` and `ffprobe`. AVIF and broader metadata
+coverage benefit from `exiftool`.
 
-## 🚀 Installation
+## Installation
 
-### **1️⃣ Using Poetry (Recommended)**
-```bash
-git clone https://github.com/sandy-sp/metadata-cleaner.git
-cd metadata-cleaner
-poetry install
-poetry run metadata-cleaner --help
-```
+Requires Python 3.11 or newer.
 
-
-### **2️⃣ Install via PyPI**
 ```bash
 pip install metadata-cleaner
 metadata-cleaner --help
 ```
 
----
+For development:
 
-## 🛠️ Development & Testing
-
-This project uses a generic `manage.py` script for development tasks (compatible with Linux, Mac, and Windows).
-
-### **Setup Environment**
 ```bash
-# Check deps & Install packages
-python3 manage.py install
+git clone https://github.com/sandy-sp/metadata-cleaner.git
+cd metadata-cleaner
+poetry install --with dev
+poetry run metadata-cleaner --help
 ```
 
-### **Running Tests**
-```bash
-python3 manage.py test
-```
+## CLI Usage
 
-### **Other Commands**
-```bash
-# Lint code
-python3 manage.py lint
+View metadata:
 
-# Security audit
-python3 manage.py check
-
-# Clean artifacts
-python3 manage.py clean
-```
-
----
-
-## 📖 Usage Guide
-
-### **View Metadata**
 ```bash
 metadata-cleaner view sample.jpg
 ```
-**Example Output:**
-```json
-{
-    "Make": "Canon",
-    "Model": "EOS 80D",
-    "DateTimeOriginal": "2023:01:20 14:22:35"
-}
-```
 
-### **Remove Metadata**
+Remove metadata from one file:
+
 ```bash
 metadata-cleaner delete sample.jpg
 ```
 
-### **Batch & Recursive Processing**
+Write to a specific file:
+
 ```bash
-# Process a folder recursively
-metadata-cleaner delete ./my_photos --dry-run
-# Remove dry-run to apply changes
-metadata-cleaner delete ./my_photos
+metadata-cleaner delete sample.jpg --output cleaned/sample.jpg
 ```
-**Features:**
-- 📂 Recursively finds all supported files (Images, Docs, Video).
-- 🧬 **Lossless Video**: Preserves all video/audio streams via copy (no re-encoding).
-- 🐛 **Dry Run**: Use `--dry-run` to see what would happen.
 
----
+Process a folder recursively:
 
-## 🐳 Docker Usage
+```bash
+metadata-cleaner delete ./photos --output ./cleaned-photos
+```
 
-You can run Metadata Cleaner without installing dependencies using Docker.
+Preview a run without writing files:
 
-### **1️⃣ Build the Image**
+```bash
+metadata-cleaner delete ./photos --dry-run
+```
+
+Edit metadata where supported:
+
+```bash
+metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
+```
+
+## Development Checks
+
+```bash
+python3 manage.py test
+python3 manage.py lint
+python3 manage.py check
+```
+
+CI runs tests, lint, and `pip-audit` on pull requests and pushes to `main`.
+
+## Docker
+
 ```bash
 docker build -t metadata-cleaner .
+docker run --rm -v "$(pwd)/photos:/data" metadata-cleaner delete /data
 ```
 
-### **2️⃣ Run Commands**
-Map your local data folder to `/data` in the container.
+## Logging
+
+By default, logs go to stderr only. To write a log file, opt in explicitly:
 
 ```bash
-# Clean a directory
-docker run --rm -v $(pwd)/photos:/data metadata-cleaner delete /data
-
-# View metadata
-docker run --rm -v $(pwd)/sample.jpg:/file.jpg metadata-cleaner view /file.jpg
+METADATA_CLEANER_LOG_FILE=./metadata-cleaner.log metadata-cleaner delete sample.jpg
 ```
----
 
-## 📊 Logging & Debugging
+Use debug logging when needed:
 
-- **Log File:** `logs/metadata_cleaner.log`
-- **Set Debug Mode:**  
-  ```bash
-  METADATA_CLEANER_LOG_LEVEL=DEBUG metadata-cleaner delete sample.jpg
-  ```
+```bash
+METADATA_CLEANER_LOG_LEVEL=DEBUG metadata-cleaner view sample.jpg
+```
 
----
+## Resources
 
-## 📬 Contributing
-1. **Fork the repository**.
-2. **Create a new branch** (`feature-branch`).
-3. **Submit a pull request**.
-
----
-
-## 🔗 Resources
-- **[API Reference](docs/API_REFERENCE.md)**
-- **[Usage Guide](docs/USAGE.md)**
-
----
+- [API Reference](docs/API_REFERENCE.md)
+- [Usage Guide](docs/USAGE.md)
+- [Architecture](docs/ARCHITECTURE.md)

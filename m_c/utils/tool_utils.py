@@ -1,9 +1,11 @@
 import shutil
+from pathlib import Path
 from m_c.handlers.image_handler import ImageHandler
 from m_c.handlers.document_handler import DocumentHandler
 from m_c.handlers.audio_handler import AudioHandler
 from m_c.handlers.video_handler import VideoHandler
 from m_c.core.logger import logger
+
 
 class ToolManager:
     """Manages tool availability and selection."""
@@ -24,16 +26,17 @@ class ToolManager:
 
     def get_best_tool(self, file_path: str):
         """Return best tool for given file type."""
-        ext = file_path.split(".")[-1].lower()
-        if ext in ["jpg", "jpeg", "png", "tiff", "webp", "avif"]:
+        ext = Path(file_path).suffix.lower().lstrip(".")
+        if ext in ImageHandler.SUPPORTED_FORMATS:
             return ImageHandler()
-        elif ext in ["pdf", "docx", "txt"]:
+        elif ext in DocumentHandler.SUPPORTED_FORMATS:
             return DocumentHandler()
-        elif ext in ["mp3", "wav", "flac"]:
+        elif ext in AudioHandler.SUPPORTED_FORMATS:
             return AudioHandler()
-        elif ext in ["mp4", "mkv", "avi"]:
+        elif ext in VideoHandler.SUPPORTED_FORMATS:
             return VideoHandler()
         logger.warning(f"No tool found for file type: {ext}")
         return None
+
 
 tool_manager = ToolManager()

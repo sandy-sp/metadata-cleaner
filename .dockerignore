@@ -16,6 +16,9 @@ htmlcov
 dist
 build
 *.egg-info
+.brain
+m_c/logs
+*.log
 .DS_Store
 task.md
 implementation_plan.md

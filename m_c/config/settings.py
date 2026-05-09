@@ -11,6 +11,7 @@ These settings include:
 - Parallel processing settings
 """
 
+
 def get_env_variable(var_name, default, cast_type=str):
     """Retrieve environment variable and cast it to the appropriate type."""
     value = os.getenv(var_name, default)
@@ -19,6 +20,7 @@ def get_env_variable(var_name, default, cast_type=str):
     except ValueError:
         logging.warning(f"Invalid value for {var_name}. Using default: {default}")
         return default
+
 
 # Default output directory for cleaned files
 DEFAULT_OUTPUT_FOLDER = get_env_variable("METADATA_CLEANER_OUTPUT_DIR", "cleaned_files")
@@ -35,5 +37,7 @@ SUPPORTED_FORMATS = {
 }
 
 # Parallel processing settings
-ENABLE_PARALLEL_PROCESSING = get_env_variable("METADATA_CLEANER_PARALLEL", "True", str).lower() in {"true", "1", "yes"}
+ENABLE_PARALLEL_PROCESSING = get_env_variable(
+    "METADATA_CLEANER_PARALLEL", "True", str
+).lower() in {"true", "1", "yes"}
 MAX_WORKERS = get_env_variable("METADATA_CLEANER_WORKERS", 4, int)

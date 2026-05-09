@@ -1,6 +1,7 @@
 import json
 from m_c.core.logger import logger
 
+
 def format_metadata_output(metadata):
     """Formats metadata output for CLI display with error handling."""
     try:

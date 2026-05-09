@@ -3,4 +3,8 @@ include LICENSE
 include README.md
 include pyproject.toml
 recursive-include docs *.md
-recursive-include metadata_cleaner *.py
+recursive-include m_c *.py
+prune .brain
+prune .agents
+prune .codex
+prune m_c/logs
