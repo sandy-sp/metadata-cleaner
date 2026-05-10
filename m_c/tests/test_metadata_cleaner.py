@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import shutil
@@ -446,6 +447,55 @@ class TestMetadataCleaner(unittest.TestCase):
                 file_payload["files"][0]["output"],
                 os.path.join("cleaned", "photo.jpg"),
             )
+
+    def test_cli_json_summary_with_checksums_for_dry_run(self):
+        """Checksum reporting should include input hashes without writing outputs."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+            with open("photo.jpg", "rb") as image_file:
+                expected_hash = hashlib.sha256(image_file.read()).hexdigest()
+
+            result = runner.invoke(
+                cli,
+                ["delete", "photo.jpg", "--dry-run", "--json-summary", "--checksums"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            checksums = payload["files"][0]["checksums"]
+            self.assertEqual(checksums["input_sha256"], expected_hash)
+            self.assertIsNone(checksums["output_sha256"])
+
+    def test_cli_summary_file_with_checksums_for_cleaned_output(self):
+        """Checksum reporting should include input and cleaned output hashes."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--output",
+                    "cleaned.jpg",
+                    "--summary-file",
+                    "summary.json",
+                    "--checksums",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            with open("summary.json") as summary_file:
+                payload = json.load(summary_file)
+            checksums = payload["files"][0]["checksums"]
+            with open("photo.jpg", "rb") as input_file:
+                expected_input = hashlib.sha256(input_file.read()).hexdigest()
+            with open("cleaned.jpg", "rb") as output_file:
+                expected_output = hashlib.sha256(output_file.read()).hexdigest()
+            self.assertEqual(checksums["input_sha256"], expected_input)
+            self.assertEqual(checksums["output_sha256"], expected_output)
 
     def test_cli_json_summary_for_dry_run_with_quiet(self):
         """JSON summary and quiet mode should produce clean stdout for automation."""

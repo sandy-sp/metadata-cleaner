@@ -82,6 +82,7 @@ metadata-cleaner delete ./photos --summary-file reports/summary.json
 ```
 
 Summary reports include per-file status and output paths for audit trails.
+Add `--checksums` to include SHA-256 input/output hashes.
 
 Edit metadata where supported:
 

@@ -27,11 +27,11 @@ privacy risk before implementation.
 ## Medium Term
 
 ### Privacy and Safety
-- Add optional checksum reporting for input/output integrity checks.
 - Add a `--preserve-timestamps` option if users need cleaned files to retain
   filesystem timestamps.
 - Add clearer warnings for formats that require re-saving rather than lossless
   metadata stripping.
+- Add optional checksum algorithms beyond SHA-256 only if users need them.
 
 ### Packaging
 - Add a Docker image publishing workflow after Docker builds are covered in CI.
