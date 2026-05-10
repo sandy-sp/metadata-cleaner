@@ -61,4 +61,6 @@ returns exit code `2` with `status` set to `invalid_input`.
 
 Use `metadata-cleaner delete PATH --json-summary` to print a machine-readable
 summary to stdout, or `metadata-cleaner delete PATH --summary-file report.json`
-to write the same summary payload to a file.
+to write the same summary payload to a file. Delete summaries include top-level
+counts plus a `files` list with each input path, per-file status, output path,
+and failure reason when available.

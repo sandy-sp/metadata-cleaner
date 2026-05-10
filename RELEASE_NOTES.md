@@ -1,5 +1,13 @@
 # Release Notes
 
+## v3.7.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added per-file details to delete JSON summaries and summary files.
+- Each processed file now reports its input path, status, output path, and
+  failure reason when available.
+
 ## v3.6.0
 **Release Date**: 2026-05-10
 

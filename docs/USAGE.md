@@ -77,6 +77,23 @@ Write the summary to a JSON file:
 metadata-cleaner delete ./images --summary-file reports/summary.json
 ```
 
+JSON summaries include top-level counts and per-file details:
+
+```json
+{
+  "status": "partial_failure",
+  "succeeded": 12,
+  "failed": 1,
+  "files": [
+    {
+      "input": "images/photo.jpg",
+      "status": "success",
+      "output": "cleaned-images/photo.jpg"
+    }
+  ]
+}
+```
+
 Suppress human progress/output for automation:
 
 ```bash
