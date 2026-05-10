@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.7.2
+**Release Date**: 2026-05-10
+
+### Maintenance
+- Expanded the installed-package smoke test to exercise JPEG, PDF, DOCX, and
+  WAV files through the packaged `metadata-cleaner` CLI.
+- Added smoke assertions for JSON metadata views, dry-run summaries, real
+  cleaning output, and generated summary reports.
+
 ## v3.7.1
 **Release Date**: 2026-05-10
 
