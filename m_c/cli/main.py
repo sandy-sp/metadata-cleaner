@@ -51,6 +51,20 @@ def _summary_payload(summary: BatchSummary, dry_run: bool) -> dict:
     }
 
 
+def _metadata_payload(file_path: str, metadata: Optional[dict], status: str) -> dict:
+    metadata = metadata or {}
+    return {
+        "status": status,
+        "file": file_path,
+        "metadata_count": len(metadata),
+        "metadata": metadata,
+    }
+
+
+def _echo_json(payload: dict) -> None:
+    click.echo(json.dumps(payload, default=str, sort_keys=True))
+
+
 def _echo_batch_summary(
     summary: BatchSummary,
     dry_run: bool,
@@ -58,7 +72,7 @@ def _echo_batch_summary(
     quiet: bool = False,
 ) -> None:
     if json_summary:
-        click.echo(json.dumps(_summary_payload(summary, dry_run), sort_keys=True))
+        _echo_json(_summary_payload(summary, dry_run))
         return
 
     if quiet:
@@ -137,15 +151,26 @@ def cli(verbose, log_file):
 
 @cli.command()
 @click.argument("file")
+@click.option("--json", "json_output", is_flag=True, help="Print a JSON metadata payload.")
 @click.pass_context
-def view(ctx, file):
+def view(ctx, file, json_output):
     """View metadata of a file."""
     if not os.path.isfile(file):
-        click.echo("Error: file does not exist or is not a regular file.")
+        message = "file does not exist or is not a regular file"
+        if json_output:
+            payload = _metadata_payload(file, {}, "invalid_input")
+            payload["error"] = message
+            _echo_json(payload)
+        else:
+            click.echo(f"Error: {message}.")
         ctx.exit(EXIT_USAGE)
 
     metadata = MetadataProcessor().view_metadata(file)
-    click.echo(format_metadata_output(metadata))
+    if json_output:
+        status = "success" if metadata else "no_metadata"
+        _echo_json(_metadata_payload(file, metadata, status))
+    else:
+        click.echo(format_metadata_output(metadata))
 
 
 @cli.command()
