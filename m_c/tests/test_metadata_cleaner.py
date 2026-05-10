@@ -67,6 +67,51 @@ class TestMetadataCleaner(unittest.TestCase):
             archive.writestr("content.xml", content_xml)
             archive.writestr("meta.xml", meta_xml)
 
+    @staticmethod
+    def _write_epub(file_path):
+        container_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0"
+    xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OPS/package.opf"
+        media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>
+"""
+        package_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf"
+    unique-identifier="bookid" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="bookid">urn:uuid:fixture-book-id</dc:identifier>
+    <dc:title>EPUB Fixture Title</dc:title>
+    <dc:creator>EPUB Fixture Author</dc:creator>
+    <dc:description>EPUB Fixture Description</dc:description>
+    <meta property="dcterms:modified">2026-05-10T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="chapter" href="chapter.xhtml"
+        media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="chapter"/>
+  </spine>
+</package>
+"""
+        chapter_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <body><p>Metadata Cleaner EPUB body</p></body>
+</html>
+"""
+        with zipfile.ZipFile(file_path, "w") as archive:
+            archive.writestr(
+                "mimetype",
+                "application/epub+zip",
+                compress_type=zipfile.ZIP_STORED,
+            )
+            archive.writestr("META-INF/container.xml", container_xml)
+            archive.writestr("OPS/package.opf", package_xml)
+            archive.writestr("OPS/chapter.xhtml", chapter_xml)
+
     @classmethod
     def setUpClass(cls):
         """Setup test environment before all tests."""
@@ -338,6 +383,41 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertIn(
                 b"Metadata Cleaner ODT body",
                 cleaned_archive.read("content.xml"),
+            )
+
+    def test_epub_metadata_removal_neutralizes_package_metadata(self):
+        """EPUB cleaning should neutralize package metadata and preserve content."""
+        source_epub = os.path.join(self.test_dir, "sample.epub")
+        cleaned_epub = os.path.join(self.cleaned_dir, "cleaned_sample.epub")
+        self._write_epub(source_epub)
+
+        metadata = self.processor.view_metadata(source_epub)
+        self.assertEqual(metadata["title"], "EPUB Fixture Title")
+        self.assertEqual(metadata["creator"], "EPUB Fixture Author")
+        self.assertEqual(metadata["description"], "EPUB Fixture Description")
+        self.assertEqual(metadata["dcterms:modified"], "2026-05-10T00:00:00Z")
+
+        output_file = self.processor.delete_metadata(source_epub, cleaned_epub)
+
+        self.assertEqual(output_file, cleaned_epub)
+        self.assertTrue(os.path.exists(source_epub))
+        self.assertTrue(os.path.exists(cleaned_epub))
+        cleaned_metadata = self.processor.view_metadata(cleaned_epub)
+        self.assertEqual(cleaned_metadata["title"], "Untitled")
+        self.assertEqual(cleaned_metadata["language"], "und")
+        self.assertEqual(
+            cleaned_metadata["identifier"],
+            "urn:uuid:00000000-0000-0000-0000-000000000000",
+        )
+        self.assertNotIn("creator", cleaned_metadata)
+        self.assertNotIn("description", cleaned_metadata)
+        self.assertNotIn("dcterms:modified", cleaned_metadata)
+
+        with zipfile.ZipFile(cleaned_epub, "r") as cleaned_archive:
+            self.assertIn("OPS/chapter.xhtml", cleaned_archive.namelist())
+            self.assertIn(
+                b"Metadata Cleaner EPUB body",
+                cleaned_archive.read("OPS/chapter.xhtml"),
             )
 
     def test_in_place_output_path_is_rejected(self):
@@ -646,6 +726,24 @@ class TestMetadataCleaner(unittest.TestCase):
             warnings = payload["files"][0]["warnings"]
             self.assertTrue(
                 any("ODT metadata removal rewrites" in warning for warning in warnings)
+            )
+
+    def test_cli_json_summary_includes_epub_processing_warning(self):
+        """EPUB dry-run reports should describe package rewrite behavior."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            self._write_epub("book.epub")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "book.epub", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(
+                any("EPUB metadata removal rewrites" in warning for warning in warnings)
             )
 
     def test_cli_json_summary_compact_report_detail(self):

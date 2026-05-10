@@ -248,6 +248,10 @@ def _processing_warnings(file_path: str) -> list[str]:
             "DOCX metadata removal rewrites the document package while "
             "preserving content."
         ],
+        ".epub": [
+            "EPUB metadata removal rewrites the book package while preserving "
+            "content."
+        ],
         ".odt": [
             "ODT metadata removal rewrites the document package while "
             "preserving content."

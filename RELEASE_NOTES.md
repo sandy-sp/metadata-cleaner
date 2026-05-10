@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.14.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added EPUB metadata viewing and cleanup through the package OPF metadata
+  document referenced by `META-INF/container.xml`.
+- EPUB cleanup neutralizes identifying package metadata while preserving
+  required EPUB fields and book contents.
+
+### Maintenance
+- Added generated EPUB fixture coverage for metadata extraction, cleanup, and
+  CLI processing warnings.
+
 ## v3.13.0
 **Release Date**: 2026-05-10
 

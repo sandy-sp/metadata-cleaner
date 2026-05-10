@@ -31,7 +31,7 @@ LOG_LEVEL = get_env_variable("METADATA_CLEANER_LOG_LEVEL", "INFO").upper()
 # Supported file formats
 SUPPORTED_FORMATS = {
     "images": {".jpg", ".jpeg", ".png", ".tiff", ".webp"},
-    "documents": {".pdf", ".docx", ".odt", ".txt"},
+    "documents": {".pdf", ".docx", ".epub", ".odt", ".txt"},
     "audio": {".mp3", ".wav", ".flac"},
     "videos": {".mp4", ".mkv", ".avi"},
 }

@@ -21,7 +21,6 @@ privacy risk before implementation.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.
-- Evaluate EPUB metadata cleanup.
 - Expand audio/video tests before expanding advertised format support.
 
 ## Medium Term
