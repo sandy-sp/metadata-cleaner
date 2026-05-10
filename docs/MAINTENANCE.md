@@ -15,7 +15,8 @@ poetry run pip-audit
 poetry build
 ```
 
-The CI workflow mirrors these checks and also builds the Docker image.
+The CI workflow mirrors these checks, builds the Docker image, and smoke-tests
+the built wheel in a clean virtual environment.
 
 ## Dependency Updates
 
@@ -42,6 +43,7 @@ merged. Recommended required checks:
 - `Python 3.12`
 - `Python 3.13`
 - `Docker build`
+- `Package smoke`
 - `Analyze Python`
 
 Allowing administrators to bypass protection is acceptable for a small personal
