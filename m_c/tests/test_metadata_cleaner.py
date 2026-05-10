@@ -327,6 +327,62 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(payload["failed"], 0)
             self.assertEqual(payload["failures"], [])
 
+    def test_cli_summary_file_for_batch(self):
+        """Batch delete should write machine-readable summaries to a file."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "inputs",
+                    "--output",
+                    "outputs",
+                    "--summary-file",
+                    "reports/summary.json",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn("Summary: succeeded=1, failed=0, skipped=0, total=1", result.output)
+            with open(os.path.join("reports", "summary.json")) as summary_file:
+                payload = json.load(summary_file)
+            self.assertEqual(payload["status"], "success")
+            self.assertFalse(payload["dry_run"])
+            self.assertEqual(payload["total"], 1)
+            self.assertEqual(payload["succeeded"], 1)
+
+    def test_cli_summary_file_with_json_summary(self):
+        """Summary files should work alongside JSON stdout."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--json-summary",
+                    "--summary-file",
+                    "summary.json",
+                    "--dry-run",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            stdout_payload = json.loads(result.output)
+            with open("summary.json") as summary_file:
+                file_payload = json.load(summary_file)
+            self.assertEqual(file_payload, stdout_payload)
+            self.assertEqual(file_payload["would_process"], 1)
+
     def test_cli_json_summary_for_dry_run_with_quiet(self):
         """JSON summary and quiet mode should produce clean stdout for automation."""
         runner = CliRunner()
@@ -388,6 +444,26 @@ class TestMetadataCleaner(unittest.TestCase):
 
             self.assertEqual(result.exit_code, 2, result.output)
             payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "no_supported_files")
+            self.assertEqual(payload["total"], 0)
+
+    def test_cli_no_supported_files_summary_file(self):
+        """Summary files should be written for no-supported-file exits."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            with open(os.path.join("inputs", "notes.unknown"), "w") as notes:
+                notes.write("nothing to clean")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--summary-file", "summary.json", "--quiet"],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            self.assertEqual(result.output, "")
+            with open("summary.json") as summary_file:
+                payload = json.load(summary_file)
             self.assertEqual(payload["status"], "no_supported_files")
             self.assertEqual(payload["total"], 0)
 

@@ -71,6 +71,12 @@ Print a machine-readable summary:
 metadata-cleaner delete ./images --json-summary
 ```
 
+Write the summary to a JSON file:
+
+```bash
+metadata-cleaner delete ./images --summary-file reports/summary.json
+```
+
 Suppress human progress/output for automation:
 
 ```bash
