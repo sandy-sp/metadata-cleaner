@@ -8,9 +8,10 @@ privacy risk before implementation.
 ## Near Term
 
 ### Stronger Fixture Coverage
-- Add generated audio fixtures with real metadata tags where practical.
 - Add video integration tests that run when FFmpeg and FFprobe are installed.
 - Add more package smoke coverage for representative file types.
+- Add fixture assertions for additional audio containers beyond WAV when their
+  metadata can be generated without external system tools.
 
 ### CLI Usability
 - Add optional file output targets for machine-readable command output.
