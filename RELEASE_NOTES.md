@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.4.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --json-summary` for machine-readable batch
+  and single-file summaries.
+- Added `metadata-cleaner delete --quiet` to suppress progress and human output
+  for automation.
+
+### Maintenance
+- Updated the release workflow to attach the matching curated section from
+  `RELEASE_NOTES.md` to GitHub Releases.
+
 ## v3.3.1
 **Release Date**: 2026-05-10
 
