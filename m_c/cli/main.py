@@ -7,7 +7,11 @@ import click
 from tqdm import tqdm
 
 from m_c.cli.utils import format_metadata_output
-from m_c.core.file_utils import get_safe_output_path, get_supported_files
+from m_c.core.file_utils import (
+    get_file_checksum,
+    get_safe_output_path,
+    get_supported_files,
+)
 from m_c.core.logger import configure_logging, logger
 from m_c.core.metadata_processor import MetadataProcessor
 
@@ -180,12 +184,22 @@ def _record_file_result(
     status: str,
     output_path: Optional[str] = None,
     error: Optional[str] = None,
+    include_checksums: bool = False,
 ) -> None:
     item = {
         "input": input_path,
         "status": status,
         "output": output_path,
     }
+    if include_checksums:
+        item["checksums"] = {
+            "input_sha256": get_file_checksum(input_path),
+            "output_sha256": (
+                get_file_checksum(output_path)
+                if output_path and os.path.exists(output_path)
+                else None
+            ),
+        }
     if error:
         item["error"] = error
     summary.files.append(item)
@@ -234,6 +248,11 @@ def view(ctx, file, json_output):
 @click.option("--dry-run", is_flag=True, help="Show what would be processed.")
 @click.option("--json-summary", is_flag=True, help="Print final summary as JSON.")
 @click.option(
+    "--checksums",
+    is_flag=True,
+    help="Include SHA-256 checksums in JSON summaries and summary files.",
+)
+@click.option(
     "--summary-file",
     type=click.Path(dir_okay=False, path_type=str),
     default=None,
@@ -241,7 +260,7 @@ def view(ctx, file, json_output):
 )
 @click.option("--quiet", is_flag=True, help="Suppress progress and human output.")
 @click.pass_context
-def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
+def delete(ctx, path, output, dry_run, json_summary, checksums, summary_file, quiet):
     """Remove metadata from a file or supported files in a directory."""
     files_to_process = get_supported_files(path)
     if not files_to_process:
@@ -267,6 +286,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                 input_file,
                 "would_process",
                 planned_output,
+                include_checksums=checksums,
             )
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
@@ -277,7 +297,13 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
             ctx.exit(EXIT_SUCCESS)
         elif result:
             summary.succeeded = 1
-            _record_file_result(summary, input_file, "success", result)
+            _record_file_result(
+                summary,
+                input_file,
+                "success",
+                result,
+                include_checksums=checksums,
+            )
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
@@ -294,6 +320,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                 "failed",
                 planned_output,
                 "metadata_removal_failed",
+                include_checksums=checksums,
             )
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
@@ -327,6 +354,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                         file_path,
                         "would_process" if dry_run else "success",
                         output_path if dry_run else result,
+                        include_checksums=checksums,
                     )
                 else:
                     summary.failed += 1
@@ -337,6 +365,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                         "failed",
                         output_path,
                         "metadata_removal_failed",
+                        include_checksums=checksums,
                     )
             except Exception as e:
                 summary.failed += 1
@@ -347,6 +376,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                     "failed",
                     None,
                     str(e),
+                    include_checksums=checksums,
                 )
                 logger.error(f"Failed to process {file_path}: {e}", exc_info=True)
             pbar.update(1)

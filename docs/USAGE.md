@@ -77,6 +77,12 @@ Write the summary to a JSON file:
 metadata-cleaner delete ./images --summary-file reports/summary.json
 ```
 
+Include SHA-256 checksums in JSON summaries:
+
+```bash
+metadata-cleaner delete ./images --summary-file reports/summary.json --checksums
+```
+
 JSON summaries include top-level counts and per-file details:
 
 ```json
@@ -88,7 +94,11 @@ JSON summaries include top-level counts and per-file details:
     {
       "input": "images/photo.jpg",
       "status": "success",
-      "output": "cleaned-images/photo.jpg"
+      "output": "cleaned-images/photo.jpg",
+      "checksums": {
+        "input_sha256": "<sha256>",
+        "output_sha256": "<sha256>"
+      }
     }
   ]
 }

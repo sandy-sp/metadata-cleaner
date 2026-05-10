@@ -64,3 +64,8 @@ summary to stdout, or `metadata-cleaner delete PATH --summary-file report.json`
 to write the same summary payload to a file. Delete summaries include top-level
 counts plus a `files` list with each input path, per-file status, output path,
 and failure reason when available.
+
+Pass `--checksums` with `delete` to include SHA-256 hashes in each per-file
+result. Dry-run summaries include input hashes and leave output hashes empty;
+completed cleaning summaries include both input and output hashes when files are
+available.

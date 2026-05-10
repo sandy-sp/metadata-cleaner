@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.8.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --checksums` to include SHA-256 integrity
+  hashes in JSON summaries and summary files.
+- Checksum reporting covers input files for dry runs and both input/output
+  files for completed cleaning operations.
+
 ## v3.7.2
 **Release Date**: 2026-05-10
 
