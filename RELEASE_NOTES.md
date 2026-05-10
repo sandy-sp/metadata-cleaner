@@ -1,5 +1,13 @@
 # Release Notes
 
+## v3.7.1
+**Release Date**: 2026-05-10
+
+### Maintenance
+- Added generated WAV fixtures with real ID3 metadata tags.
+- Expanded audio cleanup coverage to verify metadata is stripped from the
+  cleaned copy while the original tagged source remains intact and playable.
+
 ## v3.7.0
 **Release Date**: 2026-05-10
 

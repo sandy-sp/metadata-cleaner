@@ -7,6 +7,9 @@ import wave
 from logging.handlers import RotatingFileHandler
 from click.testing import CliRunner
 import docx
+from mutagen import File as MutagenFile
+from mutagen.id3 import TIT2, TPE1
+from mutagen.wave import WAVE
 from PIL import Image
 import pypdf
 
@@ -19,6 +22,20 @@ from m_c.handlers.video_handler import VideoHandler
 
 
 class TestMetadataCleaner(unittest.TestCase):
+    @staticmethod
+    def _write_tagged_wav(file_path):
+        with wave.open(file_path, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(8000)
+            wav_file.writeframes(b"\0\0" * 800)
+
+        audio = WAVE(file_path)
+        audio.add_tags()
+        audio.tags.add(TIT2(encoding=3, text="Fixture Title"))
+        audio.tags.add(TPE1(encoding=3, text="Fixture Artist"))
+        audio.save()
+
     @classmethod
     def setUpClass(cls):
         """Setup test environment before all tests."""
@@ -552,21 +569,22 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIn("Invalid JSON format", result.output)
 
     def test_generated_wav_metadata_removal_preserves_original(self):
-        """Audio cleanup should write a separate playable WAV file."""
+        """Audio cleanup should strip metadata from a separate playable WAV file."""
         source_wav = os.path.join(self.test_dir, "generated.wav")
         cleaned_wav = os.path.join(self.cleaned_dir, "generated_cleaned.wav")
 
-        with wave.open(source_wav, "wb") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(8000)
-            wav_file.writeframes(b"\0\0" * 800)
+        self._write_tagged_wav(source_wav)
+        source_metadata = self.processor.view_metadata(source_wav)
+        self.assertIn("TIT2", source_metadata)
+        self.assertIn("Fixture Title", str(source_metadata["TIT2"]))
 
         output_file = self.processor.delete_metadata(source_wav, cleaned_wav)
 
         self.assertEqual(output_file, cleaned_wav)
         self.assertTrue(os.path.exists(source_wav))
         self.assertTrue(os.path.exists(cleaned_wav))
+        self.assertIn("TIT2", self.processor.view_metadata(source_wav))
+        self.assertEqual(dict(MutagenFile(cleaned_wav, easy=True)), {})
 
         with wave.open(source_wav, "rb") as original, wave.open(
             cleaned_wav, "rb"
