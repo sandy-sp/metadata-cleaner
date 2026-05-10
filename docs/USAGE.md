@@ -90,6 +90,12 @@ metadata-cleaner delete ./images --json-summary --report-detail compact
 metadata-cleaner delete ./images --summary-file reports/summary.json --report-detail summary
 ```
 
+List only failed per-file entries while preserving top-level counts:
+
+```bash
+metadata-cleaner delete ./images --json-summary --report-filter failed
+```
+
 Preserve source access and modification times on cleaned files:
 
 ```bash

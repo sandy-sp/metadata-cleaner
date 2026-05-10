@@ -399,6 +399,80 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(failed_item["status"], "failed")
             self.assertEqual(failed_item["error"], "metadata_removal_failed")
 
+    def test_cli_json_summary_failed_report_filter(self):
+        """JSON reports should optionally include only failed per-file entries."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+            with open(os.path.join("inputs", "broken.pdf"), "wb") as broken_pdf:
+                broken_pdf.write(b"not a valid pdf")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "inputs",
+                    "--output",
+                    "outputs",
+                    "--json-summary",
+                    "--report-filter",
+                    "failed",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 3, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["total"], 2)
+            self.assertEqual(payload["succeeded"], 1)
+            self.assertEqual(payload["failed"], 1)
+            self.assertEqual(len(payload["files"]), 1)
+            self.assertEqual(payload["files"][0]["input"], os.path.join("inputs", "broken.pdf"))
+            self.assertEqual(payload["files"][0]["status"], "failed")
+
+    def test_cli_summary_file_failed_report_filter_with_compact_detail(self):
+        """Summary files should combine failed filtering with compact detail."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+            with open(os.path.join("inputs", "broken.pdf"), "wb") as broken_pdf:
+                broken_pdf.write(b"not a valid pdf")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "inputs",
+                    "--output",
+                    "outputs",
+                    "--summary-file",
+                    "summary.json",
+                    "--report-detail",
+                    "compact",
+                    "--report-filter",
+                    "failed",
+                    "--quiet",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 3, result.output)
+            with open("summary.json") as summary_file:
+                payload = json.load(summary_file)
+            self.assertEqual(payload["total"], 2)
+            self.assertEqual(len(payload["files"]), 1)
+            failed_item = payload["files"][0]
+            self.assertEqual(failed_item["input"], os.path.join("inputs", "broken.pdf"))
+            self.assertEqual(failed_item["status"], "failed")
+            self.assertIn("error", failed_item)
+            self.assertNotIn("output", failed_item)
+
     def test_cli_summary_file_for_batch(self):
         """Batch delete should write machine-readable summaries to a file."""
         runner = CliRunner()

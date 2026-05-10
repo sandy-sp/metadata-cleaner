@@ -16,8 +16,8 @@ privacy risk before implementation.
 
 ### CLI Usability
 - Add optional file output targets for machine-readable command output.
-- Add filtering options for report entries if users need only failed files in
-  very large batches.
+- Add additional report filters only if users need more targeted automation
+  views.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.

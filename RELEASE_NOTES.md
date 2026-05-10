@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.12.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --report-filter all|failed` to filter
+  per-file entries in JSON summaries and summary files.
+- `failed` reports keep top-level totals intact while listing only failed
+  per-file entries, which is useful for very large batch runs.
+
 ## v3.11.0
 **Release Date**: 2026-05-10
 
