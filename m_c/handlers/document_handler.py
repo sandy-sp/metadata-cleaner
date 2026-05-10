@@ -21,11 +21,16 @@ class DocumentHandler(BaseHandler):
     Handles metadata extraction, removal, and editing for document files.
     """
 
-    SUPPORTED_FORMATS = {"pdf", "docx", "odt", "txt"}
+    SUPPORTED_FORMATS = {"pdf", "docx", "epub", "odt", "txt"}
     ODT_NAMESPACES = {
         "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
         "dc": "http://purl.org/dc/elements/1.1/",
         "meta": "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
+    }
+    EPUB_NAMESPACES = {
+        "container": "urn:oasis:names:tc:opendocument:xmlns:container",
+        "dc": "http://purl.org/dc/elements/1.1/",
+        "opf": "http://www.idpf.org/2007/opf",
     }
 
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
@@ -39,6 +44,8 @@ class DocumentHandler(BaseHandler):
                 return self._extract_metadata_pdf(file_path)
             elif ext == ".docx":
                 return self._extract_metadata_docx(file_path)
+            elif ext == ".epub":
+                return self._extract_metadata_epub(file_path)
             elif ext == ".odt":
                 return self._extract_metadata_odt(file_path)
             elif ext == ".txt":
@@ -95,6 +102,8 @@ class DocumentHandler(BaseHandler):
                 return self._remove_metadata_pdf(file_path, output_path)
             elif ext == ".docx":
                 return self._remove_metadata_docx(file_path, output_path)
+            elif ext == ".epub":
+                return self._remove_metadata_epub(file_path, output_path)
             elif ext == ".odt":
                 return self._remove_metadata_odt(file_path, output_path)
             elif ext == ".txt":
@@ -160,6 +169,17 @@ class DocumentHandler(BaseHandler):
             logger.error(f"Failed to remove metadata from DOCX: {e}", exc_info=True)
             return None
 
+    def _xml_local_name(self, tag: str) -> str:
+        """Return an XML tag name without its namespace."""
+        return tag.rsplit("}", 1)[-1]
+
+    def _find_child_by_local_name(self, element: ET.Element, name: str):
+        """Find the first direct child with a matching local XML name."""
+        for child in element:
+            if self._xml_local_name(child.tag) == name:
+                return child
+        return None
+
     def _extract_metadata_odt(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Extract common OpenDocument metadata from meta.xml."""
         try:
@@ -176,7 +196,7 @@ class DocumentHandler(BaseHandler):
                     continue
                 text = (element.text or "").strip()
                 if text:
-                    name = element.tag.rsplit("}", 1)[-1]
+                    name = self._xml_local_name(element.tag)
                     metadata[name] = text
             return metadata
         except Exception as e:
@@ -215,6 +235,110 @@ class DocumentHandler(BaseHandler):
             return output_path
         except Exception as e:
             logger.error(f"Failed to remove metadata from ODT: {e}", exc_info=True)
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            return None
+
+    def _epub_package_path(self, archive: zipfile.ZipFile) -> str:
+        """Return the package document path from an EPUB archive."""
+        try:
+            container_xml = archive.read("META-INF/container.xml")
+        except KeyError:
+            for name in archive.namelist():
+                if name.lower().endswith(".opf"):
+                    return name
+            raise ValueError("EPUB package document not found")
+
+        root = ET.fromstring(container_xml)
+        container_uri = self.EPUB_NAMESPACES["container"]
+        rootfiles = root.findall(f".//{{{container_uri}}}rootfile")
+        for rootfile in rootfiles:
+            package_path = rootfile.attrib.get("full-path")
+            if package_path:
+                return package_path
+        raise ValueError("EPUB container does not reference a package document")
+
+    def _extract_metadata_epub(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Extract EPUB package metadata from the OPF document."""
+        try:
+            with zipfile.ZipFile(file_path, "r") as archive:
+                package_path = self._epub_package_path(archive)
+                package_xml = archive.read(package_path)
+
+            root = ET.fromstring(package_xml)
+            metadata_element = self._find_child_by_local_name(root, "metadata")
+            if metadata_element is None:
+                return {}
+
+            metadata = {}
+            for element in metadata_element:
+                if list(element):
+                    continue
+                text = (element.text or "").strip()
+                if not text:
+                    continue
+                name = self._xml_local_name(element.tag)
+                if name == "meta":
+                    name = (
+                        element.attrib.get("property")
+                        or element.attrib.get("name")
+                        or "meta"
+                    )
+                metadata[name] = text
+            return metadata
+        except Exception as e:
+            logger.error(f"EPUB metadata extraction failed for {file_path}: {e}")
+            return None
+
+    def _neutralize_epub_package_metadata(self, package_xml: bytes) -> bytes:
+        """Replace EPUB metadata with neutral required package values."""
+        for prefix, uri in self.EPUB_NAMESPACES.items():
+            if prefix != "container":
+                ET.register_namespace(prefix, uri)
+
+        root = ET.fromstring(package_xml)
+        metadata_element = self._find_child_by_local_name(root, "metadata")
+        if metadata_element is None:
+            opf_uri = self.EPUB_NAMESPACES["opf"]
+            metadata_element = ET.Element(f"{{{opf_uri}}}metadata")
+            root.insert(0, metadata_element)
+
+        metadata_element.clear()
+        dc_uri = self.EPUB_NAMESPACES["dc"]
+        identifier = ET.SubElement(
+            metadata_element,
+            f"{{{dc_uri}}}identifier",
+            {"id": "metadata-cleaner-id"},
+        )
+        identifier.text = "urn:uuid:00000000-0000-0000-0000-000000000000"
+        title = ET.SubElement(metadata_element, f"{{{dc_uri}}}title")
+        title.text = "Untitled"
+        language = ET.SubElement(metadata_element, f"{{{dc_uri}}}language")
+        language.text = "und"
+        root.set("unique-identifier", "metadata-cleaner-id")
+        return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    def _remove_metadata_epub(self, file_path: str, output_path: str) -> Optional[str]:
+        """Neutralize EPUB package metadata while preserving book contents."""
+        try:
+            with zipfile.ZipFile(file_path, "r") as source:
+                package_path = self._epub_package_path(source)
+                package_xml = source.read(package_path)
+                cleaned_package_xml = self._neutralize_epub_package_metadata(
+                    package_xml
+                )
+
+                with zipfile.ZipFile(output_path, "w") as target:
+                    for info in source.infolist():
+                        data = source.read(info.filename)
+                        if info.filename == package_path:
+                            data = cleaned_package_xml
+                        target.writestr(info, data)
+
+            logger.info(f"EPUB metadata removed: {output_path}")
+            return output_path
+        except Exception as e:
+            logger.error(f"Failed to remove metadata from EPUB: {e}", exc_info=True)
             if os.path.exists(output_path):
                 os.remove(output_path)
             return None
