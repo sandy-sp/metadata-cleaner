@@ -18,18 +18,31 @@ logger.propagate = False
 
 formatter = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
 
+
+def add_log_file(log_file: str) -> None:
+    """Add a rotating file handler if one is not already configured."""
+    log_file = os.path.abspath(log_file)
+    for handler in logger.handlers:
+        if isinstance(handler, RotatingFileHandler):
+            if os.path.abspath(handler.baseFilename) == log_file:
+                return
+
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=LOG_ROTATION_SIZE, backupCount=LOG_BACKUP_COUNT
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logger.level)
+    logger.addHandler(file_handler)
+
+
 if not logger.handlers:
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
     if LOG_FILE:
-        os.makedirs(os.path.dirname(os.path.abspath(LOG_FILE)), exist_ok=True)
-        file_handler = RotatingFileHandler(
-            LOG_FILE, maxBytes=LOG_ROTATION_SIZE, backupCount=LOG_BACKUP_COUNT
-        )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        add_log_file(LOG_FILE)
 
 
 def set_log_level(level: str) -> None:
@@ -41,3 +54,11 @@ def set_log_level(level: str) -> None:
             handler.setLevel(getattr(logging, level))
     else:
         logger.warning(f"Invalid log level: {level}. Using default: {LOG_LEVEL}")
+
+
+def configure_logging(verbose: bool = False, log_file: str | None = None) -> None:
+    """Apply CLI logging options at runtime."""
+    if verbose:
+        set_log_level("DEBUG")
+    if log_file:
+        add_log_file(log_file)

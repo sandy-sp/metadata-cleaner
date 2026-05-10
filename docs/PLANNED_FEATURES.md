@@ -14,11 +14,8 @@ privacy risk before implementation.
 - Add Docker build verification in CI.
 
 ### CLI Usability
-- Add a `--verbose` flag that maps to `METADATA_CLEANER_LOG_LEVEL=DEBUG`.
-- Add a `--log-file` option for explicit file logging.
-- Add a structured batch summary showing successes, skipped files, and failures.
-- Improve exit codes so scripts can distinguish no-op, partial failure, and full
-  failure cases.
+- Add richer batch reports that can be exported as JSON.
+- Add a `--quiet` flag for automation that only needs machine-readable output.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.
