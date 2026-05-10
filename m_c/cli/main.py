@@ -26,7 +26,44 @@ class BatchSummary:
     failures: list[str] = field(default_factory=list)
 
 
-def _echo_batch_summary(summary: BatchSummary, dry_run: bool) -> None:
+def _summary_status(summary: BatchSummary, dry_run: bool) -> str:
+    if summary.total == 0:
+        return "no_supported_files"
+    if dry_run:
+        return "success" if summary.failed == 0 else "partial_failure"
+    if summary.succeeded == summary.total:
+        return "success"
+    if summary.succeeded == 0:
+        return "failure"
+    return "partial_failure"
+
+
+def _summary_payload(summary: BatchSummary, dry_run: bool) -> dict:
+    return {
+        "status": _summary_status(summary, dry_run),
+        "dry_run": dry_run,
+        "total": summary.total,
+        "succeeded": summary.succeeded,
+        "failed": summary.failed,
+        "skipped": summary.skipped,
+        "would_process": summary.succeeded if dry_run else None,
+        "failures": summary.failures,
+    }
+
+
+def _echo_batch_summary(
+    summary: BatchSummary,
+    dry_run: bool,
+    json_summary: bool = False,
+    quiet: bool = False,
+) -> None:
+    if json_summary:
+        click.echo(json.dumps(_summary_payload(summary, dry_run), sort_keys=True))
+        return
+
+    if quiet:
+        return
+
     if dry_run:
         click.echo(
             "Dry run summary: "
@@ -115,30 +152,50 @@ def view(ctx, file):
 @click.argument("path")
 @click.option("--output", default=None, help="Output file path or batch directory.")
 @click.option("--dry-run", is_flag=True, help="Show what would be processed.")
+@click.option("--json-summary", is_flag=True, help="Print final summary as JSON.")
+@click.option("--quiet", is_flag=True, help="Suppress progress and human output.")
 @click.pass_context
-def delete(ctx, path, output, dry_run):
+def delete(ctx, path, output, dry_run, json_summary, quiet):
     """Remove metadata from a file or supported files in a directory."""
     files_to_process = get_supported_files(path)
     if not files_to_process:
-        click.echo("No supported files found.")
+        if json_summary:
+            _echo_batch_summary(BatchSummary(total=0), dry_run, json_summary=True)
+        elif not quiet:
+            click.echo("No supported files found.")
         ctx.exit(EXIT_USAGE)
 
     processor = MetadataProcessor()
     if len(files_to_process) == 1 and not os.path.isdir(path):
         result = processor.delete_metadata(files_to_process[0], output, dry_run=dry_run)
+        summary = BatchSummary(total=1)
         if dry_run:
-            click.echo("Dry run complete. No files changed.")
+            summary.succeeded = 1
+            if json_summary:
+                _echo_batch_summary(summary, dry_run, json_summary=True)
+            elif not quiet:
+                click.echo("Dry run complete. No files changed.")
             ctx.exit(EXIT_SUCCESS)
         elif result:
-            click.echo(f"Metadata removed: {result}")
+            summary.succeeded = 1
+            if json_summary:
+                _echo_batch_summary(summary, dry_run, json_summary=True)
+            elif not quiet:
+                click.echo(f"Metadata removed: {result}")
             ctx.exit(EXIT_SUCCESS)
         else:
-            click.echo("Metadata removal failed. Check logs for details.")
+            summary.failed = 1
+            summary.failures.append(files_to_process[0])
+            if json_summary:
+                _echo_batch_summary(summary, dry_run, json_summary=True)
+            elif not quiet:
+                click.echo("Metadata removal failed. Check logs for details.")
             ctx.exit(EXIT_FAILURE)
 
     summary = BatchSummary(total=len(files_to_process))
-    click.echo(f"Processing {len(files_to_process)} files...")
-    with tqdm(total=len(files_to_process)) as pbar:
+    if not quiet and not json_summary:
+        click.echo(f"Processing {len(files_to_process)} files...")
+    with tqdm(total=len(files_to_process), disable=quiet or json_summary) as pbar:
         for file_path in files_to_process:
             try:
                 output_path = _batch_output_path(
@@ -163,7 +220,12 @@ def delete(ctx, path, output, dry_run):
                 logger.error(f"Failed to process {file_path}: {e}", exc_info=True)
             pbar.update(1)
 
-    _echo_batch_summary(summary, dry_run)
+    _echo_batch_summary(
+        summary,
+        dry_run,
+        json_summary=json_summary,
+        quiet=quiet,
+    )
     _exit_for_summary(ctx, summary, dry_run)
 
 

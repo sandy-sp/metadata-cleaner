@@ -13,8 +13,8 @@ privacy risk before implementation.
 - Add more package smoke coverage for representative file types.
 
 ### CLI Usability
-- Add richer batch reports that can be exported as JSON.
-- Add a `--quiet` flag for automation that only needs machine-readable output.
+- Add richer batch reports that can be exported to files.
+- Add more machine-readable command output for metadata inspection.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.

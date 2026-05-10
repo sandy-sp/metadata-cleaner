@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -270,6 +271,63 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertIn("Summary: succeeded=1, failed=1, skipped=0, total=2", result.output)
             self.assertIn("Failed:", result.output)
 
+    def test_cli_json_summary_for_batch(self):
+        """Batch delete should support machine-readable summaries."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--output", "outputs", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "success")
+            self.assertFalse(payload["dry_run"])
+            self.assertEqual(payload["total"], 1)
+            self.assertEqual(payload["succeeded"], 1)
+            self.assertEqual(payload["failed"], 0)
+            self.assertEqual(payload["failures"], [])
+
+    def test_cli_json_summary_for_dry_run_with_quiet(self):
+        """JSON summary and quiet mode should produce clean stdout for automation."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--json-summary", "--quiet", "--dry-run"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "success")
+            self.assertTrue(payload["dry_run"])
+            self.assertEqual(payload["total"], 1)
+            self.assertEqual(payload["would_process"], 1)
+
+    def test_cli_quiet_suppresses_human_success_output(self):
+        """Quiet mode should suppress human output when JSON is not requested."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(cli, ["delete", "photo.jpg", "--dry-run", "--quiet"])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(result.output, "")
+
     def test_cli_no_supported_files_exit_code(self):
         """CLI should distinguish no-op input from successful work."""
         runner = CliRunner()
@@ -282,6 +340,24 @@ class TestMetadataCleaner(unittest.TestCase):
 
             self.assertEqual(result.exit_code, 2, result.output)
             self.assertIn("No supported files found.", result.output)
+
+    def test_cli_no_supported_files_json_summary(self):
+        """JSON summaries should describe empty supported-file sets."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            with open(os.path.join("inputs", "notes.unknown"), "w") as notes:
+                notes.write("nothing to clean")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--json-summary", "--quiet", "--dry-run"],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "no_supported_files")
+            self.assertEqual(payload["total"], 0)
 
     def test_cli_verbose_log_file_option(self):
         """Global CLI options should enable explicit file logging."""

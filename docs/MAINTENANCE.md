@@ -52,7 +52,8 @@ project, but force pushes and branch deletion should stay disabled.
 ## Release Process
 
 1. Update `pyproject.toml`.
-2. Move release notes from unreleased status to the target version.
+2. Add a matching `RELEASE_NOTES.md` section for the target tag, such as
+   `## vX.Y.Z`.
 3. Run the full local verification suite.
 4. Push the release-prep commit and wait for GitHub checks.
 5. Create and push an annotated tag:
@@ -62,4 +63,5 @@ git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-The release workflow publishes to PyPI and creates the GitHub release.
+The release workflow publishes to PyPI and creates the GitHub release using the
+matching `RELEASE_NOTES.md` section as the release body.

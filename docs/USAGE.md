@@ -59,6 +59,18 @@ Batch runs end with a structured summary:
 Summary: succeeded=12, failed=1, skipped=0, total=13
 ```
 
+Print a machine-readable summary:
+
+```bash
+metadata-cleaner delete ./images --json-summary
+```
+
+Suppress human progress/output for automation:
+
+```bash
+metadata-cleaner delete ./images --json-summary --quiet
+```
+
 Preview work without creating files:
 
 ```bash

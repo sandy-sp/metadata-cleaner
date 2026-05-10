@@ -48,6 +48,27 @@ jobs:
         run: |
           poetry build
 
+      - name: Extract Release Notes
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          text = Path("RELEASE_NOTES.md").read_text(encoding="utf-8")
+          pattern = rf"^## {re.escape(tag)}\n(?P<body>.*?)(?=^## v|\Z)"
+          match = re.search(pattern, text, flags=re.MULTILINE | re.DOTALL)
+          if not match:
+              raise SystemExit(f"No RELEASE_NOTES.md section found for {tag}")
+
+          body = match.group("body").strip()
+          if not body:
+              raise SystemExit(f"Release notes section for {tag} is empty")
+
+          Path("release-notes.md").write_text(body + "\n", encoding="utf-8")
+          PY
+
       - name: Publish Package to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
@@ -57,6 +78,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
+          body_path: release-notes.md
+          generate_release_notes: false
           draft: false
           prerelease: false
