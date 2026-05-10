@@ -485,6 +485,22 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(checksums["input_sha256"], expected_hash)
             self.assertIsNone(checksums["output_sha256"])
 
+    def test_cli_json_summary_includes_processing_warnings(self):
+        """JSON summaries should warn when formats use rewrite-style cleanup."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.png", "png")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "photo.png", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(any("re-saves image data" in warning for warning in warnings))
+
     def test_cli_summary_file_with_checksums_for_cleaned_output(self):
         """Checksum reporting should include input and cleaned output hashes."""
         runner = CliRunner()

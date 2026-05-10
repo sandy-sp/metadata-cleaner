@@ -101,6 +101,9 @@ JSON summaries include top-level counts and per-file details:
       "input": "images/photo.jpg",
       "status": "success",
       "output": "cleaned-images/photo.jpg",
+      "warnings": [
+        "Format-specific processing notes appear here when applicable."
+      ],
       "checksums": {
         "input_sha256": "<sha256>",
         "output_sha256": "<sha256>"

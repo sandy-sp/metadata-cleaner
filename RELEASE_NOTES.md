@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.10.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added per-file processing warnings to delete JSON summaries and summary
+  files for formats that rewrite, re-save, or remux data while removing
+  metadata.
+- Warnings are available during dry runs as well as completed cleaning runs.
+
 ## v3.9.0
 **Release Date**: 2026-05-10
 
