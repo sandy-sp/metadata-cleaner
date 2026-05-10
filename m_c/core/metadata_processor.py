@@ -35,7 +35,11 @@ class MetadataProcessor:
             return {}
 
     def delete_metadata(
-        self, file_path: str, output_path: Optional[str] = None, dry_run: bool = False
+        self,
+        file_path: str,
+        output_path: Optional[str] = None,
+        dry_run: bool = False,
+        preserve_timestamps: bool = False,
     ) -> Optional[str]:
         """Ensure the cleaned file is correctly saved without modifying the original."""
         if not validate_file(file_path):
@@ -75,6 +79,10 @@ class MetadataProcessor:
                     f"Expected output: {output_path}"
                 )
                 return None
+
+            if preserve_timestamps:
+                source_stat = os.stat(file_path)
+                os.utime(cleaned_file, (source_stat.st_atime, source_stat.st_mtime))
 
             logger.info(f"Metadata successfully removed: {cleaned_file}")
             return cleaned_file

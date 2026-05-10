@@ -83,6 +83,12 @@ Include SHA-256 checksums in JSON summaries:
 metadata-cleaner delete ./images --summary-file reports/summary.json --checksums
 ```
 
+Preserve source access and modification times on cleaned files:
+
+```bash
+metadata-cleaner delete ./images --output ./cleaned-images --preserve-timestamps
+```
+
 JSON summaries include top-level counts and per-file details:
 
 ```json

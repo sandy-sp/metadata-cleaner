@@ -14,12 +14,13 @@ metadata = MetadataProcessor().view_metadata("image.jpg")
 print(metadata)
 ```
 
-## `delete_metadata(file_path: str, output_path: str | None = None, dry_run: bool = False) -> str | None`
+## `delete_metadata(file_path: str, output_path: str | None = None, dry_run: bool = False, preserve_timestamps: bool = False) -> str | None`
 
 Remove metadata and write a cleaned copy. When `output_path` is omitted, the
 cleaned file is written under a `cleaned/` directory next to the source file.
 When `dry_run=True`, the method returns `None` and does not create output files
-or directories.
+or directories. Pass `preserve_timestamps=True` to copy the source access and
+modification times to the cleaned file after metadata removal.
 
 ```python
 from m_c.core.metadata_processor import MetadataProcessor
