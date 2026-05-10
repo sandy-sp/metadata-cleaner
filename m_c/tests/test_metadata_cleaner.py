@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import unittest
 import wave
+import zipfile
 from logging.handlers import RotatingFileHandler
 from click.testing import CliRunner
 import docx
@@ -36,6 +37,35 @@ class TestMetadataCleaner(unittest.TestCase):
         audio.tags.add(TIT2(encoding=3, text="Fixture Title"))
         audio.tags.add(TPE1(encoding=3, text="Fixture Artist"))
         audio.save()
+
+    @staticmethod
+    def _write_odt(file_path):
+        meta_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0">
+  <office:meta>
+    <dc:title>ODT Fixture Title</dc:title>
+    <meta:initial-creator>ODT Fixture Author</meta:initial-creator>
+    <dc:description>ODT Fixture Description</dc:description>
+  </office:meta>
+</office:document-meta>
+"""
+        content_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0">
+  <office:body>Metadata Cleaner ODT body</office:body>
+</office:document-content>
+"""
+        with zipfile.ZipFile(file_path, "w") as archive:
+            archive.writestr(
+                "mimetype",
+                "application/vnd.oasis.opendocument.text",
+                compress_type=zipfile.ZIP_STORED,
+            )
+            archive.writestr("content.xml", content_xml)
+            archive.writestr("meta.xml", meta_xml)
 
     @classmethod
     def setUpClass(cls):
@@ -284,6 +314,31 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertEqual(cleaned_props.title, "")
         self.assertEqual(cleaned_props.created.year, 1980)
         self.assertEqual(cleaned_props.modified.year, 1980)
+
+    def test_odt_metadata_removal_clears_meta_xml_and_preserves_content(self):
+        """ODT cleaning should clear package metadata while preserving content."""
+        source_odt = os.path.join(self.test_dir, "sample.odt")
+        cleaned_odt = os.path.join(self.cleaned_dir, "cleaned_sample.odt")
+        self._write_odt(source_odt)
+
+        metadata = self.processor.view_metadata(source_odt)
+        self.assertEqual(metadata["title"], "ODT Fixture Title")
+        self.assertEqual(metadata["initial-creator"], "ODT Fixture Author")
+        self.assertEqual(metadata["description"], "ODT Fixture Description")
+
+        output_file = self.processor.delete_metadata(source_odt, cleaned_odt)
+
+        self.assertEqual(output_file, cleaned_odt)
+        self.assertTrue(os.path.exists(source_odt))
+        self.assertTrue(os.path.exists(cleaned_odt))
+        self.assertEqual(self.processor.view_metadata(cleaned_odt), {})
+
+        with zipfile.ZipFile(cleaned_odt, "r") as cleaned_archive:
+            self.assertIn("content.xml", cleaned_archive.namelist())
+            self.assertIn(
+                b"Metadata Cleaner ODT body",
+                cleaned_archive.read("content.xml"),
+            )
 
     def test_in_place_output_path_is_rejected(self):
         """Handlers should reject an output path that equals the input path."""
@@ -574,6 +629,24 @@ class TestMetadataCleaner(unittest.TestCase):
             payload = json.loads(result.output)
             warnings = payload["files"][0]["warnings"]
             self.assertTrue(any("re-saves image data" in warning for warning in warnings))
+
+    def test_cli_json_summary_includes_odt_processing_warning(self):
+        """ODT dry-run reports should describe package rewrite behavior."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            self._write_odt("document.odt")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "document.odt", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(
+                any("ODT metadata removal rewrites" in warning for warning in warnings)
+            )
 
     def test_cli_json_summary_compact_report_detail(self):
         """Compact JSON reports should omit verbose per-file fields."""

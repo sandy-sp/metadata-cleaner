@@ -12,7 +12,7 @@ in-place.
 ## Supported Files
 
 - Images: JPG, JPEG, PNG, TIFF, WEBP, AVIF
-- Documents: PDF, DOCX, TXT
+- Documents: PDF, DOCX, ODT, TXT
 - Audio: MP3, WAV, FLAC, OGG, AAC, M4A, WMA
 - Video: MP4, MKV, MOV, AVI, WEBM, FLV
 

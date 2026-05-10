@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.13.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added ODT metadata viewing and cleanup using the standard OpenDocument
+  `meta.xml` package metadata.
+- ODT cleanup clears package metadata while preserving the rest of the
+  document package contents.
+
+### Maintenance
+- Added generated ODT fixture coverage for metadata extraction, cleanup, and
+  CLI processing warnings.
+
 ## v3.12.0
 **Release Date**: 2026-05-10
 
