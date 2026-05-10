@@ -248,6 +248,10 @@ def _processing_warnings(file_path: str) -> list[str]:
             "DOCX metadata removal rewrites the document package while "
             "preserving content."
         ],
+        ".odt": [
+            "ODT metadata removal rewrites the document package while "
+            "preserving content."
+        ],
         ".mp3": ["Audio metadata removal rewrites tags on a copied audio file."],
         ".wav": ["Audio metadata removal rewrites tags on a copied audio file."],
         ".flac": ["Audio metadata removal rewrites tags on a copied audio file."],

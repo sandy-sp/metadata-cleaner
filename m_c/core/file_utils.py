@@ -69,6 +69,7 @@ ALL_SUPPORTED_EXTENSIONS = {
     # Documents
     ".pdf",
     ".docx",
+    ".odt",
     ".txt",
     # Video/Audio
     ".mp4",
