@@ -44,3 +44,14 @@ jobs:
 
       - name: Audit dependencies
         run: poetry run pip-audit
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build --tag metadata-cleaner:test .

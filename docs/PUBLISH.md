@@ -34,7 +34,7 @@ poetry build
 The GitHub release workflow publishes to PyPI when a `v*` tag is pushed.
 
 ```bash
-git tag vX.Y.Z
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin vX.Y.Z
 ```
 

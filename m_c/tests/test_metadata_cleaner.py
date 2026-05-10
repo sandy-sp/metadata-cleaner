@@ -1,6 +1,8 @@
 import os
 import shutil
+import subprocess
 import unittest
+import wave
 from click.testing import CliRunner
 import docx
 from PIL import Image
@@ -10,6 +12,7 @@ from m_c.cli.main import cli
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
 from m_c.handlers.base_handler import BaseHandler
+from m_c.handlers.video_handler import VideoHandler
 
 
 class TestMetadataCleaner(unittest.TestCase):
@@ -257,6 +260,74 @@ class TestMetadataCleaner(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("Invalid JSON format", result.output)
+
+    def test_generated_wav_metadata_removal_preserves_original(self):
+        """Audio cleanup should write a separate playable WAV file."""
+        source_wav = os.path.join(self.test_dir, "generated.wav")
+        cleaned_wav = os.path.join(self.cleaned_dir, "generated_cleaned.wav")
+
+        with wave.open(source_wav, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(8000)
+            wav_file.writeframes(b"\0\0" * 800)
+
+        output_file = self.processor.delete_metadata(source_wav, cleaned_wav)
+
+        self.assertEqual(output_file, cleaned_wav)
+        self.assertTrue(os.path.exists(source_wav))
+        self.assertTrue(os.path.exists(cleaned_wav))
+
+        with wave.open(source_wav, "rb") as original, wave.open(
+            cleaned_wav, "rb"
+        ) as cleaned:
+            self.assertEqual(original.getnchannels(), cleaned.getnchannels())
+            self.assertEqual(original.getsampwidth(), cleaned.getsampwidth())
+            self.assertEqual(original.getframerate(), cleaned.getframerate())
+            self.assertEqual(original.getnframes(), cleaned.getnframes())
+
+    @unittest.skipUnless(
+        shutil.which("ffmpeg") and shutil.which("ffprobe"),
+        "FFmpeg and FFprobe are required for video integration coverage",
+    )
+    def test_generated_video_metadata_removal_with_ffmpeg(self):
+        """Video cleanup should strip container metadata without re-encoding."""
+        source_video = os.path.join(self.test_dir, "generated.mp4")
+        cleaned_video = os.path.join(self.cleaned_dir, "generated_cleaned.mp4")
+
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "testsrc=size=16x16:rate=1",
+                "-t",
+                "1",
+                "-metadata",
+                "title=Metadata Cleaner Test",
+                "-pix_fmt",
+                "yuv420p",
+                source_video,
+                "-y",
+            ],
+            check=True,
+        )
+
+        output_file = VideoHandler().remove_metadata(source_video, cleaned_video)
+        metadata = VideoHandler().extract_metadata(cleaned_video)
+
+        self.assertEqual(output_file, cleaned_video)
+        self.assertTrue(os.path.exists(source_video))
+        self.assertTrue(os.path.exists(cleaned_video))
+        self.assertNotEqual(os.path.getsize(cleaned_video), 0)
+        self.assertNotEqual(
+            metadata.get("format", {}).get("tags", {}).get("title"),
+            "Metadata Cleaner Test",
+        )
 
     def test_recursive_scanning(self):
         """Test recursive file scanning logic."""

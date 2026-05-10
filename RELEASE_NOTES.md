@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Maintenance
+- Added Docker build verification to CI and fixed the Docker build context so
+  `poetry.lock` is available to the Dockerfile.
+- Added generated WAV coverage and optional FFmpeg/FFprobe video integration
+  coverage.
+- Replaced stale planning and self-improvement docs with current roadmap and
+  maintenance guidance.
+
+## v3.2.0
+**Release Date**: 2026-05-09
+
 ### Security
 - Refreshed the dependency lockfile to patched versions for Pillow, pypdf,
   urllib3, requests, lxml, filelock, pytest, Black, Pygments, and pip.
