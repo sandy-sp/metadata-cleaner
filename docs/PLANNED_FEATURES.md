@@ -13,8 +13,8 @@ privacy risk before implementation.
 - Add more package smoke coverage for representative file types.
 
 ### CLI Usability
-- Add richer batch reports that can be exported to files.
 - Add optional file output targets for machine-readable command output.
+- Add richer per-file batch reports with output paths and failure reasons.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.

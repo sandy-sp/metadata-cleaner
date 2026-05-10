@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.6.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --summary-file PATH` to write the final
+  delete summary as JSON for audits, scheduled jobs, and CI pipelines.
+- Summary files are written for successful, failed, dry-run, and no-supported-
+  file outcomes.
+
 ## v3.5.0
 **Release Date**: 2026-05-10
 

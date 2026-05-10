@@ -65,6 +65,36 @@ def _echo_json(payload: dict) -> None:
     click.echo(json.dumps(payload, default=str, sort_keys=True))
 
 
+def _write_json_payload(file_path: str, payload: dict) -> bool:
+    try:
+        output_dir = os.path.dirname(os.path.abspath(file_path))
+        os.makedirs(output_dir, exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as output_file:
+            json.dump(payload, output_file, default=str, indent=2, sort_keys=True)
+            output_file.write("\n")
+        return True
+    except OSError as exc:
+        logger.error(f"Failed to write JSON output to {file_path}: {exc}")
+        return False
+
+
+def _write_summary_file(
+    summary_file: Optional[str],
+    summary: BatchSummary,
+    dry_run: bool,
+    quiet: bool = False,
+) -> bool:
+    if not summary_file:
+        return True
+
+    if _write_json_payload(summary_file, _summary_payload(summary, dry_run)):
+        return True
+
+    if not quiet:
+        click.echo(f"Failed to write summary file: {summary_file}")
+    return False
+
+
 def _echo_batch_summary(
     summary: BatchSummary,
     dry_run: bool,
@@ -178,16 +208,25 @@ def view(ctx, file, json_output):
 @click.option("--output", default=None, help="Output file path or batch directory.")
 @click.option("--dry-run", is_flag=True, help="Show what would be processed.")
 @click.option("--json-summary", is_flag=True, help="Print final summary as JSON.")
+@click.option(
+    "--summary-file",
+    type=click.Path(dir_okay=False, path_type=str),
+    default=None,
+    help="Write final summary as JSON to a file.",
+)
 @click.option("--quiet", is_flag=True, help="Suppress progress and human output.")
 @click.pass_context
-def delete(ctx, path, output, dry_run, json_summary, quiet):
+def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
     """Remove metadata from a file or supported files in a directory."""
     files_to_process = get_supported_files(path)
     if not files_to_process:
+        summary = BatchSummary(total=0)
         if json_summary:
-            _echo_batch_summary(BatchSummary(total=0), dry_run, json_summary=True)
+            _echo_batch_summary(summary, dry_run, json_summary=True)
         elif not quiet:
             click.echo("No supported files found.")
+        if not _write_summary_file(summary_file, summary, dry_run, quiet):
+            ctx.exit(EXIT_FAILURE)
         ctx.exit(EXIT_USAGE)
 
     processor = MetadataProcessor()
@@ -200,6 +239,8 @@ def delete(ctx, path, output, dry_run, json_summary, quiet):
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
                 click.echo("Dry run complete. No files changed.")
+            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+                ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_SUCCESS)
         elif result:
             summary.succeeded = 1
@@ -207,6 +248,8 @@ def delete(ctx, path, output, dry_run, json_summary, quiet):
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
                 click.echo(f"Metadata removed: {result}")
+            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+                ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_SUCCESS)
         else:
             summary.failed = 1
@@ -215,6 +258,8 @@ def delete(ctx, path, output, dry_run, json_summary, quiet):
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
                 click.echo("Metadata removal failed. Check logs for details.")
+            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+                ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_FAILURE)
 
     summary = BatchSummary(total=len(files_to_process))
@@ -251,6 +296,8 @@ def delete(ctx, path, output, dry_run, json_summary, quiet):
         json_summary=json_summary,
         quiet=quiet,
     )
+    if not _write_summary_file(summary_file, summary, dry_run, quiet):
+        ctx.exit(EXIT_FAILURE)
     _exit_for_summary(ctx, summary, dry_run)
 
 

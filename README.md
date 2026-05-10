@@ -75,6 +75,12 @@ Preview a run without writing files:
 metadata-cleaner delete ./photos --dry-run
 ```
 
+Write a JSON summary report:
+
+```bash
+metadata-cleaner delete ./photos --summary-file reports/summary.json
+```
+
 Edit metadata where supported:
 
 ```bash

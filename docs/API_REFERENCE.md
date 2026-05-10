@@ -58,3 +58,7 @@ The CLI returns stable exit codes for automation:
 Use `metadata-cleaner view FILE --json` to get a stable JSON envelope with
 `status`, `file`, `metadata_count`, and `metadata` fields. Invalid file input
 returns exit code `2` with `status` set to `invalid_input`.
+
+Use `metadata-cleaner delete PATH --json-summary` to print a machine-readable
+summary to stdout, or `metadata-cleaner delete PATH --summary-file report.json`
+to write the same summary payload to a file.
