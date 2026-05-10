@@ -1,6 +1,13 @@
 # Release Notes
 
-## Unreleased
+## v3.3.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added global `--verbose` and `--log-file` CLI options.
+- Added structured batch summaries for recursive metadata removal.
+- Added script-friendly exit codes for success, usage/no-op, full failure, and
+  partial failure cases.
 
 ### Maintenance
 - Added Docker build verification to CI and fixed the Docker build context so
@@ -9,6 +16,7 @@
   coverage.
 - Replaced stale planning and self-improvement docs with current roadmap and
   maintenance guidance.
+- Updated the release action and Docker base image through Dependabot.
 
 ## v3.2.0
 **Release Date**: 2026-05-09

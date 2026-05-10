@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import unittest
 import wave
+from logging.handlers import RotatingFileHandler
 from click.testing import CliRunner
 import docx
 from PIL import Image
@@ -11,6 +12,7 @@ import pypdf
 from m_c.cli.main import cli
 from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import validate_file, get_safe_output_path
+from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
 from m_c.handlers.video_handler import VideoHandler
 
@@ -245,10 +247,65 @@ class TestMetadataCleaner(unittest.TestCase):
 
             self.assertEqual(result.exit_code, 0, result.output)
             self.assertIn(
-                "Dry run complete. 1 files would be processed.",
+                "Dry run summary: would_process=1, failed=0, skipped=0, total=1",
                 result.output,
             )
             self.assertFalse(os.path.exists("outputs"))
+
+    def test_cli_batch_partial_failure_exit_code(self):
+        """Batch delete should report partial failure distinctly."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="purple").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+            with open(os.path.join("inputs", "broken.pdf"), "wb") as broken_pdf:
+                broken_pdf.write(b"not a valid pdf")
+
+            result = runner.invoke(cli, ["delete", "inputs", "--output", "outputs"])
+
+            self.assertEqual(result.exit_code, 3, result.output)
+            self.assertIn("Summary: succeeded=1, failed=1, skipped=0, total=2", result.output)
+            self.assertIn("Failed:", result.output)
+
+    def test_cli_no_supported_files_exit_code(self):
+        """CLI should distinguish no-op input from successful work."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            with open(os.path.join("inputs", "notes.unknown"), "w") as notes:
+                notes.write("nothing to clean")
+
+            result = runner.invoke(cli, ["delete", "inputs"])
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            self.assertIn("No supported files found.", result.output)
+
+    def test_cli_verbose_log_file_option(self):
+        """Global CLI options should enable explicit file logging."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="orange").save("photo.jpg", "jpeg")
+            log_path = os.path.abspath("metadata-cleaner.log")
+
+            result = runner.invoke(
+                cli,
+                ["--verbose", "--log-file", log_path, "delete", "photo.jpg", "--dry-run"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertTrue(os.path.exists(log_path))
+            with open(log_path) as log_file:
+                log_content = log_file.read()
+            self.assertIn("[DRY-RUN]", log_content)
+
+            for handler in list(logger.handlers):
+                if isinstance(handler, RotatingFileHandler):
+                    if os.path.abspath(handler.baseFilename) == log_path:
+                        logger.removeHandler(handler)
+                        handler.close()
 
     def test_cli_rejects_invalid_edit_json(self):
         """CLI edit command should fail gracefully for invalid JSON."""
@@ -258,7 +315,7 @@ class TestMetadataCleaner(unittest.TestCase):
             ["edit", self.test_files["document"], "--changes", "{invalid"],
         )
 
-        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("Invalid JSON format", result.output)
 
     def test_generated_wav_metadata_removal_preserves_original(self):

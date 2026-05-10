@@ -13,6 +13,20 @@ poetry install --with dev
 poetry run metadata-cleaner --help
 ```
 
+## Global Options
+
+Enable debug logs for any command:
+
+```bash
+metadata-cleaner --verbose view my_photo.jpg
+```
+
+Write logs to a rotating file:
+
+```bash
+metadata-cleaner --log-file ./metadata-cleaner.log delete sample.jpg
+```
+
 ## Commands
 
 View metadata:
@@ -39,6 +53,12 @@ Process a directory recursively:
 metadata-cleaner delete ./images --output ./cleaned-images
 ```
 
+Batch runs end with a structured summary:
+
+```text
+Summary: succeeded=12, failed=1, skipped=0, total=13
+```
+
 Preview work without creating files:
 
 ```bash
@@ -50,6 +70,13 @@ Edit metadata for formats with editing support:
 ```bash
 metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 ```
+
+## Exit Codes
+
+- `0`: command completed successfully.
+- `1`: command ran but all processing failed.
+- `2`: invalid input, usage issue, or no supported files were found.
+- `3`: batch processing completed with partial failures.
 
 ## Supported Formats
 
@@ -69,11 +96,14 @@ Some formats require system tools:
 Logs are written to stderr by default. To opt into file logging:
 
 ```bash
-METADATA_CLEANER_LOG_FILE=./metadata-cleaner.log metadata-cleaner delete sample.jpg
+metadata-cleaner --log-file ./metadata-cleaner.log delete sample.jpg
 ```
 
 To increase verbosity:
 
 ```bash
-METADATA_CLEANER_LOG_LEVEL=DEBUG metadata-cleaner view sample.jpg
+metadata-cleaner --verbose view sample.jpg
 ```
+
+The environment variables `METADATA_CLEANER_LOG_FILE` and
+`METADATA_CLEANER_LOG_LEVEL` are also supported for automation.

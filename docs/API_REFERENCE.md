@@ -43,3 +43,12 @@ updated_file = MetadataProcessor().edit_metadata(
 )
 print(updated_file)
 ```
+
+## CLI Exit Codes
+
+The CLI returns stable exit codes for automation:
+
+- `0`: success.
+- `1`: processing failure.
+- `2`: invalid input, usage error, or no supported files.
+- `3`: partial batch failure.
