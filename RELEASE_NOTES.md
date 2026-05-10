@@ -1,5 +1,12 @@
 # Release Notes
 
+## v3.3.1
+**Release Date**: 2026-05-10
+
+### Maintenance
+- Added a package smoke-test CI job that builds the wheel, installs it into a
+  clean virtual environment, and runs the installed `metadata-cleaner` CLI.
+
 ## v3.3.0
 **Release Date**: 2026-05-10
 

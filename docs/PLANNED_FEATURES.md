@@ -10,8 +10,7 @@ privacy risk before implementation.
 ### Stronger Fixture Coverage
 - Add generated audio fixtures with real metadata tags where practical.
 - Add video integration tests that run when FFmpeg and FFprobe are installed.
-- Add package smoke tests that install the built wheel and run the CLI.
-- Add Docker build verification in CI.
+- Add more package smoke coverage for representative file types.
 
 ### CLI Usability
 - Add richer batch reports that can be exported as JSON.

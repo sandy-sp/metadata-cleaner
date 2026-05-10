@@ -55,3 +55,38 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag metadata-cleaner:test .
+
+  package-smoke:
+    name: Package smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.2.1
+
+      - name: Build package
+        run: poetry build
+
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/metadata-cleaner-smoke
+          /tmp/metadata-cleaner-smoke/bin/python -m pip install --upgrade pip
+          /tmp/metadata-cleaner-smoke/bin/python -m pip install dist/*.whl
+
+      - name: Smoke test installed CLI
+        run: |
+          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner --help
+          /tmp/metadata-cleaner-smoke/bin/python - <<'PY'
+          from PIL import Image
+          Image.new("RGB", (8, 8), color="white").save("smoke.jpg", "jpeg")
+          PY
+          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner view smoke.jpg
+          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner delete smoke.jpg --dry-run
