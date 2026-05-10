@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.9.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --preserve-timestamps` to copy source access
+  and modification times to cleaned outputs.
+- Added programmatic support through
+  `MetadataProcessor.delete_metadata(..., preserve_timestamps=True)`.
+
 ## v3.8.0
 **Release Date**: 2026-05-10
 

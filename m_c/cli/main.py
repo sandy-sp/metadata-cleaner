@@ -253,6 +253,11 @@ def view(ctx, file, json_output):
     help="Include SHA-256 checksums in JSON summaries and summary files.",
 )
 @click.option(
+    "--preserve-timestamps",
+    is_flag=True,
+    help="Copy source access and modification times to cleaned outputs.",
+)
+@click.option(
     "--summary-file",
     type=click.Path(dir_okay=False, path_type=str),
     default=None,
@@ -260,7 +265,17 @@ def view(ctx, file, json_output):
 )
 @click.option("--quiet", is_flag=True, help="Suppress progress and human output.")
 @click.pass_context
-def delete(ctx, path, output, dry_run, json_summary, checksums, summary_file, quiet):
+def delete(
+    ctx,
+    path,
+    output,
+    dry_run,
+    json_summary,
+    checksums,
+    preserve_timestamps,
+    summary_file,
+    quiet,
+):
     """Remove metadata from a file or supported files in a directory."""
     files_to_process = get_supported_files(path)
     if not files_to_process:
@@ -277,7 +292,12 @@ def delete(ctx, path, output, dry_run, json_summary, checksums, summary_file, qu
     if len(files_to_process) == 1 and not os.path.isdir(path):
         input_file = files_to_process[0]
         planned_output = _single_output_path(input_file, output)
-        result = processor.delete_metadata(input_file, output, dry_run=dry_run)
+        result = processor.delete_metadata(
+            input_file,
+            output,
+            dry_run=dry_run,
+            preserve_timestamps=preserve_timestamps,
+        )
         summary = BatchSummary(total=1)
         if dry_run:
             summary.succeeded = 1
@@ -346,6 +366,7 @@ def delete(ctx, path, output, dry_run, json_summary, checksums, summary_file, qu
                     file_path,
                     output_path,
                     dry_run=dry_run,
+                    preserve_timestamps=preserve_timestamps,
                 )
                 if result or dry_run:
                     summary.succeeded += 1

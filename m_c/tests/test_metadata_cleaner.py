@@ -248,6 +248,24 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIsNone(result)
         self.assertFalse(os.path.exists(default_cleaned_dir))
 
+    def test_delete_metadata_preserves_timestamps_when_requested(self):
+        """Core cleanup should optionally preserve source filesystem timestamps."""
+        source_file = os.path.join(self.test_dir, "timestamped.jpg")
+        cleaned_file = os.path.join(self.cleaned_dir, "timestamped_cleaned.jpg")
+        Image.new("RGB", (10, 10), color="blue").save(source_file, "jpeg")
+        old_atime = 1_600_000_000
+        old_mtime = 1_500_000_000
+        os.utime(source_file, (old_atime, old_mtime))
+
+        result = self.processor.delete_metadata(
+            source_file,
+            cleaned_file,
+            preserve_timestamps=True,
+        )
+
+        self.assertEqual(result, cleaned_file)
+        self.assertEqual(int(os.stat(cleaned_file).st_mtime), old_mtime)
+
     def test_docx_metadata_removal_clears_core_properties(self):
         """DOCX cleaning should preserve content and clear common core metadata."""
         cleaned_docx = os.path.join(self.cleaned_dir, "cleaned_sample.docx")
@@ -496,6 +514,29 @@ class TestMetadataCleaner(unittest.TestCase):
                 expected_output = hashlib.sha256(output_file.read()).hexdigest()
             self.assertEqual(checksums["input_sha256"], expected_input)
             self.assertEqual(checksums["output_sha256"], expected_output)
+
+    def test_cli_delete_preserves_timestamps_when_requested(self):
+        """CLI cleanup should optionally preserve source filesystem timestamps."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+            old_atime = 1_600_000_000
+            old_mtime = 1_500_000_000
+            os.utime("photo.jpg", (old_atime, old_mtime))
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--output",
+                    "cleaned.jpg",
+                    "--preserve-timestamps",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(int(os.stat("cleaned.jpg").st_mtime), old_mtime)
 
     def test_cli_json_summary_for_dry_run_with_quiet(self):
         """JSON summary and quiet mode should produce clean stdout for automation."""
