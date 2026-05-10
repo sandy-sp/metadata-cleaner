@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.11.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner delete --report-detail full|compact|summary` to
+  control JSON summary verbosity for large batch and automation workflows.
+- `full` preserves the existing report shape, `compact` keeps per-file status
+  with minimal fields, and `summary` omits per-file entries entirely.
+
 ## v3.10.0
 **Release Date**: 2026-05-10
 
