@@ -74,3 +74,7 @@ available.
 Use `--report-detail full|compact|summary` to control JSON verbosity. `full` is
 the default and preserves all per-file fields, `compact` keeps minimal per-file
 status fields, and `summary` omits per-file entries.
+
+Use `--report-filter all|failed` to control which per-file entries are included
+when per-file entries are present. `failed` keeps aggregate counts unchanged and
+lists only failed file entries.

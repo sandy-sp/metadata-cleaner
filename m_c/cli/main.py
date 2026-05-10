@@ -43,7 +43,14 @@ def _summary_status(summary: BatchSummary, dry_run: bool) -> str:
     return "partial_failure"
 
 
-def _report_files(files: list[dict], report_detail: str) -> list[dict]:
+def _report_files(
+    files: list[dict],
+    report_detail: str,
+    report_filter: str = "all",
+) -> list[dict]:
+    if report_filter == "failed":
+        files = [item for item in files if item["status"] == "failed"]
+
     if report_detail == "full":
         return files
 
@@ -65,6 +72,7 @@ def _summary_payload(
     summary: BatchSummary,
     dry_run: bool,
     report_detail: str = "full",
+    report_filter: str = "all",
 ) -> dict:
     payload = {
         "status": _summary_status(summary, dry_run),
@@ -77,7 +85,11 @@ def _summary_payload(
         "failures": summary.failures,
     }
     if report_detail != "summary":
-        payload["files"] = _report_files(summary.files, report_detail)
+        payload["files"] = _report_files(
+            summary.files,
+            report_detail,
+            report_filter=report_filter,
+        )
     return payload
 
 
@@ -113,6 +125,7 @@ def _write_summary_file(
     summary: BatchSummary,
     dry_run: bool,
     report_detail: str = "full",
+    report_filter: str = "all",
     quiet: bool = False,
 ) -> bool:
     if not summary_file:
@@ -120,7 +133,12 @@ def _write_summary_file(
 
     if _write_json_payload(
         summary_file,
-        _summary_payload(summary, dry_run, report_detail=report_detail),
+        _summary_payload(
+            summary,
+            dry_run,
+            report_detail=report_detail,
+            report_filter=report_filter,
+        ),
     ):
         return True
 
@@ -134,10 +152,18 @@ def _echo_batch_summary(
     dry_run: bool,
     json_summary: bool = False,
     report_detail: str = "full",
+    report_filter: str = "all",
     quiet: bool = False,
 ) -> None:
     if json_summary:
-        _echo_json(_summary_payload(summary, dry_run, report_detail=report_detail))
+        _echo_json(
+            _summary_payload(
+                summary,
+                dry_run,
+                report_detail=report_detail,
+                report_filter=report_filter,
+            )
+        )
         return
 
     if quiet:
@@ -324,6 +350,13 @@ def view(ctx, file, json_output):
     help="Control detail level for JSON summaries and summary files.",
 )
 @click.option(
+    "--report-filter",
+    type=click.Choice(["all", "failed"]),
+    default="all",
+    show_default=True,
+    help="Filter per-file entries in JSON summaries and summary files.",
+)
+@click.option(
     "--preserve-timestamps",
     is_flag=True,
     help="Copy source access and modification times to cleaned outputs.",
@@ -344,6 +377,7 @@ def delete(
     json_summary,
     checksums,
     report_detail,
+    report_filter,
     preserve_timestamps,
     summary_file,
     quiet,
@@ -358,6 +392,7 @@ def delete(
                 dry_run,
                 json_summary=True,
                 report_detail=report_detail,
+                report_filter=report_filter,
             )
         elif not quiet:
             click.echo("No supported files found.")
@@ -366,6 +401,7 @@ def delete(
             summary,
             dry_run,
             report_detail=report_detail,
+            report_filter=report_filter,
             quiet=quiet,
         ):
             ctx.exit(EXIT_FAILURE)
@@ -397,6 +433,7 @@ def delete(
                     dry_run,
                     json_summary=True,
                     report_detail=report_detail,
+                    report_filter=report_filter,
                 )
             elif not quiet:
                 click.echo("Dry run complete. No files changed.")
@@ -405,6 +442,7 @@ def delete(
                 summary,
                 dry_run,
                 report_detail=report_detail,
+                report_filter=report_filter,
                 quiet=quiet,
             ):
                 ctx.exit(EXIT_FAILURE)
@@ -424,6 +462,7 @@ def delete(
                     dry_run,
                     json_summary=True,
                     report_detail=report_detail,
+                    report_filter=report_filter,
                 )
             elif not quiet:
                 click.echo(f"Metadata removed: {result}")
@@ -432,6 +471,7 @@ def delete(
                 summary,
                 dry_run,
                 report_detail=report_detail,
+                report_filter=report_filter,
                 quiet=quiet,
             ):
                 ctx.exit(EXIT_FAILURE)
@@ -453,6 +493,7 @@ def delete(
                     dry_run,
                     json_summary=True,
                     report_detail=report_detail,
+                    report_filter=report_filter,
                 )
             elif not quiet:
                 click.echo("Metadata removal failed. Check logs for details.")
@@ -461,6 +502,7 @@ def delete(
                 summary,
                 dry_run,
                 report_detail=report_detail,
+                report_filter=report_filter,
                 quiet=quiet,
             ):
                 ctx.exit(EXIT_FAILURE)
@@ -523,6 +565,7 @@ def delete(
         dry_run,
         json_summary=json_summary,
         report_detail=report_detail,
+        report_filter=report_filter,
         quiet=quiet,
     )
     if not _write_summary_file(
@@ -530,6 +573,7 @@ def delete(
         summary,
         dry_run,
         report_detail=report_detail,
+        report_filter=report_filter,
         quiet=quiet,
     ):
         ctx.exit(EXIT_FAILURE)

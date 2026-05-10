@@ -85,6 +85,7 @@ Summary reports include per-file status and output paths for audit trails.
 Add `--checksums` to include SHA-256 input/output hashes.
 Add `--preserve-timestamps` when cleaned files should keep source file times.
 Use `--report-detail compact` or `--report-detail summary` for smaller reports.
+Use `--report-filter failed` to list only failed per-file entries.
 Formats that rewrite, re-save, or remux data include per-file warnings in JSON
 summary reports.
 
