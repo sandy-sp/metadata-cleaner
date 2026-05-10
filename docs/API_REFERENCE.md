@@ -70,3 +70,7 @@ Pass `--checksums` with `delete` to include SHA-256 hashes in each per-file
 result. Dry-run summaries include input hashes and leave output hashes empty;
 completed cleaning summaries include both input and output hashes when files are
 available.
+
+Use `--report-detail full|compact|summary` to control JSON verbosity. `full` is
+the default and preserves all per-file fields, `compact` keeps minimal per-file
+status fields, and `summary` omits per-file entries.

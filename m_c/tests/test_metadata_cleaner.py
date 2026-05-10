@@ -501,6 +501,58 @@ class TestMetadataCleaner(unittest.TestCase):
             warnings = payload["files"][0]["warnings"]
             self.assertTrue(any("re-saves image data" in warning for warning in warnings))
 
+    def test_cli_json_summary_compact_report_detail(self):
+        """Compact JSON reports should omit verbose per-file fields."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.png", "png")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.png",
+                    "--dry-run",
+                    "--json-summary",
+                    "--checksums",
+                    "--report-detail",
+                    "compact",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            item = payload["files"][0]
+            self.assertEqual(item["input"], "photo.png")
+            self.assertEqual(item["status"], "would_process")
+            self.assertIn("checksums", item)
+            self.assertNotIn("output", item)
+            self.assertNotIn("warnings", item)
+
+    def test_cli_json_summary_summary_report_detail(self):
+        """Summary JSON reports should omit per-file entries for large batches."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--dry-run",
+                    "--json-summary",
+                    "--report-detail",
+                    "summary",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["total"], 1)
+            self.assertNotIn("files", payload)
+
     def test_cli_summary_file_with_checksums_for_cleaned_output(self):
         """Checksum reporting should include input and cleaned output hashes."""
         runner = CliRunner()

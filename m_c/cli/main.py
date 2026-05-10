@@ -43,8 +43,30 @@ def _summary_status(summary: BatchSummary, dry_run: bool) -> str:
     return "partial_failure"
 
 
-def _summary_payload(summary: BatchSummary, dry_run: bool) -> dict:
-    return {
+def _report_files(files: list[dict], report_detail: str) -> list[dict]:
+    if report_detail == "full":
+        return files
+
+    compact_files = []
+    for item in files:
+        compact_item = {
+            "input": item["input"],
+            "status": item["status"],
+        }
+        if "error" in item:
+            compact_item["error"] = item["error"]
+        if "checksums" in item:
+            compact_item["checksums"] = item["checksums"]
+        compact_files.append(compact_item)
+    return compact_files
+
+
+def _summary_payload(
+    summary: BatchSummary,
+    dry_run: bool,
+    report_detail: str = "full",
+) -> dict:
+    payload = {
         "status": _summary_status(summary, dry_run),
         "dry_run": dry_run,
         "total": summary.total,
@@ -53,8 +75,10 @@ def _summary_payload(summary: BatchSummary, dry_run: bool) -> dict:
         "skipped": summary.skipped,
         "would_process": summary.succeeded if dry_run else None,
         "failures": summary.failures,
-        "files": summary.files,
     }
+    if report_detail != "summary":
+        payload["files"] = _report_files(summary.files, report_detail)
+    return payload
 
 
 def _metadata_payload(file_path: str, metadata: Optional[dict], status: str) -> dict:
@@ -88,12 +112,16 @@ def _write_summary_file(
     summary_file: Optional[str],
     summary: BatchSummary,
     dry_run: bool,
+    report_detail: str = "full",
     quiet: bool = False,
 ) -> bool:
     if not summary_file:
         return True
 
-    if _write_json_payload(summary_file, _summary_payload(summary, dry_run)):
+    if _write_json_payload(
+        summary_file,
+        _summary_payload(summary, dry_run, report_detail=report_detail),
+    ):
         return True
 
     if not quiet:
@@ -105,10 +133,11 @@ def _echo_batch_summary(
     summary: BatchSummary,
     dry_run: bool,
     json_summary: bool = False,
+    report_detail: str = "full",
     quiet: bool = False,
 ) -> None:
     if json_summary:
-        _echo_json(_summary_payload(summary, dry_run))
+        _echo_json(_summary_payload(summary, dry_run, report_detail=report_detail))
         return
 
     if quiet:
@@ -288,6 +317,13 @@ def view(ctx, file, json_output):
     help="Include SHA-256 checksums in JSON summaries and summary files.",
 )
 @click.option(
+    "--report-detail",
+    type=click.Choice(["full", "compact", "summary"]),
+    default="full",
+    show_default=True,
+    help="Control detail level for JSON summaries and summary files.",
+)
+@click.option(
     "--preserve-timestamps",
     is_flag=True,
     help="Copy source access and modification times to cleaned outputs.",
@@ -307,6 +343,7 @@ def delete(
     dry_run,
     json_summary,
     checksums,
+    report_detail,
     preserve_timestamps,
     summary_file,
     quiet,
@@ -316,10 +353,21 @@ def delete(
     if not files_to_process:
         summary = BatchSummary(total=0)
         if json_summary:
-            _echo_batch_summary(summary, dry_run, json_summary=True)
+            _echo_batch_summary(
+                summary,
+                dry_run,
+                json_summary=True,
+                report_detail=report_detail,
+            )
         elif not quiet:
             click.echo("No supported files found.")
-        if not _write_summary_file(summary_file, summary, dry_run, quiet):
+        if not _write_summary_file(
+            summary_file,
+            summary,
+            dry_run,
+            report_detail=report_detail,
+            quiet=quiet,
+        ):
             ctx.exit(EXIT_FAILURE)
         ctx.exit(EXIT_USAGE)
 
@@ -344,10 +392,21 @@ def delete(
                 include_checksums=checksums,
             )
             if json_summary:
-                _echo_batch_summary(summary, dry_run, json_summary=True)
+                _echo_batch_summary(
+                    summary,
+                    dry_run,
+                    json_summary=True,
+                    report_detail=report_detail,
+                )
             elif not quiet:
                 click.echo("Dry run complete. No files changed.")
-            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+            if not _write_summary_file(
+                summary_file,
+                summary,
+                dry_run,
+                report_detail=report_detail,
+                quiet=quiet,
+            ):
                 ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_SUCCESS)
         elif result:
@@ -360,10 +419,21 @@ def delete(
                 include_checksums=checksums,
             )
             if json_summary:
-                _echo_batch_summary(summary, dry_run, json_summary=True)
+                _echo_batch_summary(
+                    summary,
+                    dry_run,
+                    json_summary=True,
+                    report_detail=report_detail,
+                )
             elif not quiet:
                 click.echo(f"Metadata removed: {result}")
-            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+            if not _write_summary_file(
+                summary_file,
+                summary,
+                dry_run,
+                report_detail=report_detail,
+                quiet=quiet,
+            ):
                 ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_SUCCESS)
         else:
@@ -378,10 +448,21 @@ def delete(
                 include_checksums=checksums,
             )
             if json_summary:
-                _echo_batch_summary(summary, dry_run, json_summary=True)
+                _echo_batch_summary(
+                    summary,
+                    dry_run,
+                    json_summary=True,
+                    report_detail=report_detail,
+                )
             elif not quiet:
                 click.echo("Metadata removal failed. Check logs for details.")
-            if not _write_summary_file(summary_file, summary, dry_run, quiet):
+            if not _write_summary_file(
+                summary_file,
+                summary,
+                dry_run,
+                report_detail=report_detail,
+                quiet=quiet,
+            ):
                 ctx.exit(EXIT_FAILURE)
             ctx.exit(EXIT_FAILURE)
 
@@ -441,9 +522,16 @@ def delete(
         summary,
         dry_run,
         json_summary=json_summary,
+        report_detail=report_detail,
         quiet=quiet,
     )
-    if not _write_summary_file(summary_file, summary, dry_run, quiet):
+    if not _write_summary_file(
+        summary_file,
+        summary,
+        dry_run,
+        report_detail=report_detail,
+        quiet=quiet,
+    ):
         ctx.exit(EXIT_FAILURE)
     _exit_for_summary(ctx, summary, dry_run)
 
