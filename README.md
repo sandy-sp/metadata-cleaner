@@ -81,6 +81,8 @@ Write a JSON summary report:
 metadata-cleaner delete ./photos --summary-file reports/summary.json
 ```
 
+Summary reports include per-file status and output paths for audit trails.
+
 Edit metadata where supported:
 
 ```bash

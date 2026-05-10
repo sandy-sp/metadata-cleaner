@@ -24,6 +24,7 @@ class BatchSummary:
     failed: int = 0
     skipped: int = 0
     failures: list[str] = field(default_factory=list)
+    files: list[dict] = field(default_factory=list)
 
 
 def _summary_status(summary: BatchSummary, dry_run: bool) -> str:
@@ -48,6 +49,7 @@ def _summary_payload(summary: BatchSummary, dry_run: bool) -> dict:
         "skipped": summary.skipped,
         "would_process": summary.succeeded if dry_run else None,
         "failures": summary.failures,
+        "files": summary.files,
     }
 
 
@@ -166,6 +168,29 @@ def _batch_output_path(
     return get_safe_output_path(target_path, create_dirs=create_dirs)
 
 
+def _single_output_path(file_path: str, output_path: Optional[str]) -> str:
+    if output_path:
+        return output_path
+    return os.path.join(os.path.dirname(file_path), "cleaned", os.path.basename(file_path))
+
+
+def _record_file_result(
+    summary: BatchSummary,
+    input_path: str,
+    status: str,
+    output_path: Optional[str] = None,
+    error: Optional[str] = None,
+) -> None:
+    item = {
+        "input": input_path,
+        "status": status,
+        "output": output_path,
+    }
+    if error:
+        item["error"] = error
+    summary.files.append(item)
+
+
 @click.group()
 @click.option("--verbose", is_flag=True, help="Enable debug logging.")
 @click.option(
@@ -231,10 +256,18 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
 
     processor = MetadataProcessor()
     if len(files_to_process) == 1 and not os.path.isdir(path):
-        result = processor.delete_metadata(files_to_process[0], output, dry_run=dry_run)
+        input_file = files_to_process[0]
+        planned_output = _single_output_path(input_file, output)
+        result = processor.delete_metadata(input_file, output, dry_run=dry_run)
         summary = BatchSummary(total=1)
         if dry_run:
             summary.succeeded = 1
+            _record_file_result(
+                summary,
+                input_file,
+                "would_process",
+                planned_output,
+            )
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
@@ -244,6 +277,7 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
             ctx.exit(EXIT_SUCCESS)
         elif result:
             summary.succeeded = 1
+            _record_file_result(summary, input_file, "success", result)
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
@@ -253,7 +287,14 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
             ctx.exit(EXIT_SUCCESS)
         else:
             summary.failed = 1
-            summary.failures.append(files_to_process[0])
+            summary.failures.append(input_file)
+            _record_file_result(
+                summary,
+                input_file,
+                "failed",
+                planned_output,
+                "metadata_removal_failed",
+            )
             if json_summary:
                 _echo_batch_summary(summary, dry_run, json_summary=True)
             elif not quiet:
@@ -281,12 +322,32 @@ def delete(ctx, path, output, dry_run, json_summary, summary_file, quiet):
                 )
                 if result or dry_run:
                     summary.succeeded += 1
+                    _record_file_result(
+                        summary,
+                        file_path,
+                        "would_process" if dry_run else "success",
+                        output_path if dry_run else result,
+                    )
                 else:
                     summary.failed += 1
                     summary.failures.append(file_path)
+                    _record_file_result(
+                        summary,
+                        file_path,
+                        "failed",
+                        output_path,
+                        "metadata_removal_failed",
+                    )
             except Exception as e:
                 summary.failed += 1
                 summary.failures.append(file_path)
+                _record_file_result(
+                    summary,
+                    file_path,
+                    "failed",
+                    None,
+                    str(e),
+                )
                 logger.error(f"Failed to process {file_path}: {e}", exc_info=True)
             pbar.update(1)
 

@@ -326,6 +326,42 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(payload["succeeded"], 1)
             self.assertEqual(payload["failed"], 0)
             self.assertEqual(payload["failures"], [])
+            self.assertEqual(len(payload["files"]), 1)
+            self.assertEqual(payload["files"][0]["input"], os.path.join("inputs", "photo.jpg"))
+            self.assertEqual(payload["files"][0]["status"], "success")
+            self.assertTrue(payload["files"][0]["output"].startswith("outputs"))
+
+    def test_cli_json_summary_for_batch_partial_failure_has_file_details(self):
+        """JSON batch summaries should include per-file status and errors."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            os.makedirs("inputs", exist_ok=True)
+            Image.new("RGB", (10, 10), color="green").save(
+                os.path.join("inputs", "photo.jpg"),
+                "jpeg",
+            )
+            with open(os.path.join("inputs", "broken.pdf"), "wb") as broken_pdf:
+                broken_pdf.write(b"not a valid pdf")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "inputs", "--output", "outputs", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 3, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "partial_failure")
+            self.assertEqual(payload["succeeded"], 1)
+            self.assertEqual(payload["failed"], 1)
+            self.assertEqual(len(payload["files"]), 2)
+            files_by_input = {item["input"]: item for item in payload["files"]}
+            self.assertEqual(
+                files_by_input[os.path.join("inputs", "photo.jpg")]["status"],
+                "success",
+            )
+            failed_item = files_by_input[os.path.join("inputs", "broken.pdf")]
+            self.assertEqual(failed_item["status"], "failed")
+            self.assertEqual(failed_item["error"], "metadata_removal_failed")
 
     def test_cli_summary_file_for_batch(self):
         """Batch delete should write machine-readable summaries to a file."""
@@ -357,6 +393,12 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertFalse(payload["dry_run"])
             self.assertEqual(payload["total"], 1)
             self.assertEqual(payload["succeeded"], 1)
+            self.assertEqual(payload["files"][0]["status"], "success")
+            self.assertEqual(
+                payload["files"][0]["input"],
+                os.path.join("inputs", "photo.jpg"),
+            )
+            self.assertTrue(payload["files"][0]["output"].startswith("outputs"))
 
     def test_cli_summary_file_with_json_summary(self):
         """Summary files should work alongside JSON stdout."""
@@ -382,6 +424,11 @@ class TestMetadataCleaner(unittest.TestCase):
                 file_payload = json.load(summary_file)
             self.assertEqual(file_payload, stdout_payload)
             self.assertEqual(file_payload["would_process"], 1)
+            self.assertEqual(file_payload["files"][0]["status"], "would_process")
+            self.assertEqual(
+                file_payload["files"][0]["output"],
+                os.path.join("cleaned", "photo.jpg"),
+            )
 
     def test_cli_json_summary_for_dry_run_with_quiet(self):
         """JSON summary and quiet mode should produce clean stdout for automation."""
@@ -404,6 +451,8 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertTrue(payload["dry_run"])
             self.assertEqual(payload["total"], 1)
             self.assertEqual(payload["would_process"], 1)
+            self.assertEqual(payload["files"][0]["status"], "would_process")
+            self.assertTrue(payload["files"][0]["output"].startswith("inputs"))
 
     def test_cli_quiet_suppresses_human_success_output(self):
         """Quiet mode should suppress human output when JSON is not requested."""

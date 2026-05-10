@@ -14,7 +14,8 @@ privacy risk before implementation.
 
 ### CLI Usability
 - Add optional file output targets for machine-readable command output.
-- Add richer per-file batch reports with output paths and failure reasons.
+- Add configurable verbosity levels for per-file report payloads if users need
+  compact reports for very large batches.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.
