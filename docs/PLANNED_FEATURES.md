@@ -27,11 +27,11 @@ privacy risk before implementation.
 ## Medium Term
 
 ### Privacy and Safety
-- Add clearer warnings for formats that require re-saving rather than lossless
-  metadata stripping.
 - Add optional checksum algorithms beyond SHA-256 only if users need them.
 - Add timestamp preservation coverage for additional handlers as new formats are
   added.
+- Expand per-file warnings as handlers gain more precise lossless/rewrite
+  detection.
 
 ### Packaging
 - Add a Docker image publishing workflow after Docker builds are covered in CI.

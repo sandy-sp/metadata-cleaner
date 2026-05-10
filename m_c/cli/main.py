@@ -178,6 +178,38 @@ def _single_output_path(file_path: str, output_path: Optional[str]) -> str:
     return os.path.join(os.path.dirname(file_path), "cleaned", os.path.basename(file_path))
 
 
+def _processing_warnings(file_path: str) -> list[str]:
+    ext = os.path.splitext(file_path)[1].lower()
+    warnings_by_extension = {
+        ".png": [
+            "PNG metadata removal re-saves image data; inspect output if "
+            "pixel-perfect preservation matters."
+        ],
+        ".pdf": [
+            "PDF metadata removal rewrites the document container while "
+            "preserving content."
+        ],
+        ".docx": [
+            "DOCX metadata removal rewrites the document package while "
+            "preserving content."
+        ],
+        ".mp3": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".wav": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".flac": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".ogg": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".aac": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".m4a": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".wma": ["Audio metadata removal rewrites tags on a copied audio file."],
+        ".mp4": ["Video metadata removal remuxes the container with stream copy."],
+        ".mkv": ["Video metadata removal remuxes the container with stream copy."],
+        ".mov": ["Video metadata removal remuxes the container with stream copy."],
+        ".avi": ["Video metadata removal remuxes the container with stream copy."],
+        ".webm": ["Video metadata removal remuxes the container with stream copy."],
+        ".flv": ["Video metadata removal remuxes the container with stream copy."],
+    }
+    return warnings_by_extension.get(ext, [])
+
+
 def _record_file_result(
     summary: BatchSummary,
     input_path: str,
@@ -191,6 +223,9 @@ def _record_file_result(
         "status": status,
         "output": output_path,
     }
+    warnings = _processing_warnings(input_path)
+    if warnings:
+        item["warnings"] = warnings
     if include_checksums:
         item["checksums"] = {
             "input_sha256": get_file_checksum(input_path),

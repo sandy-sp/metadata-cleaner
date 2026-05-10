@@ -84,6 +84,8 @@ metadata-cleaner delete ./photos --summary-file reports/summary.json
 Summary reports include per-file status and output paths for audit trails.
 Add `--checksums` to include SHA-256 input/output hashes.
 Add `--preserve-timestamps` when cleaned files should keep source file times.
+Formats that rewrite, re-save, or remux data include per-file warnings in JSON
+summary reports.
 
 Edit metadata where supported:
 
