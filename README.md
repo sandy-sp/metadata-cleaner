@@ -45,6 +45,12 @@ View metadata:
 metadata-cleaner view sample.jpg
 ```
 
+Print metadata for automation:
+
+```bash
+metadata-cleaner view sample.jpg --json
+```
+
 Remove metadata from one file:
 
 ```bash

@@ -35,6 +35,12 @@ View metadata:
 metadata-cleaner view my_photo.jpg
 ```
 
+Print metadata in a stable JSON envelope:
+
+```bash
+metadata-cleaner view my_photo.jpg --json
+```
+
 Remove metadata from one file:
 
 ```bash

@@ -90,6 +90,38 @@ class TestMetadataCleaner(unittest.TestCase):
         pdf_meta = self.processor.view_metadata(self.test_files["document"])
         self.assertIsInstance(pdf_meta, dict)
 
+    def test_cli_view_json_output_with_metadata(self):
+        """View command should provide a stable JSON envelope."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            writer = pypdf.PdfWriter()
+            writer.add_blank_page(width=72, height=72)
+            writer.add_metadata({"/Title": "Automation Test"})
+            with open("sample.pdf", "wb") as pdf_file:
+                writer.write(pdf_file)
+
+            result = runner.invoke(cli, ["view", "sample.pdf", "--json"])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["file"], "sample.pdf")
+            self.assertGreaterEqual(payload["metadata_count"], 1)
+            self.assertIn("/Title", payload["metadata"])
+
+    def test_cli_view_json_output_for_invalid_file(self):
+        """JSON view output should stay parseable for invalid input."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["view", "missing.jpg", "--json"])
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "invalid_input")
+            self.assertEqual(payload["file"], "missing.jpg")
+            self.assertEqual(payload["metadata"], {})
+            self.assertIn("error", payload)
+
     def test_remove_metadata(self):
         """Test metadata removal for all file types while preserving originals."""
         for category, file_path in self.test_files.items():

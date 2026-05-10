@@ -52,3 +52,9 @@ The CLI returns stable exit codes for automation:
 - `1`: processing failure.
 - `2`: invalid input, usage error, or no supported files.
 - `3`: partial batch failure.
+
+## Machine-Readable CLI Output
+
+Use `metadata-cleaner view FILE --json` to get a stable JSON envelope with
+`status`, `file`, `metadata_count`, and `metadata` fields. Invalid file input
+returns exit code `2` with `status` set to `invalid_input`.

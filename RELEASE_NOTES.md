@@ -1,5 +1,16 @@
 # Release Notes
 
+## v3.5.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added `metadata-cleaner view --json` for stable machine-readable metadata
+  inspection, including invalid-input and no-metadata cases.
+
+### Maintenance
+- Improved CLI metadata formatting so non-JSON-native metadata values are
+  rendered safely instead of causing formatting errors.
+
 ## v3.4.0
 **Release Date**: 2026-05-10
 

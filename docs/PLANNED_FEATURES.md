@@ -14,7 +14,7 @@ privacy risk before implementation.
 
 ### CLI Usability
 - Add richer batch reports that can be exported to files.
-- Add more machine-readable command output for metadata inspection.
+- Add optional file output targets for machine-readable command output.
 
 ### File Format Support
 - Evaluate HEIC/HEIF support with a clear dependency strategy.
