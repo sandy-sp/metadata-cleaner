@@ -35,5 +35,8 @@ Metadata Cleaner is a small Python CLI organized around file-type handlers.
   to stderr only.
 - Cleaned outputs are written separately from originals.
 - Dependency scanning is performed with `pip-audit` in CI.
+- Static analysis is performed with CodeQL.
+- Docker image builds are checked in CI so Dockerfile updates are tested before
+  release.
 - The project ignores local logs, local agent state, virtual environments, build
   artifacts, and caches.

@@ -18,6 +18,8 @@ print(metadata)
 
 Remove metadata and write a cleaned copy. When `output_path` is omitted, the
 cleaned file is written under a `cleaned/` directory next to the source file.
+When `dry_run=True`, the method returns `None` and does not create output files
+or directories.
 
 ```python
 from m_c.core.metadata_processor import MetadataProcessor
@@ -29,7 +31,8 @@ print(cleaned_file)
 ## `edit_metadata(file_path: str, metadata_changes: dict) -> str | None`
 
 Edit metadata for formats whose handler supports editing. Currently this is most
-useful for audio files through Mutagen.
+useful for audio files through Mutagen. Editing may modify the target file in
+place; use metadata removal when you need a cleaned copy.
 
 ```python
 from m_c.core.metadata_processor import MetadataProcessor

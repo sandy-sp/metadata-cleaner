@@ -51,6 +51,19 @@ Edit metadata for formats with editing support:
 metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 ```
 
+## Supported Formats
+
+- Images: JPEG, PNG, TIFF, WebP, AVIF
+- Documents: PDF, DOCX, TXT
+- Audio: MP3, WAV, FLAC, OGG, AAC, M4A, WMA
+- Video: MP4, MKV, MOV, AVI, WebM, FLV
+
+Some formats require system tools:
+
+- AVIF cleanup uses ExifTool.
+- Video metadata reads use FFprobe.
+- Video metadata removal uses FFmpeg.
+
 ## Logging
 
 Logs are written to stderr by default. To opt into file logging:
