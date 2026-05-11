@@ -1,5 +1,19 @@
 # Release Notes
 
+## v3.15.0
+**Release Date**: 2026-05-10
+
+### Features
+- Added HEIC and HEIF file discovery plus ExifTool-backed metadata cleanup.
+- HEIC/HEIF dry-run and JSON reports now include processing warnings that
+  explain the external-tool dependency.
+
+### Maintenance
+- Documented the HEIC/HEIF support strategy without adding a new image codec
+  dependency.
+- Added tests for HEIC/HEIF recognition, HEIC cleanup routing, and CLI warning
+  output.
+
 ## v3.14.0
 **Release Date**: 2026-05-10
 

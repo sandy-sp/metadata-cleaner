@@ -17,7 +17,15 @@ class ImageHandler(BaseHandler):
     Uses ExifTool and Piexif.
     """
 
-    SUPPORTED_FORMATS = {"jpg", "jpeg", "png", "tiff", "webp", "avif"}
+    EXIFTOOL_ONLY_FORMATS = {"avif", "heic", "heif"}
+    SUPPORTED_FORMATS = {
+        "jpg",
+        "jpeg",
+        "png",
+        "tiff",
+        "webp",
+        *EXIFTOOL_ONLY_FORMATS,
+    }
 
     def extract_metadata(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Extract metadata with fallback methods."""
@@ -46,8 +54,8 @@ class ImageHandler(BaseHandler):
             logger.debug(f"Processing image: {file_path}")
             ext = os.path.splitext(file_path)[1].lower()
 
-            if ext == ".avif":
-                logger.info(f"Using ExifTool for AVIF: {file_path}")
+            if ext.strip(".") in self.EXIFTOOL_ONLY_FORMATS:
+                logger.info(f"Using ExifTool for {ext.upper().strip('.')}: {file_path}")
                 return self._remove_metadata_exiftool(file_path, output_path)
 
             if ext in {".jpg", ".jpeg", ".webp", ".tiff", ".tif"}:

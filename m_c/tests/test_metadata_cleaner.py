@@ -7,6 +7,7 @@ import unittest
 import wave
 import zipfile
 from logging.handlers import RotatingFileHandler
+from unittest.mock import patch
 from click.testing import CliRunner
 import docx
 from mutagen import File as MutagenFile
@@ -293,6 +294,39 @@ class TestMetadataCleaner(unittest.TestCase):
             f.write(b"dummy binary data")
 
         self.assertTrue(image_handler.is_supported(avif_path))
+
+    def test_heic_heif_recognition(self):
+        """Verify HEIC and HEIF files are recognized by ImageHandler."""
+        from m_c.handlers.image_handler import image_handler
+
+        self.assertIn("heic", image_handler.SUPPORTED_FORMATS)
+        self.assertIn("heif", image_handler.SUPPORTED_FORMATS)
+
+        for extension in ("heic", "heif"):
+            image_path = os.path.join(self.test_dir, f"test.{extension}")
+            with open(image_path, "wb") as image_file:
+                image_file.write(b"dummy binary data")
+
+            self.assertTrue(image_handler.is_supported(image_path))
+
+    def test_heic_metadata_removal_uses_exiftool_path(self):
+        """HEIC cleanup should use the ExifTool-backed image path."""
+        from m_c.handlers.image_handler import image_handler
+
+        source_heic = os.path.join(self.test_dir, "source.heic")
+        cleaned_heic = os.path.join(self.cleaned_dir, "source_cleaned.heic")
+        with open(source_heic, "wb") as image_file:
+            image_file.write(b"dummy binary data")
+
+        with patch.object(
+            image_handler,
+            "_remove_metadata_exiftool",
+            return_value=cleaned_heic,
+        ) as remove_metadata:
+            result = image_handler.remove_metadata(source_heic, cleaned_heic)
+
+        self.assertEqual(result, cleaned_heic)
+        remove_metadata.assert_called_once_with(source_heic, cleaned_heic)
 
     def test_dry_run_mechanism(self):
         """Test dry run flag does not modify files."""
@@ -744,6 +778,26 @@ class TestMetadataCleaner(unittest.TestCase):
             warnings = payload["files"][0]["warnings"]
             self.assertTrue(
                 any("EPUB metadata removal rewrites" in warning for warning in warnings)
+            )
+
+    def test_cli_json_summary_includes_heic_processing_warning(self):
+        """HEIC dry-run reports should describe the ExifTool-backed path."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("photo.heic", "wb") as image_file:
+                image_file.write(b"dummy binary data")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "photo.heic", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(
+                any("HEIC metadata removal requires ExifTool" in warning
+                    for warning in warnings)
             )
 
     def test_cli_json_summary_compact_report_detail(self):

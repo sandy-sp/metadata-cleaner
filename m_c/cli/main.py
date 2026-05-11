@@ -248,6 +248,14 @@ def _processing_warnings(file_path: str) -> list[str]:
             "DOCX metadata removal rewrites the document package while "
             "preserving content."
         ],
+        ".heic": [
+            "HEIC metadata removal requires ExifTool and rewrites metadata on "
+            "a copied file."
+        ],
+        ".heif": [
+            "HEIF metadata removal requires ExifTool and rewrites metadata on "
+            "a copied file."
+        ],
         ".epub": [
             "EPUB metadata removal rewrites the book package while preserving "
             "content."
