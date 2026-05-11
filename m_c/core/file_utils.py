@@ -5,6 +5,8 @@ from typing import Optional
 
 logger = logging.getLogger("metadata_cleaner")
 
+SUPPORTED_CHECKSUM_ALGORITHMS = ("sha256", "sha512", "blake2b")
+
 
 def validate_file(file_path: str) -> bool:
     """Check if the file exists and is accessible."""
@@ -20,14 +22,19 @@ def validate_file(file_path: str) -> bool:
     return True
 
 
-def get_file_checksum(file_path: str) -> Optional[str]:
-    """Generate SHA-256 checksum for file integrity verification using chunking."""
+def get_file_checksum(file_path: str, algorithm: str = "sha256") -> Optional[str]:
+    """Generate a checksum for file integrity verification using chunking."""
+    algorithm = algorithm.lower()
+    if algorithm not in SUPPORTED_CHECKSUM_ALGORITHMS:
+        logger.error(f"Unsupported checksum algorithm: {algorithm}")
+        return None
+
     try:
-        sha256 = hashlib.sha256()
+        checksum = hashlib.new(algorithm)
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(8192), b""):
-                sha256.update(chunk)
-        return sha256.hexdigest()
+                checksum.update(chunk)
+        return checksum.hexdigest()
     except Exception as e:
         logger.error(f"Error generating checksum for {file_path}: {e}")
         return None

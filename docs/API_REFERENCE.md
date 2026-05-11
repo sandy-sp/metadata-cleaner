@@ -66,10 +66,11 @@ to write the same summary payload to a file. Delete summaries include top-level
 counts plus a `files` list with each input path, per-file status, output path,
 format-specific processing warnings, and failure reason when available.
 
-Pass `--checksums` with `delete` to include SHA-256 hashes in each per-file
-result. Dry-run summaries include input hashes and leave output hashes empty;
-completed cleaning summaries include both input and output hashes when files are
-available.
+Pass `--checksums` with `delete` to include hashes in each per-file result.
+SHA-256 is the default. Use `--checksum-algorithm sha256|sha512|blake2b` to
+select the report algorithm. Dry-run summaries include input hashes and leave
+output hashes empty; completed cleaning summaries include both input and output
+hashes when files are available.
 
 Use `--report-detail full|compact|summary` to control JSON verbosity. `full` is
 the default and preserves all per-file fields, `compact` keeps minimal per-file

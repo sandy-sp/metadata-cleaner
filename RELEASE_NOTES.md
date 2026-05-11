@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.16.0
+**Release Date**: 2026-05-11
+
+### Features
+- Added `metadata-cleaner delete --checksum-algorithm sha256|sha512|blake2b`
+  for configurable checksum reporting.
+- `--checksums` keeps SHA-256 as the default while using algorithm-specific
+  report keys such as `input_sha512` and `output_blake2b` when requested.
+
+### Maintenance
+- Added direct checksum helper coverage and CLI JSON summary coverage for
+  SHA-512 checksum reports.
+
 ## v3.15.0
 **Release Date**: 2026-05-10
 

@@ -82,7 +82,9 @@ metadata-cleaner delete ./photos --summary-file reports/summary.json
 ```
 
 Summary reports include per-file status and output paths for audit trails.
-Add `--checksums` to include SHA-256 input/output hashes.
+Add `--checksums` to include input/output hashes. SHA-256 is the default; use
+`--checksum-algorithm sha512` or `--checksum-algorithm blake2b` for stronger
+hash reports.
 Add `--preserve-timestamps` when cleaned files should keep source file times.
 Use `--report-detail compact` or `--report-detail summary` for smaller reports.
 Use `--report-filter failed` to list only failed per-file entries.
