@@ -1,5 +1,16 @@
 # Release Notes
 
+## v3.17.0
+**Release Date**: 2026-05-11
+
+### Features
+- Added a GitHub Container Registry publishing workflow for tagged releases.
+- Docker release images are published as `ghcr.io/sandy-sp/metadata-cleaner`
+  with version, minor-version, and `latest` tags.
+
+### Maintenance
+- Documented published Docker image usage and release-process behavior.
+
 ## v3.16.1
 **Release Date**: 2026-05-11
 
