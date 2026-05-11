@@ -398,6 +398,42 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertEqual(result, cleaned_file)
         self.assertEqual(int(os.stat(cleaned_file).st_mtime), old_mtime)
 
+    def test_odt_cleanup_preserves_timestamps_when_requested(self):
+        """ODT package cleanup should honor timestamp preservation."""
+        source_odt = os.path.join(self.test_dir, "timestamped.odt")
+        cleaned_odt = os.path.join(self.cleaned_dir, "timestamped_cleaned.odt")
+        self._write_odt(source_odt)
+        old_atime = 1_600_000_000
+        old_mtime = 1_500_000_000
+        os.utime(source_odt, (old_atime, old_mtime))
+
+        result = self.processor.delete_metadata(
+            source_odt,
+            cleaned_odt,
+            preserve_timestamps=True,
+        )
+
+        self.assertEqual(result, cleaned_odt)
+        self.assertEqual(int(os.stat(cleaned_odt).st_mtime), old_mtime)
+
+    def test_epub_cleanup_preserves_timestamps_when_requested(self):
+        """EPUB package cleanup should honor timestamp preservation."""
+        source_epub = os.path.join(self.test_dir, "timestamped.epub")
+        cleaned_epub = os.path.join(self.cleaned_dir, "timestamped_cleaned.epub")
+        self._write_epub(source_epub)
+        old_atime = 1_600_000_000
+        old_mtime = 1_500_000_000
+        os.utime(source_epub, (old_atime, old_mtime))
+
+        result = self.processor.delete_metadata(
+            source_epub,
+            cleaned_epub,
+            preserve_timestamps=True,
+        )
+
+        self.assertEqual(result, cleaned_epub)
+        self.assertEqual(int(os.stat(cleaned_epub).st_mtime), old_mtime)
+
     def test_docx_metadata_removal_clears_core_properties(self):
         """DOCX cleaning should preserve content and clear common core metadata."""
         cleaned_docx = os.path.join(self.cleaned_dir, "cleaned_sample.docx")
