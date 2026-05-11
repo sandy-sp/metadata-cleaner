@@ -29,7 +29,6 @@ privacy risk before implementation.
   detection.
 
 ### Packaging
-- Add a Docker image publishing workflow after Docker builds are covered in CI.
 - Consider standalone executables only after the CLI test suite is broader.
 
 ## Longer Term

@@ -114,6 +114,12 @@ docker build -t metadata-cleaner .
 docker run --rm -v "$(pwd)/photos:/data" metadata-cleaner delete /data
 ```
 
+Published release images are available from GitHub Container Registry:
+
+```bash
+docker run --rm -v "$(pwd)/photos:/data" ghcr.io/sandy-sp/metadata-cleaner:latest delete /data
+```
+
 ## Logging
 
 By default, logs go to stderr only. To write a log file, opt in explicitly:

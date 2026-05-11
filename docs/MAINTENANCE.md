@@ -16,7 +16,8 @@ poetry build
 ```
 
 The CI workflow mirrors these checks, builds the Docker image, and smoke-tests
-the built wheel in a clean virtual environment.
+the built wheel in a clean virtual environment. Tagged releases also publish a
+Docker image to GitHub Container Registry.
 
 ## Dependency Updates
 
@@ -64,4 +65,6 @@ git push origin vX.Y.Z
 ```
 
 The release workflow publishes to PyPI and creates the GitHub release using the
-matching `RELEASE_NOTES.md` section as the release body.
+matching `RELEASE_NOTES.md` section as the release body. The Docker publishing
+workflow runs for the same version tags and publishes `ghcr.io/sandy-sp/metadata-cleaner`
+with `vX.Y.Z`, `X.Y.Z`, `X.Y`, and `latest` tags.
