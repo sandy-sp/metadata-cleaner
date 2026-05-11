@@ -1,5 +1,13 @@
 # Release Notes
 
+## v3.16.1
+**Release Date**: 2026-05-11
+
+### Maintenance
+- Added timestamp-preservation regression coverage for ODT and EPUB cleanup.
+- Confirmed package-rewrite document handlers honor
+  `preserve_timestamps=True` after metadata removal.
+
 ## v3.16.0
 **Release Date**: 2026-05-11
 
