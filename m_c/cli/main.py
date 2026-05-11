@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from m_c.cli.utils import format_metadata_output
 from m_c.core.file_utils import (
+    SUPPORTED_CHECKSUM_ALGORITHMS,
     get_file_checksum,
     get_safe_output_path,
     get_supported_files,
@@ -288,6 +289,7 @@ def _record_file_result(
     output_path: Optional[str] = None,
     error: Optional[str] = None,
     include_checksums: bool = False,
+    checksum_algorithm: str = "sha256",
 ) -> None:
     item = {
         "input": input_path,
@@ -298,10 +300,12 @@ def _record_file_result(
     if warnings:
         item["warnings"] = warnings
     if include_checksums:
+        input_key = f"input_{checksum_algorithm}"
+        output_key = f"output_{checksum_algorithm}"
         item["checksums"] = {
-            "input_sha256": get_file_checksum(input_path),
-            "output_sha256": (
-                get_file_checksum(output_path)
+            input_key: get_file_checksum(input_path, checksum_algorithm),
+            output_key: (
+                get_file_checksum(output_path, checksum_algorithm)
                 if output_path and os.path.exists(output_path)
                 else None
             ),
@@ -356,7 +360,14 @@ def view(ctx, file, json_output):
 @click.option(
     "--checksums",
     is_flag=True,
-    help="Include SHA-256 checksums in JSON summaries and summary files.",
+    help="Include checksums in JSON summaries and summary files.",
+)
+@click.option(
+    "--checksum-algorithm",
+    type=click.Choice(SUPPORTED_CHECKSUM_ALGORITHMS),
+    default="sha256",
+    show_default=True,
+    help="Checksum algorithm to use when --checksums is enabled.",
 )
 @click.option(
     "--report-detail",
@@ -392,6 +403,7 @@ def delete(
     dry_run,
     json_summary,
     checksums,
+    checksum_algorithm,
     report_detail,
     report_filter,
     preserve_timestamps,
@@ -442,6 +454,7 @@ def delete(
                 "would_process",
                 planned_output,
                 include_checksums=checksums,
+                checksum_algorithm=checksum_algorithm,
             )
             if json_summary:
                 _echo_batch_summary(
@@ -471,6 +484,7 @@ def delete(
                 "success",
                 result,
                 include_checksums=checksums,
+                checksum_algorithm=checksum_algorithm,
             )
             if json_summary:
                 _echo_batch_summary(
@@ -502,6 +516,7 @@ def delete(
                 planned_output,
                 "metadata_removal_failed",
                 include_checksums=checksums,
+                checksum_algorithm=checksum_algorithm,
             )
             if json_summary:
                 _echo_batch_summary(
@@ -550,6 +565,7 @@ def delete(
                         "would_process" if dry_run else "success",
                         output_path if dry_run else result,
                         include_checksums=checksums,
+                        checksum_algorithm=checksum_algorithm,
                     )
                 else:
                     summary.failed += 1
@@ -561,6 +577,7 @@ def delete(
                         output_path,
                         "metadata_removal_failed",
                         include_checksums=checksums,
+                        checksum_algorithm=checksum_algorithm,
                     )
             except Exception as e:
                 summary.failed += 1
@@ -572,6 +589,7 @@ def delete(
                     None,
                     str(e),
                     include_checksums=checksums,
+                    checksum_algorithm=checksum_algorithm,
                 )
                 logger.error(f"Failed to process {file_path}: {e}", exc_info=True)
             pbar.update(1)

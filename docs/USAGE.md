@@ -83,6 +83,12 @@ Include SHA-256 checksums in JSON summaries:
 metadata-cleaner delete ./images --summary-file reports/summary.json --checksums
 ```
 
+Choose a different checksum algorithm:
+
+```bash
+metadata-cleaner delete ./images --json-summary --checksums --checksum-algorithm sha512
+```
+
 Control JSON report verbosity for large batches:
 
 ```bash

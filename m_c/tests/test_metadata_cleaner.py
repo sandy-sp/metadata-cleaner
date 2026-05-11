@@ -18,7 +18,7 @@ import pypdf
 
 from m_c.cli.main import cli
 from m_c.core.metadata_processor import MetadataProcessor
-from m_c.core.file_utils import validate_file, get_safe_output_path
+from m_c.core.file_utils import get_file_checksum, validate_file, get_safe_output_path
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
 from m_c.handlers.video_handler import VideoHandler
@@ -173,6 +173,29 @@ class TestMetadataCleaner(unittest.TestCase):
         """Test safe output path generation."""
         output_path = get_safe_output_path(self.test_files["image"], prefix="cleaned_")
         self.assertTrue(os.path.basename(output_path).startswith("cleaned_"))
+
+    def test_get_file_checksum_supports_multiple_algorithms(self):
+        """Checksum helper should support stronger optional algorithms."""
+        checksum_file = os.path.join(self.test_dir, "checksum.txt")
+        with open(checksum_file, "wb") as output_file:
+            output_file.write(b"metadata-cleaner checksum fixture")
+
+        with open(checksum_file, "rb") as input_file:
+            content = input_file.read()
+
+        self.assertEqual(
+            get_file_checksum(checksum_file),
+            hashlib.sha256(content).hexdigest(),
+        )
+        self.assertEqual(
+            get_file_checksum(checksum_file, "sha512"),
+            hashlib.sha512(content).hexdigest(),
+        )
+        self.assertEqual(
+            get_file_checksum(checksum_file, "blake2b"),
+            hashlib.blake2b(content).hexdigest(),
+        )
+        self.assertIsNone(get_file_checksum(checksum_file, "md5"))
 
     def test_view_metadata(self):
         """Test metadata extraction."""
@@ -727,6 +750,34 @@ class TestMetadataCleaner(unittest.TestCase):
             checksums = payload["files"][0]["checksums"]
             self.assertEqual(checksums["input_sha256"], expected_hash)
             self.assertIsNone(checksums["output_sha256"])
+
+    def test_cli_json_summary_with_sha512_checksums(self):
+        """Checksum reporting should support stronger optional algorithms."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+            with open("photo.jpg", "rb") as image_file:
+                expected_hash = hashlib.sha512(image_file.read()).hexdigest()
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--dry-run",
+                    "--json-summary",
+                    "--checksums",
+                    "--checksum-algorithm",
+                    "sha512",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            checksums = payload["files"][0]["checksums"]
+            self.assertEqual(checksums["input_sha512"], expected_hash)
+            self.assertIsNone(checksums["output_sha512"])
+            self.assertNotIn("input_sha256", checksums)
 
     def test_cli_json_summary_includes_processing_warnings(self):
         """JSON summaries should warn when formats use rewrite-style cleanup."""

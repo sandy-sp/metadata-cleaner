@@ -25,7 +25,6 @@ privacy risk before implementation.
 ## Medium Term
 
 ### Privacy and Safety
-- Add optional checksum algorithms beyond SHA-256 only if users need them.
 - Add timestamp preservation coverage for additional handlers as new formats are
   added.
 - Expand per-file warnings as handlers gain more precise lossless/rewrite
