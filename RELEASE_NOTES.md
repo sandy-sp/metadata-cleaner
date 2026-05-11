@@ -1,5 +1,12 @@
 # Release Notes
 
+## v3.17.1
+**Release Date**: 2026-05-11
+
+### Maintenance
+- Updated the Docker image publishing workflow to `docker/metadata-action@v6`
+  for Node 24-compatible GitHub Actions runtime support.
+
 ## v3.17.0
 **Release Date**: 2026-05-11
 
