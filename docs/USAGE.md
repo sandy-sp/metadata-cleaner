@@ -153,7 +153,7 @@ metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 
 ## Supported Formats
 
-- Images: JPEG, PNG, TIFF, WebP, AVIF
+- Images: JPEG, PNG, TIFF, WebP, AVIF, HEIC, HEIF
 - Documents: PDF, DOCX, EPUB, ODT, TXT
 - Audio: MP3, WAV, FLAC, OGG, AAC, M4A, WMA
 - Video: MP4, MKV, MOV, AVI, WebM, FLV

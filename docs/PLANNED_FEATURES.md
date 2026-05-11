@@ -20,7 +20,6 @@ privacy risk before implementation.
   views.
 
 ### File Format Support
-- Evaluate HEIC/HEIF support with a clear dependency strategy.
 - Expand audio/video tests before expanding advertised format support.
 
 ## Medium Term

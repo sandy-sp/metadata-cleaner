@@ -66,6 +66,8 @@ ALL_SUPPORTED_EXTENSIONS = {
     ".tiff",
     ".webp",
     ".avif",
+    ".heic",
+    ".heif",
     # Documents
     ".pdf",
     ".docx",
