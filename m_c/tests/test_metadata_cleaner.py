@@ -311,6 +311,42 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(payload["metadata"], {})
             self.assertIn("error", payload)
 
+    def test_cli_view_json_output_for_unsupported_file(self):
+        """View JSON output should explicitly identify unsupported files."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("README.md", "w", encoding="utf-8") as markdown_file:
+                markdown_file.write("# Unsupported\n")
+
+            result = runner.invoke(cli, ["view", "README.md", "--json"])
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "unsupported_file_type")
+            self.assertEqual(payload["file"], "README.md")
+            self.assertEqual(payload["metadata"], {})
+            self.assertEqual(payload["error"], "unsupported file type")
+
+    def test_cli_view_json_output_file_for_unsupported_file(self):
+        """Unsupported view input should still write JSON output files."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("README.md", "w", encoding="utf-8") as markdown_file:
+                markdown_file.write("# Unsupported\n")
+
+            result = runner.invoke(
+                cli,
+                ["view", "README.md", "--json-output", "metadata/view.json"],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            with open("metadata/view.json") as payload_file:
+                payload = json.load(payload_file)
+            self.assertEqual(payload["status"], "unsupported_file_type")
+            self.assertEqual(payload["file"], "README.md")
+            self.assertEqual(payload["metadata"], {})
+            self.assertEqual(payload["error"], "unsupported file type")
+
     def test_remove_metadata(self):
         """Test metadata removal for all file types while preserving originals."""
         for category, file_path in self.test_files.items():
@@ -1300,6 +1336,67 @@ class TestMetadataCleaner(unittest.TestCase):
                 payload = json.load(summary_file)
             self.assertEqual(payload["status"], "no_supported_files")
             self.assertEqual(payload["total"], 0)
+
+    def test_cli_delete_unsupported_single_file_exit_code(self):
+        """Delete should distinguish unsupported single files from failures."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("README.md", "w", encoding="utf-8") as markdown_file:
+                markdown_file.write("# Unsupported\n")
+
+            result = runner.invoke(cli, ["delete", "README.md"])
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            self.assertIn("Unsupported file type.", result.output)
+            self.assertFalse(os.path.exists(os.path.join("cleaned", "README.md")))
+
+    def test_cli_delete_unsupported_single_file_json_summary(self):
+        """JSON delete summaries should identify unsupported single files."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("README.md", "w", encoding="utf-8") as markdown_file:
+                markdown_file.write("# Unsupported\n")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "README.md", "--json-summary", "--quiet"],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "unsupported_input")
+            self.assertEqual(payload["total"], 1)
+            self.assertEqual(payload["skipped"], 1)
+            self.assertEqual(payload["files"][0]["status"], "unsupported")
+            self.assertEqual(payload["files"][0]["error"], "unsupported_file_type")
+
+    def test_cli_delete_unsupported_single_file_summary_file(self):
+        """Unsupported single files should write summary files for automation."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("README.md", "w", encoding="utf-8") as markdown_file:
+                markdown_file.write("# Unsupported\n")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "README.md",
+                    "--summary-file",
+                    "summary.json",
+                    "--quiet",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            self.assertEqual(result.output, "")
+            with open("summary.json") as summary_file:
+                payload = json.load(summary_file)
+            self.assertEqual(payload["status"], "unsupported_input")
+            self.assertEqual(payload["total"], 1)
+            self.assertEqual(payload["skipped"], 1)
+            self.assertEqual(payload["files"][0]["status"], "unsupported")
+            self.assertEqual(payload["files"][0]["error"], "unsupported_file_type")
 
     def test_cli_verbose_log_file_option(self):
         """Global CLI options should enable explicit file logging."""

@@ -1,5 +1,16 @@
 # Release Notes
 
+## v3.18.7
+**Release Date**: 2026-05-16
+
+### CLI
+- Added explicit unsupported single-file handling for `view` and `delete`
+  commands.
+- Machine-readable output now returns `unsupported_file_type` for unsupported
+  `view` input and `unsupported_input` summaries for unsupported `delete`
+  input, instead of reporting those files as no-metadata or processing
+  failures.
+
 ## v3.18.6
 **Release Date**: 2026-05-16
 
