@@ -12,7 +12,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
-from urllib.parse import unquote
+from urllib.parse import quote, unquote, urlparse
 
 from m_c.core.file_utils import (
     SUPPORTED_CHECKSUM_ALGORITHMS,
@@ -59,6 +59,33 @@ class DownloadRecord:
     filename: str
 
 
+@dataclass
+class StoredFile:
+    file_path: str
+    filename: str
+    collection: str
+    size: int
+    modified: float
+
+    def to_payload(self) -> dict:
+        quoted_name = quote(self.filename, safe="")
+        return {
+            "filename": self.filename,
+            "collection": self.collection,
+            "size": self.size,
+            "modified": self.modified,
+            "view_url": f"/api/files/{self.collection}/{quoted_name}",
+            "delete_url": f"/api/files/{self.collection}/{quoted_name}",
+        }
+
+
+def _parse_file_route(path: str) -> tuple[str, str]:
+    parts = path.split("/", 4)
+    if len(parts) != 5 or parts[:3] != ["", "api", "files"] or not parts[4]:
+        raise ValueError("invalid file route")
+    return parts[3], unquote(parts[4])
+
+
 class WebApp:
     def __init__(self, workspace: str, max_upload_bytes: int = MAX_UPLOAD_BYTES):
         self.workspace = workspace
@@ -74,6 +101,58 @@ class WebApp:
     @property
     def cleaned_dir(self) -> str:
         return os.path.join(self.workspace, "cleaned")
+
+    def _collection_dir(self, collection: str) -> str:
+        collections = {
+            "originals": self.upload_dir,
+            "cleaned": self.cleaned_dir,
+        }
+        if collection not in collections:
+            raise ValueError("unsupported file collection")
+        return collections[collection]
+
+    def _stored_file_path(self, collection: str, filename: str) -> str:
+        if filename != os.path.basename(filename):
+            raise ValueError("invalid filename")
+        if _safe_filename(filename) != filename:
+            raise ValueError("invalid filename")
+
+        collection_dir = os.path.abspath(self._collection_dir(collection))
+        file_path = os.path.abspath(os.path.join(collection_dir, filename))
+        if os.path.commonpath([collection_dir, file_path]) != collection_dir:
+            raise ValueError("invalid filename")
+        return file_path
+
+    def list_files(self, collection: str) -> list[dict]:
+        collection_dir = self._collection_dir(collection)
+        if not os.path.isdir(collection_dir):
+            return []
+
+        files = []
+        for filename in sorted(os.listdir(collection_dir), key=str.lower):
+            try:
+                file_path = self._stored_file_path(collection, filename)
+            except ValueError:
+                continue
+            if not os.path.isfile(file_path):
+                continue
+            stat_result = os.stat(file_path)
+            files.append(
+                StoredFile(
+                    file_path=file_path,
+                    filename=filename,
+                    collection=collection,
+                    size=stat_result.st_size,
+                    modified=stat_result.st_mtime,
+                ).to_payload()
+            )
+        return files
+
+    def files_response(self) -> dict:
+        return {
+            "originals": self.list_files("originals"),
+            "cleaned": self.list_files("cleaned"),
+        }
 
     def save_upload(self, payload: dict) -> str:
         filename, content = _decode_upload(payload, self.max_upload_bytes)
@@ -160,6 +239,29 @@ class WebApp:
             return None
         return record
 
+    def file_record(self, collection: str, filename: str) -> DownloadRecord:
+        file_path = self._stored_file_path(collection, filename)
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(filename)
+        return DownloadRecord(file_path, os.path.basename(file_path))
+
+    def delete_file(self, collection: str, filename: str) -> dict:
+        file_path = self._stored_file_path(collection, filename)
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(filename)
+        os.remove(file_path)
+        self.downloads = {
+            token: record
+            for token, record in self.downloads.items()
+            if os.path.abspath(record.file_path) != os.path.abspath(file_path)
+        }
+        return {
+            "status": "deleted",
+            "collection": collection,
+            "filename": filename,
+            "files": self.files_response(),
+        }
+
 
 def _handler_factory(app: WebApp):
     class MetadataCleanerWebHandler(BaseHTTPRequestHandler):
@@ -200,49 +302,66 @@ def _handler_factory(app: WebApp):
             except json.JSONDecodeError as exc:
                 raise ValueError("request body must be JSON") from exc
 
+        def _send_file(self, record: DownloadRecord, disposition: str) -> None:
+            content_type = (
+                mimetypes.guess_type(record.filename)[0]
+                or "application/octet-stream"
+            )
+            with open(record.file_path, "rb") as input_file:
+                body = input_file.read()
+            self._send_bytes(
+                HTTPStatus.OK,
+                body,
+                content_type,
+                headers={
+                    "Content-Disposition": (
+                        f'{disposition}; filename="{record.filename}"'
+                    )
+                },
+            )
+
         def do_GET(self):
-            if self.path == "/":
+            path = urlparse(self.path).path
+            if path == "/":
                 self._send_bytes(
                     HTTPStatus.OK,
                     HTML_PAGE.encode("utf-8"),
                     "text/html; charset=utf-8",
                 )
                 return
-            if self.path == "/api/health":
+            if path == "/api/health":
                 self._send_json(HTTPStatus.OK, {"status": "ok"})
                 return
-            if self.path.startswith("/api/download/"):
-                token = unquote(self.path.rsplit("/", 1)[-1])
+            if path == "/api/files":
+                self._send_json(HTTPStatus.OK, app.files_response())
+                return
+            if path.startswith("/api/files/"):
+                try:
+                    collection, filename = _parse_file_route(path)
+                    self._send_file(app.file_record(collection, filename), "inline")
+                except ValueError as exc:
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+                except FileNotFoundError:
+                    self._send_json(HTTPStatus.NOT_FOUND, {"error": "file_not_found"})
+                return
+            if path.startswith("/api/download/"):
+                token = unquote(path.rsplit("/", 1)[-1])
                 record = app.download_record(token)
                 if record is None:
                     self._send_json(HTTPStatus.NOT_FOUND, {"error": "download_not_found"})
                     return
-                content_type = (
-                    mimetypes.guess_type(record.filename)[0]
-                    or "application/octet-stream"
-                )
-                with open(record.file_path, "rb") as download_file:
-                    body = download_file.read()
-                self._send_bytes(
-                    HTTPStatus.OK,
-                    body,
-                    content_type,
-                    headers={
-                        "Content-Disposition": (
-                            f'attachment; filename="{record.filename}"'
-                        )
-                    },
-                )
+                self._send_file(record, "attachment")
                 return
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
 
         def do_POST(self):
             try:
+                path = urlparse(self.path).path
                 payload = self._read_json()
-                if self.path == "/api/metadata":
+                if path == "/api/metadata":
                     self._send_json(HTTPStatus.OK, app.metadata_response(payload))
                     return
-                if self.path == "/api/clean":
+                if path == "/api/clean":
                     algorithm = str(payload.get("checksum_algorithm") or "sha256")
                     self._send_json(
                         HTTPStatus.OK,
@@ -257,6 +376,19 @@ def _handler_factory(app: WebApp):
                     HTTPStatus.INTERNAL_SERVER_ERROR,
                     {"error": f"server_error: {exc}"},
                 )
+
+        def do_DELETE(self):
+            path = urlparse(self.path).path
+            if not path.startswith("/api/files/"):
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
+                return
+            try:
+                collection, filename = _parse_file_route(path)
+                self._send_json(HTTPStatus.OK, app.delete_file(collection, filename))
+            except ValueError as exc:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            except FileNotFoundError:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "file_not_found"})
 
     return MetadataCleanerWebHandler
 
@@ -350,12 +482,12 @@ HTML_PAGE = """<!doctype html>
     }
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto auto auto;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
       gap: 10px;
       align-items: center;
       margin-bottom: 16px;
     }
-    .filebox, select, button, .download {
+    .filebox, select, button, .download, .file-action {
       min-height: 40px;
       border: 1px solid var(--line);
       background: var(--panel);
@@ -364,7 +496,7 @@ HTML_PAGE = """<!doctype html>
       padding: 8px 10px;
       font: inherit;
     }
-    button, .download {
+    button, .download, .file-action {
       cursor: pointer;
       font-weight: 600;
       text-decoration: none;
@@ -378,6 +510,10 @@ HTML_PAGE = """<!doctype html>
     button:disabled {
       cursor: not-allowed;
       opacity: .55;
+    }
+    button.danger {
+      border-color: #f3b5b0;
+      color: var(--red);
     }
     .status {
       min-height: 28px;
@@ -463,9 +599,38 @@ HTML_PAGE = """<!doctype html>
       justify-content: flex-end;
       margin-bottom: 10px;
     }
+    .file-browser {
+      min-height: 0;
+      margin: 0 0 16px;
+    }
+    .file-lists {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 14px;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .file-action {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 8px;
+      font-size: 13px;
+    }
+    .file-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
     @media (max-width: 820px) {
       .toolbar { grid-template-columns: 1fr; }
       .compare { grid-template-columns: 1fr; }
+      .file-lists { grid-template-columns: 1fr; }
       .content { max-height: none; }
     }
   </style>
@@ -485,9 +650,26 @@ HTML_PAGE = """<!doctype html>
       </select>
       <button id="inspectButton" disabled>View Metadata</button>
       <button id="cleanButton" class="primary" disabled>Clean Copy</button>
+      <button id="filesButton">Files</button>
     </div>
     <p id="status" class="status">Select a file to begin.</p>
     <div id="warnings"></div>
+    <section id="fileBrowser" class="file-browser" hidden>
+      <div class="section-head">
+        <h2>Local Files</h2>
+        <button id="refreshFilesButton">Refresh</button>
+      </div>
+      <div class="file-lists">
+        <div>
+          <h3>Original Uploads</h3>
+          <div id="originalFiles" class="empty">No uploaded files.</div>
+        </div>
+        <div>
+          <h3>Cleaned Copies</h3>
+          <div id="cleanedFiles" class="empty">No cleaned files.</div>
+        </div>
+      </div>
+    </section>
     <div class="compare">
       <section>
         <div class="section-head">
@@ -518,6 +700,11 @@ HTML_PAGE = """<!doctype html>
     const cleanedCount = document.getElementById('cleanedCount');
     const downloadRow = document.getElementById('downloadRow');
     const checksumAlgorithm = document.getElementById('checksumAlgorithm');
+    const filesButton = document.getElementById('filesButton');
+    const fileBrowser = document.getElementById('fileBrowser');
+    const refreshFilesButton = document.getElementById('refreshFilesButton');
+    const originalFiles = document.getElementById('originalFiles');
+    const cleanedFiles = document.getElementById('cleanedFiles');
 
     function setStatus(message, type = '') {
       statusEl.textContent = message;
@@ -597,6 +784,88 @@ HTML_PAGE = """<!doctype html>
       return data;
     }
 
+    async function getJson(path) {
+      const response = await fetch(path);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    function formatBytes(size) {
+      if (size < 1024) return `${size} B`;
+      if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+      return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function formatModified(seconds) {
+      if (!seconds) return '';
+      return new Date(seconds * 1000).toLocaleString();
+    }
+
+    function renderFileList(target, files, emptyText) {
+      target.innerHTML = '';
+      target.classList.toggle('empty', !files.length);
+      if (!files.length) {
+        target.textContent = emptyText;
+        return;
+      }
+
+      const table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Name</th><th>Size</th><th>Modified</th><th></th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      files.forEach((item) => {
+        const row = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        const sizeCell = document.createElement('td');
+        const modifiedCell = document.createElement('td');
+        const actionsCell = document.createElement('td');
+        const actions = document.createElement('div');
+        const viewLink = document.createElement('a');
+        const deleteButton = document.createElement('button');
+
+        nameCell.textContent = item.filename;
+        sizeCell.textContent = formatBytes(item.size);
+        modifiedCell.textContent = formatModified(item.modified);
+        actions.className = 'file-actions';
+        viewLink.className = 'file-action';
+        viewLink.href = item.view_url;
+        viewLink.target = '_blank';
+        viewLink.rel = 'noopener';
+        viewLink.textContent = 'View';
+        deleteButton.className = 'file-action danger';
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', async () => {
+          if (!window.confirm(`Delete ${item.filename}?`)) return;
+          deleteButton.disabled = true;
+          try {
+            const response = await fetch(item.delete_url, {method: 'DELETE'});
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Delete failed');
+            renderFileList(originalFiles, data.files.originals, 'No uploaded files.');
+            renderFileList(cleanedFiles, data.files.cleaned, 'No cleaned files.');
+            setStatus(`Deleted ${item.filename}.`, 'ok');
+          } catch (error) {
+            setStatus(error.message, 'error');
+          } finally {
+            deleteButton.disabled = false;
+          }
+        });
+
+        actions.append(viewLink, deleteButton);
+        actionsCell.appendChild(actions);
+        row.append(nameCell, sizeCell, modifiedCell, actionsCell);
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+      target.appendChild(table);
+    }
+
+    async function loadFiles() {
+      const data = await getJson('/api/files');
+      renderFileList(originalFiles, data.originals, 'No uploaded files.');
+      renderFileList(cleanedFiles, data.cleaned, 'No cleaned files.');
+    }
+
     fileInput.addEventListener('change', () => {
       const hasFile = fileInput.files.length > 0;
       inspectButton.disabled = !hasFile;
@@ -616,6 +885,7 @@ HTML_PAGE = """<!doctype html>
         const data = await postJson('/api/metadata', await selectedFilePayload());
         renderMetadata(originalEl, originalCount, data.metadata);
         renderWarnings(data.warnings);
+        if (!fileBrowser.hidden) await loadFiles();
         setStatus('Original metadata loaded.', 'ok');
       } catch (error) {
         setStatus(error.message, 'error');
@@ -642,6 +912,7 @@ HTML_PAGE = """<!doctype html>
           downloadRow.hidden = false;
         }
         if (data.status === 'success') {
+          if (!fileBrowser.hidden) await loadFiles();
           setStatus('Cleaned copy created.', 'ok');
         } else {
           setStatus(data.error || 'Metadata removal failed.', 'error');
@@ -650,6 +921,29 @@ HTML_PAGE = """<!doctype html>
         setStatus(error.message, 'error');
       } finally {
         setBusy(false);
+      }
+    });
+
+    filesButton.addEventListener('click', async () => {
+      fileBrowser.hidden = !fileBrowser.hidden;
+      filesButton.textContent = fileBrowser.hidden ? 'Files' : 'Hide Files';
+      if (fileBrowser.hidden) return;
+      setStatus('Loading local files...');
+      try {
+        await loadFiles();
+        setStatus('Local files loaded.', 'ok');
+      } catch (error) {
+        setStatus(error.message, 'error');
+      }
+    });
+
+    refreshFilesButton.addEventListener('click', async () => {
+      setStatus('Refreshing local files...');
+      try {
+        await loadFiles();
+        setStatus('Local files refreshed.', 'ok');
+      } catch (error) {
+        setStatus(error.message, 'error');
       }
     });
   </script>

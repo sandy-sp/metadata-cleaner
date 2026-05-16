@@ -105,7 +105,8 @@ metadata-cleaner web
 
 The Web UI runs on `127.0.0.1` by default and shows original metadata next to
 cleaned-copy metadata so you can verify what changed before using the cleaned
-file.
+file. Use the `Files` button to view or delete uploaded originals and cleaned
+copies saved in the current local session.
 
 ## Development Checks
 

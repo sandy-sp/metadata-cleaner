@@ -558,6 +558,49 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIn("output_sha512", response["checksums"])
         self.assertIsNotNone(download)
 
+    def test_web_app_files_response_lists_originals_and_cleaned_files(self):
+        """Web API should list saved uploads and cleaned copies."""
+        source_odt = os.path.join(self.test_dir, "web-files.odt")
+        self._write_odt(source_odt)
+
+        with tempfile.TemporaryDirectory() as workspace:
+            app = WebApp(workspace)
+            original_response = app.metadata_response(self._web_payload(source_odt))
+            clean_response = app.clean_response(self._web_payload(source_odt))
+            files_response = app.files_response()
+
+        original_names = [item["filename"] for item in files_response["originals"]]
+        cleaned_names = [item["filename"] for item in files_response["cleaned"]]
+        self.assertIn(original_response["filename"], original_names)
+        self.assertIn(clean_response["output_filename"], cleaned_names)
+        self.assertTrue(files_response["originals"][0]["view_url"])
+        self.assertTrue(files_response["cleaned"][0]["delete_url"])
+
+    def test_web_app_delete_file_removes_saved_upload(self):
+        """Web API should delete files only from its managed local workspace."""
+        source_odt = os.path.join(self.test_dir, "web-delete.odt")
+        self._write_odt(source_odt)
+
+        with tempfile.TemporaryDirectory() as workspace:
+            app = WebApp(workspace)
+            original_response = app.metadata_response(self._web_payload(source_odt))
+            filename = original_response["filename"]
+            record = app.file_record("originals", filename)
+
+            delete_response = app.delete_file("originals", filename)
+
+            self.assertFalse(os.path.exists(record.file_path))
+            self.assertEqual(delete_response["status"], "deleted")
+            self.assertEqual(delete_response["files"]["originals"], [])
+
+    def test_web_app_file_record_rejects_traversal(self):
+        """Web file routes should not resolve outside managed directories."""
+        with tempfile.TemporaryDirectory() as workspace:
+            app = WebApp(workspace)
+
+            with self.assertRaises(ValueError):
+                app.file_record("originals", "../secret.pdf")
+
     def test_in_place_output_path_is_rejected(self):
         """Handlers should reject an output path that equals the input path."""
         handler = BaseHandler()

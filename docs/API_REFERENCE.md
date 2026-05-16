@@ -85,4 +85,6 @@ lists only failed file entries.
 Use `metadata-cleaner web` to start a local-only single-page Web UI on
 `127.0.0.1`. The Web UI accepts a selected file, displays the original metadata,
 creates a cleaned copy, and then displays cleaned-copy metadata for comparison.
-The original file is never modified.
+The original file is never modified. The local file browser lists uploaded
+originals and cleaned copies from the current Web UI workspace, and supports
+viewing or deleting those managed files.
