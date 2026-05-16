@@ -1,5 +1,16 @@
 # Release Notes
 
+## v3.18.11
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Added a release workflow guard that verifies the pushed tag matches the
+  version in `pyproject.toml` before publishing.
+- Fixed the legacy programmatic batch API so failed files preserve their result
+  slot as `None`.
+- Refreshed the repository health review and roadmap after the v3.18.x
+  maintenance sequence.
+
 ## v3.18.10
 **Release Date**: 2026-05-16
 

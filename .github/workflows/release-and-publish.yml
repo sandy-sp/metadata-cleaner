@@ -35,6 +35,25 @@ jobs:
       - name: Check Package Metadata
         run: poetry check --lock
 
+      - name: Verify Release Version
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          with Path("pyproject.toml").open("rb") as pyproject_file:
+              version = tomllib.load(pyproject_file)["project"]["version"]
+
+          expected_tag = f"v{version}"
+          if tag != expected_tag:
+              raise SystemExit(
+                  f"Release tag {tag} does not match pyproject version "
+                  f"{version}; expected {expected_tag}"
+              )
+          PY
+
       - name: Run Tests
         run: poetry run pytest
 
