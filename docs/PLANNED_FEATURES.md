@@ -11,8 +11,8 @@ privacy risk before implementation.
 - Add video integration tests that run when FFmpeg and FFprobe are installed.
 - Add fixture assertions for additional audio containers beyond WAV when their
   metadata can be generated without external system tools.
-- Add installed-package smoke coverage for optional system-tool paths when
-  those tools are available in CI.
+- Keep installed-package smoke coverage current as optional system-tool behavior
+  expands.
 
 ### CLI Usability
 - Add optional file output targets for machine-readable command output.
