@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.18.1
+**Release Date**: 2026-05-16
+
+### Features
+- Added a local file browser to the Web UI for uploaded originals and cleaned
+  copies.
+- Added per-file `View` and `Delete` actions for files saved in the current Web
+  UI workspace.
+
+### Security
+- Scoped Web UI file viewing and deletion to managed upload and cleaned-copy
+  directories with filename validation.
+
 ## v3.18.0
 **Release Date**: 2026-05-15
 

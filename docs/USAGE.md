@@ -115,7 +115,8 @@ metadata-cleaner web
 ```
 
 The Web UI creates cleaned copies and displays original metadata beside cleaned
-metadata for local verification.
+metadata for local verification. Use the `Files` button to view or delete
+uploaded originals and cleaned copies saved in the current local session.
 
 JSON summaries include top-level counts and per-file details:
 
