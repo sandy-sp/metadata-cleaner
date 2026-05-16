@@ -97,8 +97,8 @@ hash reports.
 Add `--preserve-timestamps` when cleaned files should keep source file times.
 Use `--report-detail compact` or `--report-detail summary` for smaller reports.
 Use `--report-filter failed` to list only failed per-file entries.
-Formats that rewrite, re-save, or remux data include per-file warnings in JSON
-summary reports.
+Formats that copy, rewrite, re-save, use ExifTool, delete audio tags, or remux
+video include precise per-file processing notes in JSON summary reports.
 
 Edit metadata where supported:
 

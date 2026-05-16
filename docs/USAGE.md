@@ -143,7 +143,8 @@ JSON summaries include top-level counts and per-file details:
       "status": "success",
       "output": "cleaned-images/photo.jpg",
       "warnings": [
-        "Format-specific processing notes appear here when applicable."
+        "Format-specific processing notes describe copy, rewrite, re-save, "
+        "tag deletion, or remux behavior when applicable."
       ],
       "checksums": {
         "input_sha256": "<sha256>",

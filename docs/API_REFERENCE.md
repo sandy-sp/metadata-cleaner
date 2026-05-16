@@ -67,7 +67,9 @@ summary to stdout, or `metadata-cleaner delete PATH --summary-file report.json`
 to write the same summary payload to a file. `--json-output report.json` is a
 shared alias for the delete summary file. Delete summaries include top-level
 counts plus a `files` list with each input path, per-file status, output path,
-format-specific processing warnings, and failure reason when available.
+format-specific processing notes, and failure reason when available. Processing
+notes describe copy, rewrite, re-save, ExifTool, tag deletion, or stream-copy
+remux behavior when applicable.
 
 Pass `--checksums` with `delete` to include hashes in each per-file result.
 SHA-256 is the default. Use `--checksum-algorithm sha256|sha512|blake2b` to

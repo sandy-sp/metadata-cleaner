@@ -1005,6 +1005,22 @@ class TestMetadataCleaner(unittest.TestCase):
             warnings = payload["files"][0]["warnings"]
             self.assertTrue(any("re-saves image data" in warning for warning in warnings))
 
+    def test_cli_json_summary_includes_jpeg_processing_warning(self):
+        """JPEG dry-run reports should describe copy-first EXIF cleanup."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "photo.jpg", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(any("pixel data is not re-encoded" in warning for warning in warnings))
+
     def test_cli_json_summary_includes_odt_processing_warning(self):
         """ODT dry-run reports should describe package rewrite behavior."""
         runner = CliRunner()
@@ -1060,6 +1076,39 @@ class TestMetadataCleaner(unittest.TestCase):
                 any("HEIC metadata removal requires ExifTool" in warning
                     for warning in warnings)
             )
+
+    def test_cli_json_summary_includes_flac_processing_warning(self):
+        """FLAC dry-run reports should describe copied tag cleanup."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            self._write_tagged_flac("song.flac")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "song.flac", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(any("Vorbis comments" in warning for warning in warnings))
+
+    def test_cli_json_summary_includes_video_processing_warning(self):
+        """Video dry-run reports should describe stream-copy remux behavior."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("clip.mp4", "wb") as video_file:
+                video_file.write(b"dummy binary data")
+
+            result = runner.invoke(
+                cli,
+                ["delete", "clip.mp4", "--dry-run", "--json-summary"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            payload = json.loads(result.output)
+            warnings = payload["files"][0]["warnings"]
+            self.assertTrue(any("stream copy" in warning for warning in warnings))
 
     def test_cli_json_summary_compact_report_detail(self):
         """Compact JSON reports should omit verbose per-file fields."""
