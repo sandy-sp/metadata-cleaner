@@ -65,6 +65,31 @@ def write_fixtures():
             "-f",
             "lavfi",
             "-i",
+            "sine=frequency=440:sample_rate=8000",
+            "-t",
+            "1",
+            "-metadata",
+            "title=Smoke Audio",
+            "-metadata",
+            "artist=Smoke Artist",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "32k",
+            str(ROOT / "audio.m4a"),
+            "-y",
+        ]
+    )
+
+    run_command(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
             "testsrc=size=16x16:rate=1",
             "-t",
             "1",
@@ -94,6 +119,11 @@ def assert_view_payloads():
     wav_payload = read_json_output("view", str(ROOT / "audio.wav"))
     assert wav_payload["status"] in {"success", "no_metadata"}, wav_payload
 
+    m4a_payload = read_json_output("view", str(ROOT / "audio.m4a"))
+    assert m4a_payload["status"] == "success", m4a_payload
+    assert m4a_payload["metadata"].get("title") == ["Smoke Audio"], m4a_payload
+    assert m4a_payload["metadata"].get("artist") == ["Smoke Artist"], m4a_payload
+
     video_payload = read_json_output("view", str(ROOT / "video.mp4"))
     assert video_payload["status"] == "success", video_payload
     video_title = video_payload["metadata"]["format"]["tags"].get("title")
@@ -107,8 +137,8 @@ def assert_delete_summary():
     dry_run = run_cli("delete", str(ROOT), "--dry-run", "--json-summary")
     dry_run_payload = json.loads(dry_run.stdout)
     assert dry_run_payload["status"] == "success", dry_run_payload
-    assert dry_run_payload["total"] == 5, dry_run_payload
-    assert dry_run_payload["would_process"] == 5, dry_run_payload
+    assert dry_run_payload["total"] == 6, dry_run_payload
+    assert dry_run_payload["would_process"] == 6, dry_run_payload
 
     run_cli(
         "delete",
@@ -122,9 +152,14 @@ def assert_delete_summary():
 
     report = json.loads(REPORT.read_text())
     assert report["status"] == "success", report
-    assert report["total"] == 5, report
-    assert report["succeeded"] == 5, report
-    assert len(report["files"]) == 5, report
+    assert report["total"] == 6, report
+    assert report["succeeded"] == 6, report
+    assert len(report["files"]) == 6, report
+
+    cleaned_audio = CLEANED / "audio.m4a"
+    assert cleaned_audio.exists(), report
+    cleaned_audio_payload = read_json_output("view", str(cleaned_audio))
+    assert cleaned_audio_payload["status"] == "no_metadata", cleaned_audio_payload
 
     cleaned_video = CLEANED / "video.mp4"
     assert cleaned_video.exists(), report

@@ -3,7 +3,7 @@
 Last reviewed: 2026-05-16
 
 This review captures the current maintenance, security, dependency, and
-documentation state after the v3.18.12 maintenance review.
+documentation state after the v3.18.13 maintenance review.
 
 ## Current State
 
@@ -13,7 +13,7 @@ documentation state after the v3.18.12 maintenance review.
 - Open Dependabot security alerts: none.
 - Open CodeQL/code scanning alerts: none.
 - Recent CI, CodeQL, PyPI release, and Docker release workflows completed
-  successfully for v3.18.11.
+  successfully for v3.18.12.
 - Branch protection is enabled for `main` with required CI, Docker, package
   smoke, and CodeQL checks.
 - The committed `poetry.lock` file is intentional. It documents the exact
@@ -32,9 +32,9 @@ poetry run pip-audit
 poetry build
 ```
 
-The full test suite result is `77 passed, 1 skipped` when FFmpeg/FFprobe are
-not installed. The gated video integration test runs when those tools are
-available.
+The full test suite result is `77 passed, 2 skipped` when FFmpeg/FFprobe are
+not installed. The gated M4A audio and MP4 video integration tests run when
+those tools are available.
 
 ## Dependency Review
 
@@ -77,9 +77,12 @@ patch/minor updates: `coverage`, `idna`, and `requests`.
 - FFmpeg/FFprobe-gated video integration coverage verifies metadata removal,
   original preservation, and stream-property preservation for a generated MP4
   fixture.
+- FFmpeg-gated compressed audio integration coverage verifies M4A metadata
+  removal, original preservation, and stream-property preservation for a
+  generated fixture.
 
 ## Next Recommended Work
 
-1. Add another generated audio-container fixture only if it can be created
-   without fragile external tooling.
-2. Re-run dependency/security review when Dependabot opens the next update.
+1. Re-run dependency/security review when Dependabot opens the next update.
+2. Consider standalone executable packaging only after another release cycle of
+   CLI and package-smoke stability.

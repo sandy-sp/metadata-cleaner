@@ -1,5 +1,15 @@
 # Release Notes
 
+## v3.18.13
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Added FFmpeg-gated generated M4A audio integration coverage to verify
+  compressed audio tag cleanup, original preservation, and stream property
+  preservation.
+- Extended installed-package smoke coverage to exercise M4A metadata viewing
+  and cleanup in CI where FFmpeg is installed.
+
 ## v3.18.12
 **Release Date**: 2026-05-16
 
