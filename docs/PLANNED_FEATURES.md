@@ -25,8 +25,8 @@ privacy risk before implementation.
 ## Medium Term
 
 ### Privacy and Safety
-- Expand per-file warnings as handlers gain more precise lossless/rewrite
-  detection.
+- Keep per-file processing notes current as handlers gain more precise
+  lossless/rewrite/remux detection.
 
 ### Packaging
 - Consider standalone executables only after the CLI test suite is broader.

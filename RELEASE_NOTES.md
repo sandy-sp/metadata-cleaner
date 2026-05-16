@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.18.5
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Expanded per-file processing warnings to more precisely describe copy-first,
+  package rewrite, image re-save, ExifTool, audio tag deletion, and FFmpeg
+  stream-copy remux paths.
+- Added warning coverage for JPEG, FLAC, and video dry-run JSON summaries.
+
 ## v3.18.4
 **Release Date**: 2026-05-16
 
