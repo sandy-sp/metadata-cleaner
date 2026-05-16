@@ -14,6 +14,7 @@ class BaseHandler:
     """
 
     SUPPORTED_FORMATS = set()
+    EXIFTOOL_TIMEOUT_SECONDS = 60
 
     def prepare_output_path(
         self, file_path: str, output_path: Optional[str] = None
@@ -55,9 +56,16 @@ class BaseHandler:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=self.EXIFTOOL_TIMEOUT_SECONDS,
             )
             data = json.loads(result.stdout)
             return data[0] if data else {}
+        except subprocess.TimeoutExpired:
+            logger.error(
+                "ExifTool extraction timed out for "
+                f"{file_path} after {self.EXIFTOOL_TIMEOUT_SECONDS}s"
+            )
+            return None
         except Exception as e:
             logger.error(f"ExifTool extraction failed for {file_path}: {e}")
             return None
@@ -75,10 +83,24 @@ class BaseHandler:
                 check=True,
                 capture_output=True,
                 text=True,
+                timeout=self.EXIFTOOL_TIMEOUT_SECONDS,
             )
             return target
+        except subprocess.TimeoutExpired:
+            logger.error(
+                "ExifTool removal timed out for "
+                f"{file_path} after {self.EXIFTOOL_TIMEOUT_SECONDS}s"
+            )
+            if os.path.exists(target):
+                os.remove(target)
+            return None
         except subprocess.CalledProcessError as e:
             logger.error(f"ExifTool removal failed for {file_path}: {e.stderr}")
+            if os.path.exists(target):
+                os.remove(target)
+            return None
+        except Exception as e:
+            logger.error(f"ExifTool removal failed for {file_path}: {e}")
             if os.path.exists(target):
                 os.remove(target)
             return None
