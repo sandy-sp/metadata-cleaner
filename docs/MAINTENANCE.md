@@ -19,6 +19,10 @@ The CI workflow mirrors these checks, builds the Docker image, and smoke-tests
 the built wheel in a clean virtual environment. Tagged releases also publish a
 Docker image to GitHub Container Registry.
 
+Record broader review checkpoints in
+[`docs/REPO_HEALTH_REVIEW.md`](REPO_HEALTH_REVIEW.md) when dependency posture,
+branch protection, packaging, or roadmap priorities are re-evaluated.
+
 ## Dependency Updates
 
 `poetry.lock` is committed intentionally. It pins the exact dependency versions

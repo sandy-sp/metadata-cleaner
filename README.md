@@ -159,3 +159,4 @@ METADATA_CLEANER_LOG_LEVEL=DEBUG metadata-cleaner view sample.jpg
 - [API Reference](docs/API_REFERENCE.md)
 - [Usage Guide](docs/USAGE.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Repository Health Review](docs/REPO_HEALTH_REVIEW.md)
