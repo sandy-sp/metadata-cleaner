@@ -107,6 +107,7 @@ class MetadataProcessor:
                     logger.info(f"Successfully processed: {file} -> {result}")
                 else:
                     logger.error(f"Failed to process file: {file}")
+                    results.append(None)
             except Exception as e:
                 logger.error(f"Error processing file {file}: {e}", exc_info=True)
                 results.append(None)

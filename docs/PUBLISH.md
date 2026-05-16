@@ -41,4 +41,6 @@ git push origin vX.Y.Z
 Before tagging, update `pyproject.toml`, add a matching `RELEASE_NOTES.md`
 section such as `## vX.Y.Z`, run the full verification suite, and make sure
 `PYPI_API_TOKEN` is configured in the repository secrets. The release workflow
-uses that release-notes section as the GitHub Release body.
+verifies that the pushed tag matches the `pyproject.toml` version and uses the
+matching release-notes section as the GitHub Release body. The companion Docker
+workflow publishes the same version tag to GitHub Container Registry.

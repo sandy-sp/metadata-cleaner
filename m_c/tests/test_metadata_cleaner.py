@@ -366,6 +366,17 @@ class TestMetadataCleaner(unittest.TestCase):
                 self.assertTrue(os.path.exists(output_file))
                 self.assertTrue(os.path.exists(file_path))
 
+    def test_process_batch_preserves_result_slots_for_failures(self):
+        """Legacy batch API should return one result slot for each input file."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("broken.pdf", "wb") as broken_pdf:
+                broken_pdf.write(b"not a valid pdf")
+
+            results = MetadataProcessor().process_batch(["broken.pdf"])
+
+            self.assertEqual(results, [None])
+
     def test_edit_metadata(self):
         """Test metadata editing."""
         output_file = self.processor.edit_metadata(

@@ -72,3 +72,19 @@ The release workflow publishes to PyPI and creates the GitHub release using the
 matching `RELEASE_NOTES.md` section as the release body. The Docker publishing
 workflow runs for the same version tags and publishes `ghcr.io/sandy-sp/metadata-cleaner`
 with `vX.Y.Z`, `X.Y.Z`, `X.Y`, and `latest` tags.
+
+Before pushing a release tag, confirm that the tag matches `pyproject.toml`
+exactly. The release workflow enforces this check before publishing.
+
+## Branch Housekeeping
+
+After merged feature and maintenance PRs, prune stale local remote-tracking refs
+with:
+
+```bash
+git fetch --prune
+```
+
+If old remote branches remain visible on GitHub after their PRs are merged or
+closed, delete only branches that are clearly merged, obsolete, and not owned by
+an active Dependabot PR.
