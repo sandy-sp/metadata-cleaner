@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.18.2
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Expanded installed-package smoke coverage to install FFmpeg, FFprobe, and
+  ExifTool in CI before testing the built wheel.
+- Added smoke assertions for ExifTool-backed JPEG metadata viewing and
+  FFmpeg-backed MP4 metadata viewing/removal from the installed CLI.
+
 ## v3.18.1
 **Release Date**: 2026-05-16
 

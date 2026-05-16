@@ -69,6 +69,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install optional system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libimage-exiftool-perl
+
       - name: Install Poetry
         run: pipx install poetry==2.3.4
 
@@ -83,52 +88,5 @@ jobs:
 
       - name: Smoke test installed CLI
         run: |
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner --help
-          /tmp/metadata-cleaner-smoke/bin/python - <<'PY'
-          import os
-          import wave
-
-          import docx
-          from PIL import Image
-          import pypdf
-
-          os.makedirs("smoke-files", exist_ok=True)
-
-          Image.new("RGB", (8, 8), color="white").save(
-              "smoke-files/photo.jpg",
-              "jpeg",
-          )
-
-          writer = pypdf.PdfWriter()
-          writer.add_blank_page(width=72, height=72)
-          writer.add_metadata({"/Title": "Smoke PDF"})
-          with open("smoke-files/document.pdf", "wb") as pdf_file:
-              writer.write(pdf_file)
-
-          document = docx.Document()
-          document.add_paragraph("Metadata Cleaner smoke document.")
-          document.core_properties.title = "Smoke DOCX"
-          document.save("smoke-files/document.docx")
-
-          with wave.open("smoke-files/audio.wav", "wb") as wav_file:
-              wav_file.setnchannels(1)
-              wav_file.setsampwidth(2)
-              wav_file.setframerate(8000)
-              wav_file.writeframes(b"\0\0" * 800)
-          PY
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner view smoke-files/photo.jpg --json
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner view smoke-files/document.pdf --json
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner view smoke-files/document.docx --json
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner view smoke-files/audio.wav --json
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner delete smoke-files --dry-run --json-summary
-          /tmp/metadata-cleaner-smoke/bin/metadata-cleaner delete smoke-files --output smoke-cleaned --summary-file smoke-report.json --quiet
-          /tmp/metadata-cleaner-smoke/bin/python - <<'PY'
-          import json
-          from pathlib import Path
-
-          report = json.loads(Path("smoke-report.json").read_text())
-          assert report["status"] == "success", report
-          assert report["total"] == 4, report
-          assert report["succeeded"] == 4, report
-          assert len(report["files"]) == 4, report
-          PY
+          METADATA_CLEANER_CLI=/tmp/metadata-cleaner-smoke/bin/metadata-cleaner \
+            /tmp/metadata-cleaner-smoke/bin/python .github/scripts/package_smoke.py
