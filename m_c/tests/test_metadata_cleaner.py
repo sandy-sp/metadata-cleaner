@@ -711,6 +711,64 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertIsNone(result)
         self.assertTrue(os.path.exists(self.test_files["image"]))
 
+    def test_exiftool_extract_uses_timeout(self):
+        """ExifTool extraction should be bounded by a subprocess timeout."""
+        handler = BaseHandler()
+        completed = subprocess.CompletedProcess(
+            args=["exiftool"],
+            returncode=0,
+            stdout='[{"FileType": "JPEG"}]',
+            stderr="",
+        )
+
+        with patch("m_c.handlers.base_handler.subprocess.run", return_value=completed) as run:
+            metadata = handler._extract_metadata_exiftool("photo.jpg")
+
+        self.assertEqual(metadata["FileType"], "JPEG")
+        self.assertEqual(
+            run.call_args.kwargs["timeout"],
+            handler.EXIFTOOL_TIMEOUT_SECONDS,
+        )
+
+    def test_exiftool_extract_timeout_returns_none(self):
+        """ExifTool extraction timeouts should fail predictably."""
+        handler = BaseHandler()
+
+        with patch(
+            "m_c.handlers.base_handler.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(
+                cmd=["exiftool"],
+                timeout=handler.EXIFTOOL_TIMEOUT_SECONDS,
+            ),
+        ):
+            metadata = handler._extract_metadata_exiftool("photo.jpg")
+
+        self.assertIsNone(metadata)
+
+    def test_exiftool_remove_timeout_removes_partial_output(self):
+        """Timed-out ExifTool removals should clean up copied output files."""
+        handler = BaseHandler()
+        source_file = os.path.join(self.test_dir, "source.heic")
+        output_file = os.path.join(self.cleaned_dir, "source.heic")
+        with open(source_file, "wb") as image_file:
+            image_file.write(b"dummy image data")
+
+        with patch(
+            "m_c.handlers.base_handler.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(
+                cmd=["exiftool"],
+                timeout=handler.EXIFTOOL_TIMEOUT_SECONDS,
+            ),
+        ) as run:
+            result = handler._remove_metadata_exiftool(source_file, output_file)
+
+        self.assertIsNone(result)
+        self.assertFalse(os.path.exists(output_file))
+        self.assertEqual(
+            run.call_args.kwargs["timeout"],
+            handler.EXIFTOOL_TIMEOUT_SECONDS,
+        )
+
     def test_cli_delete_dry_run_directory_has_no_file_system_side_effects(self):
         """CLI dry-run mode should not create an output directory."""
         runner = CliRunner()

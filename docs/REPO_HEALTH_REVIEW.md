@@ -65,8 +65,6 @@ review.
 
 ## Next Recommended Work
 
-1. Add timeouts to ExifTool subprocess calls, matching the FFmpeg timeout
-   posture.
-2. Add archive safety limits for EPUB/ODT package reads to reduce zip-bomb style
+1. Add archive safety limits for EPUB/ODT package reads to reduce zip-bomb style
    denial-of-service risk.
-3. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.
+2. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.

@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.18.8
+**Release Date**: 2026-05-16
+
+### Security
+- Added bounded ExifTool subprocess timeouts for metadata extraction and
+  metadata removal paths.
+- Timed-out ExifTool removals now clean up copied partial outputs before
+  returning failure.
+
 ## v3.18.7
 **Release Date**: 2026-05-16
 
