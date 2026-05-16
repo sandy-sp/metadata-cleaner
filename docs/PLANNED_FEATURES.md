@@ -13,6 +13,8 @@ cost, and privacy risk before implementation.
 - Periodically prune stale remote-tracking refs after merged roadmap stages.
 - Re-run repository health reviews when dependency alerts, packaging changes,
   or format-support changes land.
+- Keep public-facing docs aligned with the current CLI, Web UI, Docker image,
+  and privacy/safety model before each public release.
 
 ### Stronger Fixture Coverage
 - Keep FFmpeg/FFprobe-gated video integration tests current as video behavior
@@ -42,6 +44,8 @@ cost, and privacy risk before implementation.
 
 ### Packaging
 - Consider standalone executables only after the CLI test suite is broader.
+- Prototype standalone executables in a separate branch before adding them to
+  the release workflow.
 
 ## Longer Term
 

@@ -3,7 +3,7 @@
 Last reviewed: 2026-05-16
 
 This review captures the current maintenance, security, dependency, and
-documentation state after the v3.18.13 maintenance review.
+documentation state after the v3.18.14 public-readiness review.
 
 ## Current State
 
@@ -13,12 +13,17 @@ documentation state after the v3.18.13 maintenance review.
 - Open Dependabot security alerts: none.
 - Open CodeQL/code scanning alerts: none.
 - Recent CI, CodeQL, PyPI release, and Docker release workflows completed
-  successfully for v3.18.12.
+  successfully for v3.18.13.
 - Branch protection is enabled for `main` with required CI, Docker, package
   smoke, and CodeQL checks.
 - The committed `poetry.lock` file is intentional. It documents the exact
   dependency set used by CI and releases and gives security scanners a stable
   target.
+- Public-facing README, usage, API, architecture, maintenance, contributing,
+  and security-policy docs describe the current CLI, Web UI, Docker image,
+  automation outputs, optional tools, and privacy/safety model.
+- Package metadata now links to documentation, changelog, and security policy;
+  source distributions include public docs for offline review.
 
 ## Verification Snapshot
 
@@ -34,28 +39,26 @@ poetry build
 
 The full test suite result is `77 passed, 2 skipped` when FFmpeg/FFprobe are
 not installed. The gated M4A audio and MP4 video integration tests run when
-those tools are available.
+those tools are available. Package smoke coverage runs those tool-backed paths
+in CI.
 
 ## Dependency Review
 
 Runtime dependencies should stay narrow because this tool opens user-supplied
-files. During this review, two unused runtime dependencies were identified and
-removed from `pyproject.toml`:
+files. Previous v3.18.x maintenance removed unused runtime dependencies:
 
 - `ffmpeg-python`: video handling calls the `ffmpeg` and `ffprobe` executables
   directly through `subprocess`.
 - `pymupdf`: no current handler imports or uses PyMuPDF.
 
-The current dependency freshness check showed these non-security updates:
+The latest dependency freshness check showed only non-security patch/minor
+updates:
 
 - `coverage`, `idna`, and `requests` have newer patch/minor releases available.
 
 `pikepdf` v10 compatibility was evaluated and adopted in v3.18.10 with focused
 PDF cleanup coverage for document info and XMP metadata removal. Patch/minor
 development dependency updates can usually follow normal Dependabot review.
-
-The current dependency freshness check showed only non-runtime or transitive
-patch/minor updates: `coverage`, `idna`, and `requests`.
 
 ## Maintenance Findings
 

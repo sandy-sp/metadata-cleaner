@@ -45,6 +45,19 @@ updated_file = MetadataProcessor().edit_metadata(
 print(updated_file)
 ```
 
+## `process_batch(files: list[str]) -> list[str | None]`
+
+Process a list of files sequentially with the legacy programmatic batch API.
+Each input file has one result slot. Successful files return their cleaned path;
+failed files return `None`.
+
+```python
+from m_c.core.metadata_processor import MetadataProcessor
+
+results = MetadataProcessor().process_batch(["photo.jpg", "document.pdf"])
+print(results)
+```
+
 ## CLI Exit Codes
 
 The CLI returns stable exit codes for automation:
@@ -98,6 +111,9 @@ creates a cleaned copy, and then displays cleaned-copy metadata for comparison.
 The original file is never modified. The local file browser lists uploaded
 originals and cleaned copies from the current Web UI workspace, and supports
 viewing or deleting those managed files.
+
+When no `--workspace` is supplied, uploaded originals and cleaned copies live in
+a temporary directory that is removed when the Web UI server exits.
 
 EPUB and ODT inputs are ZIP-based packages. Metadata extraction and cleanup
 apply archive safety limits before reading package members so excessive entry

@@ -1,6 +1,6 @@
 [project]
 name = "metadata-cleaner"
-version = "3.18.13"
+version = "3.18.14"
 description = "A CLI tool to remove, edit, or selectively filter metadata from images, documents, audio, and video files."
 authors = [
     { name = "Sandeep Paidipati", email = "sandeep.paidipati@gmail.com" },
@@ -24,6 +24,9 @@ dependencies = [
 Homepage = "https://github.com/sandy-sp/metadata-cleaner"
 Repository = "https://github.com/sandy-sp/metadata-cleaner"
 Issues = "https://github.com/sandy-sp/metadata-cleaner/issues"
+Documentation = "https://github.com/sandy-sp/metadata-cleaner/blob/main/docs/USAGE.md"
+Changelog = "https://github.com/sandy-sp/metadata-cleaner/blob/main/RELEASE_NOTES.md"
+Security = "https://github.com/sandy-sp/metadata-cleaner/blob/main/SECURITY.md"
 
 [project.scripts]
 metadata-cleaner = "m_c.cli.main:cli"
@@ -31,6 +34,12 @@ metadata-cleaner = "m_c.cli.main:cli"
 [tool.poetry]
 packages = [{ include = "m_c" }]
 exclude = ["m_c/tests", "m_c/tests/**"]
+include = [
+    { path = "CONTRIBUTING.md", format = "sdist" },
+    { path = "SECURITY.md", format = "sdist" },
+    { path = "RELEASE_NOTES.md", format = "sdist" },
+    { path = "docs/*.md", format = "sdist" },
+]
 
 # Removed unnecessary dependencies: tinytag, hachoir, av, dmeta, py7zr
 
