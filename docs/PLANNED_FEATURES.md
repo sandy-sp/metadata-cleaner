@@ -17,8 +17,10 @@ cost, and privacy risk before implementation.
 ### Stronger Fixture Coverage
 - Keep FFmpeg/FFprobe-gated video integration tests current as video behavior
   changes.
-- Add fixture assertions for additional audio containers beyond WAV/FLAC when
-  their metadata can be generated without external system tools.
+- Keep FFmpeg-gated compressed audio fixture coverage current where external
+  tooling is already present in CI.
+- Add more pure-Python audio fixtures beyond WAV/FLAC only when their metadata
+  can be generated without fragile external tooling.
 - Keep installed-package smoke coverage current as optional system-tool behavior
   expands.
 

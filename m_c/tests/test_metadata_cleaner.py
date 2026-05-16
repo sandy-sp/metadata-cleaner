@@ -1671,6 +1671,64 @@ class TestMetadataCleaner(unittest.TestCase):
         )
 
     @unittest.skipUnless(
+        shutil.which("ffmpeg"),
+        "FFmpeg is required for generated M4A audio integration coverage",
+    )
+    def test_generated_m4a_metadata_removal_preserves_original(self):
+        """Audio cleanup should strip M4A tags from a copied compressed file."""
+        source_m4a = os.path.join(self.test_dir, "generated.m4a")
+        cleaned_m4a = os.path.join(self.cleaned_dir, "generated_cleaned.m4a")
+
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "sine=frequency=440:sample_rate=8000",
+                "-t",
+                "1",
+                "-metadata",
+                "title=Fixture Title",
+                "-metadata",
+                "artist=Fixture Artist",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "32k",
+                source_m4a,
+                "-y",
+            ],
+            check=True,
+        )
+
+        source_metadata = self.processor.view_metadata(source_m4a)
+        self.assertEqual(source_metadata["title"], ["Fixture Title"])
+        self.assertEqual(source_metadata["artist"], ["Fixture Artist"])
+
+        output_file = self.processor.delete_metadata(source_m4a, cleaned_m4a)
+
+        self.assertEqual(output_file, cleaned_m4a)
+        self.assertTrue(os.path.exists(source_m4a))
+        self.assertTrue(os.path.exists(cleaned_m4a))
+        self.assertEqual(
+            self.processor.view_metadata(source_m4a)["title"],
+            ["Fixture Title"],
+        )
+        self.assertEqual(dict(MutagenFile(cleaned_m4a, easy=True)), {})
+        self.assertEqual(
+            MutagenFile(source_m4a).info.sample_rate,
+            MutagenFile(cleaned_m4a).info.sample_rate,
+        )
+        self.assertEqual(
+            MutagenFile(source_m4a).info.channels,
+            MutagenFile(cleaned_m4a).info.channels,
+        )
+
+    @unittest.skipUnless(
         shutil.which("ffmpeg") and shutil.which("ffprobe"),
         "FFmpeg and FFprobe are required for video integration coverage",
     )
