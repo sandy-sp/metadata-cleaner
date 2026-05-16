@@ -9,8 +9,8 @@ privacy risk before implementation.
 
 ### Stronger Fixture Coverage
 - Add video integration tests that run when FFmpeg and FFprobe are installed.
-- Add fixture assertions for additional audio containers beyond WAV when their
-  metadata can be generated without external system tools.
+- Add fixture assertions for additional audio containers beyond WAV/FLAC when
+  their metadata can be generated without external system tools.
 - Keep installed-package smoke coverage current as optional system-tool behavior
   expands.
 
