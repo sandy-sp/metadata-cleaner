@@ -1,5 +1,13 @@
 # Release Notes
 
+## v3.18.10
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Updated the pikepdf compatibility range to v10 and refreshed the lockfile.
+- Added PDF cleanup coverage confirming document-info and XMP metadata removal
+  while preserving PDF pages.
+
 ## v3.18.9
 **Release Date**: 2026-05-16
 
