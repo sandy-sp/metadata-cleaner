@@ -41,6 +41,12 @@ Print metadata in a stable JSON envelope:
 metadata-cleaner view my_photo.jpg --json
 ```
 
+Write metadata JSON to a file:
+
+```bash
+metadata-cleaner view my_photo.jpg --json-output reports/metadata.json
+```
+
 Remove metadata from one file:
 
 ```bash
@@ -75,6 +81,12 @@ Write the summary to a JSON file:
 
 ```bash
 metadata-cleaner delete ./images --summary-file reports/summary.json
+```
+
+You can also use the shared JSON output option:
+
+```bash
+metadata-cleaner delete ./images --json-output reports/summary.json
 ```
 
 Include SHA-256 checksums in JSON summaries:

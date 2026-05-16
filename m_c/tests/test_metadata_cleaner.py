@@ -258,6 +258,29 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertGreaterEqual(payload["metadata_count"], 1)
             self.assertIn("/Title", payload["metadata"])
 
+    def test_cli_view_json_output_file_with_metadata(self):
+        """View command should write a stable JSON envelope to a file."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            writer = pypdf.PdfWriter()
+            writer.add_blank_page(width=72, height=72)
+            writer.add_metadata({"/Title": "Automation Test"})
+            with open("sample.pdf", "wb") as pdf_file:
+                writer.write(pdf_file)
+
+            result = runner.invoke(
+                cli,
+                ["view", "sample.pdf", "--json-output", "metadata/view.json"],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn("Automation Test", result.output)
+            with open("metadata/view.json") as payload_file:
+                payload = json.load(payload_file)
+            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["file"], "sample.pdf")
+            self.assertEqual(payload["metadata"]["/Title"], "Automation Test")
+
     def test_cli_view_json_output_for_invalid_file(self):
         """JSON view output should stay parseable for invalid input."""
         runner = CliRunner()
@@ -266,6 +289,23 @@ class TestMetadataCleaner(unittest.TestCase):
 
             self.assertEqual(result.exit_code, 2, result.output)
             payload = json.loads(result.output)
+            self.assertEqual(payload["status"], "invalid_input")
+            self.assertEqual(payload["file"], "missing.jpg")
+            self.assertEqual(payload["metadata"], {})
+            self.assertIn("error", payload)
+
+    def test_cli_view_json_output_file_for_invalid_file(self):
+        """View JSON file output should stay parseable for invalid input."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                cli,
+                ["view", "missing.jpg", "--json-output", "metadata/view.json"],
+            )
+
+            self.assertEqual(result.exit_code, 2, result.output)
+            with open("metadata/view.json") as payload_file:
+                payload = json.load(payload_file)
             self.assertEqual(payload["status"], "invalid_input")
             self.assertEqual(payload["file"], "missing.jpg")
             self.assertEqual(payload["metadata"], {})
@@ -875,6 +915,32 @@ class TestMetadataCleaner(unittest.TestCase):
                 file_payload["files"][0]["output"],
                 os.path.join("cleaned", "photo.jpg"),
             )
+
+    def test_cli_delete_json_output_alias_writes_summary_file(self):
+        """Delete command should support the shared JSON output file option."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Image.new("RGB", (10, 10), color="yellow").save("photo.jpg", "jpeg")
+
+            result = runner.invoke(
+                cli,
+                [
+                    "delete",
+                    "photo.jpg",
+                    "--json-summary",
+                    "--json-output",
+                    "reports/delete.json",
+                    "--dry-run",
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            stdout_payload = json.loads(result.output)
+            with open("reports/delete.json") as payload_file:
+                file_payload = json.load(payload_file)
+            self.assertEqual(file_payload, stdout_payload)
+            self.assertEqual(file_payload["would_process"], 1)
+            self.assertEqual(file_payload["files"][0]["status"], "would_process")
 
     def test_cli_json_summary_with_checksums_for_dry_run(self):
         """Checksum reporting should include input hashes without writing outputs."""

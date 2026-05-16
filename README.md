@@ -51,6 +51,12 @@ Print metadata for automation:
 metadata-cleaner view sample.jpg --json
 ```
 
+Write metadata JSON to a file:
+
+```bash
+metadata-cleaner view sample.jpg --json-output reports/metadata.json
+```
+
 Remove metadata from one file:
 
 ```bash
@@ -80,6 +86,9 @@ Write a JSON summary report:
 ```bash
 metadata-cleaner delete ./photos --summary-file reports/summary.json
 ```
+
+The shared `--json-output reports/summary.json` option writes the same delete
+summary payload.
 
 Summary reports include per-file status and output paths for audit trails.
 Add `--checksums` to include input/output hashes. SHA-256 is the default; use

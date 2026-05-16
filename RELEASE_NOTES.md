@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.18.4
+**Release Date**: 2026-05-16
+
+### Features
+- Added `metadata-cleaner view --json-output FILE` to write metadata JSON
+  envelopes directly to disk.
+- Added `metadata-cleaner delete --json-output FILE` as a consistent alias for
+  writing final JSON summaries.
+
+### Maintenance
+- Added CLI coverage for JSON output files on successful and invalid `view`
+  calls, plus the `delete --json-output` summary alias.
+
 ## v3.18.3
 **Release Date**: 2026-05-16
 

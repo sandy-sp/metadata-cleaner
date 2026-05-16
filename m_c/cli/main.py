@@ -122,6 +122,20 @@ def _write_json_payload(file_path: str, payload: dict) -> bool:
         return False
 
 
+def _write_json_output_file(
+    json_output_file: Optional[str],
+    payload: dict,
+    quiet: bool = False,
+) -> bool:
+    if not json_output_file:
+        return True
+    if _write_json_payload(json_output_file, payload):
+        return True
+    if not quiet:
+        click.echo(f"Failed to write JSON output file: {json_output_file}")
+    return False
+
+
 def _write_summary_file(
     summary_file: Optional[str],
     summary: BatchSummary,
@@ -288,25 +302,37 @@ def cli(verbose, log_file):
 @cli.command()
 @click.argument("file")
 @click.option("--json", "json_output", is_flag=True, help="Print a JSON metadata payload.")
+@click.option(
+    "--json-output",
+    "json_output_file",
+    type=click.Path(dir_okay=False, path_type=str),
+    default=None,
+    help="Write the JSON metadata payload to a file.",
+)
 @click.pass_context
-def view(ctx, file, json_output):
+def view(ctx, file, json_output, json_output_file):
     """View metadata of a file."""
     if not os.path.isfile(file):
         message = "file does not exist or is not a regular file"
+        payload = _metadata_payload(file, {}, "invalid_input")
+        payload["error"] = message
         if json_output:
-            payload = _metadata_payload(file, {}, "invalid_input")
-            payload["error"] = message
             _echo_json(payload)
         else:
             click.echo(f"Error: {message}.")
+        if not _write_json_output_file(json_output_file, payload):
+            ctx.exit(EXIT_FAILURE)
         ctx.exit(EXIT_USAGE)
 
     metadata = MetadataProcessor().view_metadata(file)
+    status = "success" if metadata else "no_metadata"
+    payload = _metadata_payload(file, metadata, status)
     if json_output:
-        status = "success" if metadata else "no_metadata"
-        _echo_json(_metadata_payload(file, metadata, status))
+        _echo_json(payload)
     else:
         click.echo(format_metadata_output(metadata))
+    if not _write_json_output_file(json_output_file, payload):
+        ctx.exit(EXIT_FAILURE)
 
 
 @cli.command()
@@ -347,9 +373,11 @@ def view(ctx, file, json_output):
 )
 @click.option(
     "--summary-file",
+    "--json-output",
+    "summary_file",
     type=click.Path(dir_okay=False, path_type=str),
     default=None,
-    help="Write final summary as JSON to a file.",
+    help="Write final JSON summary to a file.",
 )
 @click.option("--quiet", is_flag=True, help="Suppress progress and human output.")
 @click.pass_context
