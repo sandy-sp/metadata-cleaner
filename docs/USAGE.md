@@ -6,6 +6,9 @@
 pip install metadata-cleaner
 ```
 
+Requires Python 3.11 or newer. Video support needs `ffmpeg` and `ffprobe`;
+AVIF, HEIC, and HEIF cleanup needs `exiftool`.
+
 For local development:
 
 ```bash
@@ -129,6 +132,9 @@ metadata-cleaner web
 The Web UI creates cleaned copies and displays original metadata beside cleaned
 metadata for local verification. Use the `Files` button to view or delete
 uploaded originals and cleaned copies saved in the current local session.
+By default the Web UI uses a temporary workspace that is removed when the server
+stops. Use `--workspace ./metadata-cleaner-workspace` to keep uploaded originals
+and cleaned copies between local sessions.
 
 JSON summaries include top-level counts and per-file details:
 
@@ -191,8 +197,24 @@ metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 Some formats require system tools:
 
 - AVIF cleanup uses ExifTool.
+- HEIC and HEIF cleanup use ExifTool.
 - Video metadata reads use FFprobe.
 - Video metadata removal uses FFmpeg.
+
+## Docker
+
+Published release images include FFmpeg, FFprobe, and ExifTool:
+
+```bash
+docker run --rm -v "$(pwd):/data" ghcr.io/sandy-sp/metadata-cleaner:latest delete /data/photos
+```
+
+## Privacy Notes
+
+Metadata removal writes cleaned copies and keeps originals unchanged. Some
+formats are rewritten, re-saved, or remuxed during cleanup; JSON reports include
+per-file processing notes for these cases. For high-risk publishing workflows,
+inspect cleaned files with independent tools before release.
 
 ## Logging
 

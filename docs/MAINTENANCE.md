@@ -19,6 +19,11 @@ The CI workflow mirrors these checks, builds the Docker image, and smoke-tests
 the built wheel in a clean virtual environment. Tagged releases also publish a
 Docker image to GitHub Container Registry.
 
+Public-facing docs should be reviewed before feature releases. At minimum,
+confirm that `README.md`, `docs/USAGE.md`, `docs/API_REFERENCE.md`,
+`docs/ARCHITECTURE.md`, and `RELEASE_NOTES.md` describe the current command
+surface and safety model.
+
 Record broader review checkpoints in
 [`docs/REPO_HEALTH_REVIEW.md`](REPO_HEALTH_REVIEW.md) when dependency posture,
 branch protection, packaging, or roadmap priorities are re-evaluated.

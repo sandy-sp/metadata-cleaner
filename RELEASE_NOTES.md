@@ -1,5 +1,17 @@
 # Release Notes
 
+## v3.18.14
+**Release Date**: 2026-05-16
+
+### Documentation
+- Refreshed the README as the public entry point with current CLI, Web UI,
+  automation, Docker, safety, optional-tool, and roadmap guidance.
+- Added public `SECURITY.md` and `CONTRIBUTING.md` files.
+- Added project metadata links for documentation, changelog, and security
+  policy, and included public docs in source distributions.
+- Updated usage, API, architecture, maintenance, roadmap, and health-review
+  docs after the v3.18.x feature and maintenance sequence.
+
 ## v3.18.13
 **Release Date**: 2026-05-16
 
