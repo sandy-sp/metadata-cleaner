@@ -97,6 +97,16 @@ Edit metadata where supported:
 metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 ```
 
+Start the local Web UI:
+
+```bash
+metadata-cleaner web
+```
+
+The Web UI runs on `127.0.0.1` by default and shows original metadata next to
+cleaned-copy metadata so you can verify what changed before using the cleaned
+file.
+
 ## Development Checks
 
 ```bash

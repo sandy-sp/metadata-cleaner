@@ -15,6 +15,7 @@ from m_c.core.file_utils import (
 )
 from m_c.core.logger import configure_logging, logger
 from m_c.core.metadata_processor import MetadataProcessor
+from m_c.core.reporting import processing_warnings
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -235,51 +236,7 @@ def _single_output_path(file_path: str, output_path: Optional[str]) -> str:
 
 
 def _processing_warnings(file_path: str) -> list[str]:
-    ext = os.path.splitext(file_path)[1].lower()
-    warnings_by_extension = {
-        ".png": [
-            "PNG metadata removal re-saves image data; inspect output if "
-            "pixel-perfect preservation matters."
-        ],
-        ".pdf": [
-            "PDF metadata removal rewrites the document container while "
-            "preserving content."
-        ],
-        ".docx": [
-            "DOCX metadata removal rewrites the document package while "
-            "preserving content."
-        ],
-        ".heic": [
-            "HEIC metadata removal requires ExifTool and rewrites metadata on "
-            "a copied file."
-        ],
-        ".heif": [
-            "HEIF metadata removal requires ExifTool and rewrites metadata on "
-            "a copied file."
-        ],
-        ".epub": [
-            "EPUB metadata removal rewrites the book package while preserving "
-            "content."
-        ],
-        ".odt": [
-            "ODT metadata removal rewrites the document package while "
-            "preserving content."
-        ],
-        ".mp3": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".wav": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".flac": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".ogg": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".aac": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".m4a": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".wma": ["Audio metadata removal rewrites tags on a copied audio file."],
-        ".mp4": ["Video metadata removal remuxes the container with stream copy."],
-        ".mkv": ["Video metadata removal remuxes the container with stream copy."],
-        ".mov": ["Video metadata removal remuxes the container with stream copy."],
-        ".avi": ["Video metadata removal remuxes the container with stream copy."],
-        ".webm": ["Video metadata removal remuxes the container with stream copy."],
-        ".flv": ["Video metadata removal remuxes the container with stream copy."],
-    }
-    return warnings_by_extension.get(ext, [])
+    return processing_warnings(file_path)
 
 
 def _record_file_result(
@@ -636,6 +593,31 @@ def edit(ctx, file, changes):
     else:
         click.echo("Metadata editing failed or is unsupported for this file.")
         ctx.exit(EXIT_FAILURE)
+
+
+@cli.command()
+@click.option("--host", default="127.0.0.1", show_default=True, help="Local bind host.")
+@click.option("--port", default=8765, show_default=True, type=int, help="Local port.")
+@click.option("--open-browser", is_flag=True, help="Open the Web UI in a browser.")
+@click.option(
+    "--workspace",
+    type=click.Path(file_okay=False, path_type=str),
+    default=None,
+    help="Directory for temporary uploads and cleaned copies.",
+)
+def web(host, port, open_browser, workspace):
+    """Start the local Web UI."""
+    from m_c.web.server import run_web_server
+
+    try:
+        run_web_server(
+            host=host,
+            port=port,
+            open_browser=open_browser,
+            workspace=workspace,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
 
 
 if __name__ == "__main__":

@@ -108,6 +108,15 @@ Preserve source access and modification times on cleaned files:
 metadata-cleaner delete ./images --output ./cleaned-images --preserve-timestamps
 ```
 
+Start the local Web UI:
+
+```bash
+metadata-cleaner web
+```
+
+The Web UI creates cleaned copies and displays original metadata beside cleaned
+metadata for local verification.
+
 JSON summaries include top-level counts and per-file details:
 
 ```json

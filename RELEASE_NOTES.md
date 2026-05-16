@@ -1,5 +1,21 @@
 # Release Notes
 
+## v3.18.0
+**Release Date**: 2026-05-15
+
+### Features
+- Added `metadata-cleaner web`, a local-only single-page Web UI bound to
+  `127.0.0.1` by default.
+- The Web UI shows original metadata, creates a cleaned copy, and then shows
+  cleaned metadata for side-by-side verification.
+- Cleaned copies can be downloaded from the local session without modifying the
+  original uploaded file.
+
+### Maintenance
+- Shared format-specific processing warnings between CLI reports and the Web UI.
+- Added Web API and CLI command coverage for the local Web UI flow.
+- Updated CI and release workflows to Poetry 2.3.4.
+
 ## v3.17.1
 **Release Date**: 2026-05-11
 
