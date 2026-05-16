@@ -1,5 +1,15 @@
 # Release Notes
 
+## v3.18.12
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Strengthened FFmpeg/FFprobe-gated video integration coverage to confirm
+  source metadata remains intact, cleaned metadata is removed, and video stream
+  properties are preserved after stream-copy cleanup.
+- Updated the roadmap and health review after branch housekeeping and video
+  fixture coverage.
+
 ## v3.18.11
 **Release Date**: 2026-05-16
 

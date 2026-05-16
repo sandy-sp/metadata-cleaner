@@ -10,12 +10,13 @@ cost, and privacy risk before implementation.
 ### Maintenance Readiness
 - Keep release automation guarded so version tags, package metadata, PyPI
   releases, GitHub releases, and Docker images cannot drift.
-- Periodically prune stale remote branches after merged roadmap stages.
+- Periodically prune stale remote-tracking refs after merged roadmap stages.
 - Re-run repository health reviews when dependency alerts, packaging changes,
   or format-support changes land.
 
 ### Stronger Fixture Coverage
-- Add video integration tests that run when FFmpeg and FFprobe are installed.
+- Keep FFmpeg/FFprobe-gated video integration tests current as video behavior
+  changes.
 - Add fixture assertions for additional audio containers beyond WAV/FLAC when
   their metadata can be generated without external system tools.
 - Keep installed-package smoke coverage current as optional system-tool behavior

@@ -1675,7 +1675,7 @@ class TestMetadataCleaner(unittest.TestCase):
         "FFmpeg and FFprobe are required for video integration coverage",
     )
     def test_generated_video_metadata_removal_with_ffmpeg(self):
-        """Video cleanup should strip container metadata without re-encoding."""
+        """Video cleanup should strip metadata while preserving stream shape."""
         source_video = os.path.join(self.test_dir, "generated.mp4")
         cleaned_video = os.path.join(self.cleaned_dir, "generated_cleaned.mp4")
 
@@ -1701,17 +1701,37 @@ class TestMetadataCleaner(unittest.TestCase):
             check=True,
         )
 
-        output_file = VideoHandler().remove_metadata(source_video, cleaned_video)
-        metadata = VideoHandler().extract_metadata(cleaned_video)
+        source_metadata = VideoHandler().extract_metadata(source_video)
+        self.assertEqual(
+            source_metadata.get("format", {}).get("tags", {}).get("title"),
+            "Metadata Cleaner Test",
+        )
+
+        output_file = self.processor.delete_metadata(source_video, cleaned_video)
+        cleaned_metadata = VideoHandler().extract_metadata(cleaned_video)
+        original_metadata_after_cleanup = VideoHandler().extract_metadata(source_video)
+
+        source_stream = source_metadata["streams"][0]
+        cleaned_stream = cleaned_metadata["streams"][0]
 
         self.assertEqual(output_file, cleaned_video)
         self.assertTrue(os.path.exists(source_video))
         self.assertTrue(os.path.exists(cleaned_video))
         self.assertNotEqual(os.path.getsize(cleaned_video), 0)
-        self.assertNotEqual(
-            metadata.get("format", {}).get("tags", {}).get("title"),
+        self.assertEqual(
+            original_metadata_after_cleanup.get("format", {})
+            .get("tags", {})
+            .get("title"),
             "Metadata Cleaner Test",
         )
+        self.assertNotEqual(
+            cleaned_metadata.get("format", {}).get("tags", {}).get("title"),
+            "Metadata Cleaner Test",
+        )
+        self.assertEqual(source_stream.get("codec_type"), "video")
+        self.assertEqual(source_stream.get("codec_name"), cleaned_stream.get("codec_name"))
+        self.assertEqual(source_stream.get("width"), cleaned_stream.get("width"))
+        self.assertEqual(source_stream.get("height"), cleaned_stream.get("height"))
 
     def test_recursive_scanning(self):
         """Test recursive file scanning logic."""
