@@ -17,6 +17,7 @@ from mutagen.flac import FLAC
 from mutagen.id3 import TIT2, TPE1
 from mutagen.wave import WAVE
 from PIL import Image
+import pikepdf
 import pypdf
 
 from m_c.cli.main import cli
@@ -561,6 +562,51 @@ class TestMetadataCleaner(unittest.TestCase):
         self.assertEqual(cleaned_props.title, "")
         self.assertEqual(cleaned_props.created.year, 1980)
         self.assertEqual(cleaned_props.modified.year, 1980)
+
+    def test_pdf_metadata_removal_clears_info_and_xmp_preserves_pages(self):
+        """PDF cleaning should clear document info and XMP metadata."""
+        source_pdf = os.path.join(self.test_dir, "metadata_rich.pdf")
+        cleaned_pdf = os.path.join(self.cleaned_dir, "metadata_rich_cleaned.pdf")
+
+        writer = pypdf.PdfWriter()
+        writer.add_blank_page(width=72, height=72)
+        writer.add_metadata({"/Title": "PDF Fixture", "/Author": "Fixture Author"})
+        with open(source_pdf, "wb") as pdf_file:
+            writer.write(pdf_file)
+
+        staged_pdf = source_pdf + ".staged"
+        xmp_metadata = b"""<?xpacket begin="" id="fixture"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <dc:title><rdf:Alt><rdf:li xml:lang="x-default">PDF Fixture</rdf:li></rdf:Alt></dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+        with pikepdf.open(source_pdf) as pdf:
+            metadata_stream = pikepdf.Stream(pdf, xmp_metadata)
+            metadata_stream.Type = pikepdf.Name.Metadata
+            metadata_stream.Subtype = pikepdf.Name.XML
+            pdf.Root.Metadata = metadata_stream
+            pdf.save(staged_pdf)
+        os.replace(staged_pdf, source_pdf)
+
+        metadata = self.processor.view_metadata(source_pdf)
+        self.assertEqual(metadata["/Title"], "PDF Fixture")
+        with pikepdf.open(source_pdf) as pdf:
+            self.assertIn(pikepdf.Name("/Info"), pdf.trailer)
+            self.assertIn(pikepdf.Name.Metadata, pdf.Root)
+
+        output_file = self.processor.delete_metadata(source_pdf, cleaned_pdf)
+
+        self.assertEqual(output_file, cleaned_pdf)
+        self.assertTrue(os.path.exists(source_pdf))
+        self.assertTrue(os.path.exists(cleaned_pdf))
+        with pikepdf.open(cleaned_pdf) as pdf:
+            self.assertNotIn(pikepdf.Name("/Info"), pdf.trailer)
+            self.assertNotIn(pikepdf.Name.Metadata, pdf.Root)
+        self.assertEqual(len(pypdf.PdfReader(cleaned_pdf).pages), 1)
 
     def test_odt_metadata_removal_clears_meta_xml_and_preserves_content(self):
         """ODT cleaning should clear package metadata while preserving content."""

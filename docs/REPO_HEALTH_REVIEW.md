@@ -3,7 +3,7 @@
 Last reviewed: 2026-05-16
 
 This review captures the current maintenance, security, dependency, and
-documentation state after the v3.18.5 release.
+documentation state after the v3.18.10 release.
 
 ## Current State
 
@@ -30,7 +30,7 @@ poetry run pip-audit
 poetry build
 ```
 
-The full test suite result was `63 passed, 1 skipped`.
+The full test suite result was `76 passed, 1 skipped`.
 
 ## Dependency Review
 
@@ -44,12 +44,11 @@ removed from `pyproject.toml`:
 
 The current dependency freshness check showed these non-security updates:
 
-- `pikepdf` has a newer major release available.
 - `coverage`, `idna`, and `requests` have newer patch/minor releases available.
 
-Treat `pikepdf` as a compatibility update because it touches PDF rewriting.
-Patch/minor development dependency updates can usually follow normal Dependabot
-review.
+`pikepdf` v10 compatibility was evaluated and adopted in v3.18.10 with focused
+PDF cleanup coverage for document info and XMP metadata removal. Patch/minor
+development dependency updates can usually follow normal Dependabot review.
 
 ## Maintenance Findings
 
@@ -65,4 +64,5 @@ review.
 
 ## Next Recommended Work
 
-1. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.
+Re-run this review when the next dependency/security alert, format support
+change, or packaging update lands.
