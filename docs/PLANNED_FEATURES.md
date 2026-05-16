@@ -15,7 +15,7 @@ privacy risk before implementation.
   expands.
 
 ### CLI Usability
-- Add optional file output targets for machine-readable command output.
+- Extend machine-readable file output targets as new JSON surfaces are added.
 - Add additional report filters only if users need more targeted automation
   views.
 
