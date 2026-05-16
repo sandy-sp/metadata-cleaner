@@ -25,7 +25,9 @@ Metadata Cleaner is a small Python CLI organized around file-type handlers.
   EXIF removal from JPEG/WebP/TIFF, and Pillow fallback re-save for other
   images. ExifTool subprocess calls use bounded timeouts.
 - `DocumentHandler`: uses `pypdf` for PDF metadata reads, `pikepdf` for PDF
-  metadata removal, and `python-docx` for DOCX core property cleanup.
+  metadata removal, and `python-docx` for DOCX core property cleanup. EPUB and
+  ODT ZIP packages are checked against entry-count and uncompressed-size limits
+  before package members are parsed or rewritten.
 - `AudioHandler`: uses Mutagen and writes cleaned copies before modifying tags.
 - `VideoHandler`: uses FFprobe for metadata reads and FFmpeg stream copy for
   metadata removal without re-encoding.
@@ -41,5 +43,7 @@ Metadata Cleaner is a small Python CLI organized around file-type handlers.
   release.
 - External ExifTool, FFprobe, and FFmpeg subprocess calls use timeouts so
   malformed files cannot make those tool invocations wait indefinitely.
+- EPUB and ODT ZIP package handling enforces archive safety limits to reduce
+  zip-bomb style denial-of-service risk.
 - The project ignores local logs, local agent state, virtual environments, build
   artifacts, and caches.

@@ -1,5 +1,15 @@
 # Release Notes
 
+## v3.18.9
+**Release Date**: 2026-05-16
+
+### Security
+- Added ZIP archive safety limits for EPUB and ODT metadata extraction and
+  cleanup paths.
+- Oversized archive entries, excessive entry counts, and excessive total
+  uncompressed archive sizes now fail before package members are parsed or
+  rewritten.
+
 ## v3.18.8
 **Release Date**: 2026-05-16
 

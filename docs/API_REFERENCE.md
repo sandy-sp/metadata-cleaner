@@ -98,3 +98,7 @@ creates a cleaned copy, and then displays cleaned-copy metadata for comparison.
 The original file is never modified. The local file browser lists uploaded
 originals and cleaned copies from the current Web UI workspace, and supports
 viewing or deleting those managed files.
+
+EPUB and ODT inputs are ZIP-based packages. Metadata extraction and cleanup
+apply archive safety limits before reading package members so excessive entry
+counts or uncompressed sizes fail instead of being parsed or rewritten.

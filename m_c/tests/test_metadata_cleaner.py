@@ -24,6 +24,7 @@ from m_c.core.metadata_processor import MetadataProcessor
 from m_c.core.file_utils import get_file_checksum, validate_file, get_safe_output_path
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
+from m_c.handlers.document_handler import DocumentHandler
 from m_c.handlers.video_handler import VideoHandler
 from m_c.web.server import WebApp
 
@@ -620,6 +621,50 @@ class TestMetadataCleaner(unittest.TestCase):
                 b"Metadata Cleaner EPUB body",
                 cleaned_archive.read("OPS/chapter.xhtml"),
             )
+
+    def test_odt_metadata_extraction_rejects_too_many_archive_entries(self):
+        """ODT extraction should reject archives with excessive entry counts."""
+        source_odt = os.path.join(self.test_dir, "too_many_entries.odt")
+        self._write_odt(source_odt)
+
+        with patch.object(DocumentHandler, "MAX_ZIP_ENTRIES", 2):
+            metadata = DocumentHandler()._extract_metadata_odt(source_odt)
+
+        self.assertIsNone(metadata)
+
+    def test_odt_metadata_removal_rejects_large_archive_member(self):
+        """ODT cleaning should reject oversized archive members and clean up."""
+        source_odt = os.path.join(self.test_dir, "large_member.odt")
+        cleaned_odt = os.path.join(self.cleaned_dir, "large_member.odt")
+        self._write_odt(source_odt)
+
+        with patch.object(DocumentHandler, "MAX_ZIP_MEMBER_BYTES", 8):
+            result = DocumentHandler()._remove_metadata_odt(source_odt, cleaned_odt)
+
+        self.assertIsNone(result)
+        self.assertFalse(os.path.exists(cleaned_odt))
+
+    def test_epub_metadata_extraction_rejects_large_package_metadata(self):
+        """EPUB extraction should reject oversized package metadata XML."""
+        source_epub = os.path.join(self.test_dir, "large_package.epub")
+        self._write_epub(source_epub)
+
+        with patch.object(DocumentHandler, "MAX_METADATA_XML_BYTES", 32):
+            metadata = DocumentHandler()._extract_metadata_epub(source_epub)
+
+        self.assertIsNone(metadata)
+
+    def test_epub_metadata_removal_rejects_large_archive_total(self):
+        """EPUB cleaning should reject excessive total uncompressed size."""
+        source_epub = os.path.join(self.test_dir, "large_total.epub")
+        cleaned_epub = os.path.join(self.cleaned_dir, "large_total.epub")
+        self._write_epub(source_epub)
+
+        with patch.object(DocumentHandler, "MAX_ZIP_UNCOMPRESSED_BYTES", 32):
+            result = DocumentHandler()._remove_metadata_epub(source_epub, cleaned_epub)
+
+        self.assertIsNone(result)
+        self.assertFalse(os.path.exists(cleaned_epub))
 
     def test_web_app_metadata_response_shows_original_metadata(self):
         """Web API should expose original metadata for the uploaded file."""
