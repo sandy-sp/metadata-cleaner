@@ -1,5 +1,18 @@
 # Release Notes
 
+## v3.18.6
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Added a repository health review checkpoint covering current security,
+  dependency, branch protection, packaging, and roadmap status.
+- Removed unused runtime dependencies on `ffmpeg-python` and `pymupdf`,
+  reducing install size and dependency attack surface.
+- Removed the stale `tools/doc` gitlink that caused non-failing GitHub Actions
+  checkout cleanup annotations.
+- Excluded test modules from release artifacts while keeping CI and package
+  smoke coverage in place.
+
 ## v3.18.5
 **Release Date**: 2026-05-16
 
