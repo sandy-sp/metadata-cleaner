@@ -1,8 +1,10 @@
+import base64
 import hashlib
 import json
 import os
 import shutil
 import subprocess
+import tempfile
 import unittest
 import wave
 import zipfile
@@ -22,9 +24,19 @@ from m_c.core.file_utils import get_file_checksum, validate_file, get_safe_outpu
 from m_c.core.logger import logger
 from m_c.handlers.base_handler import BaseHandler
 from m_c.handlers.video_handler import VideoHandler
+from m_c.web.server import WebApp
 
 
 class TestMetadataCleaner(unittest.TestCase):
+    @staticmethod
+    def _web_payload(file_path, filename=None):
+        with open(file_path, "rb") as input_file:
+            content_base64 = base64.b64encode(input_file.read()).decode("ascii")
+        return {
+            "filename": filename or os.path.basename(file_path),
+            "content_base64": content_base64,
+        }
+
     @staticmethod
     def _write_tagged_wav(file_path):
         with wave.open(file_path, "wb") as wav_file:
@@ -512,6 +524,39 @@ class TestMetadataCleaner(unittest.TestCase):
                 b"Metadata Cleaner EPUB body",
                 cleaned_archive.read("OPS/chapter.xhtml"),
             )
+
+    def test_web_app_metadata_response_shows_original_metadata(self):
+        """Web API should expose original metadata for the uploaded file."""
+        source_odt = os.path.join(self.test_dir, "web-original.odt")
+        self._write_odt(source_odt)
+
+        with tempfile.TemporaryDirectory() as workspace:
+            response = WebApp(workspace).metadata_response(self._web_payload(source_odt))
+
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(response["metadata"]["title"], "ODT Fixture Title")
+        self.assertEqual(response["metadata_count"], 3)
+
+    def test_web_app_clean_response_shows_before_and_after_metadata(self):
+        """Web API should return original and cleaned metadata for comparison."""
+        source_odt = os.path.join(self.test_dir, "web-clean.odt")
+        self._write_odt(source_odt)
+
+        with tempfile.TemporaryDirectory() as workspace:
+            app = WebApp(workspace)
+            response = app.clean_response(
+                self._web_payload(source_odt),
+                checksum_algorithm="sha512",
+            )
+            token = response["download_url"].rsplit("/", 1)[-1]
+            download = app.download_record(token)
+
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(response["original_metadata"]["title"], "ODT Fixture Title")
+        self.assertEqual(response["cleaned_metadata"], {})
+        self.assertIn("input_sha512", response["checksums"])
+        self.assertIn("output_sha512", response["checksums"])
+        self.assertIsNotNone(download)
 
     def test_in_place_output_path_is_rejected(self):
         """Handlers should reject an output path that equals the input path."""
@@ -1112,6 +1157,28 @@ class TestMetadataCleaner(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("Invalid JSON format", result.output)
+
+    def test_cli_web_command_starts_local_server(self):
+        """Web command should delegate to the local Web UI server."""
+        runner = CliRunner()
+        with patch("m_c.web.server.run_web_server") as run_web_server:
+            result = runner.invoke(cli, ["web", "--port", "9010"])
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        run_web_server.assert_called_once_with(
+            host="127.0.0.1",
+            port=9010,
+            open_browser=False,
+            workspace=None,
+        )
+
+    def test_cli_web_command_rejects_public_bind_host(self):
+        """Web command should keep the UI local-only by default."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["web", "--host", "0.0.0.0"])
+
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn("local-only", result.output)
 
     def test_generated_wav_metadata_removal_preserves_original(self):
         """Audio cleanup should strip metadata from a separate playable WAV file."""

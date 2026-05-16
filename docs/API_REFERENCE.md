@@ -79,3 +79,10 @@ status fields, and `summary` omits per-file entries.
 Use `--report-filter all|failed` to control which per-file entries are included
 when per-file entries are present. `failed` keeps aggregate counts unchanged and
 lists only failed file entries.
+
+## Local Web UI
+
+Use `metadata-cleaner web` to start a local-only single-page Web UI on
+`127.0.0.1`. The Web UI accepts a selected file, displays the original metadata,
+creates a cleaned copy, and then displays cleaned-copy metadata for comparison.
+The original file is never modified.

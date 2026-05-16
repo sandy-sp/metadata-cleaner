@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
-        run: pipx install poetry==2.2.1
+        run: pipx install poetry==2.3.4
 
       - name: Install dependencies
         run: poetry install --with dev
@@ -70,7 +70,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install Poetry
-        run: pipx install poetry==2.2.1
+        run: pipx install poetry==2.3.4
 
       - name: Build package
         run: poetry build
