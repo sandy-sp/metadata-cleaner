@@ -3,7 +3,7 @@
 Last reviewed: 2026-05-16
 
 This review captures the current maintenance, security, dependency, and
-documentation state after the v3.18.11 maintenance review.
+documentation state after the v3.18.12 maintenance review.
 
 ## Current State
 
@@ -13,7 +13,7 @@ documentation state after the v3.18.11 maintenance review.
 - Open Dependabot security alerts: none.
 - Open CodeQL/code scanning alerts: none.
 - Recent CI, CodeQL, PyPI release, and Docker release workflows completed
-  successfully for v3.18.10.
+  successfully for v3.18.11.
 - Branch protection is enabled for `main` with required CI, Docker, package
   smoke, and CodeQL checks.
 - The committed `poetry.lock` file is intentional. It documents the exact
@@ -32,7 +32,9 @@ poetry run pip-audit
 poetry build
 ```
 
-The full test suite result was `77 passed, 1 skipped`.
+The full test suite result is `77 passed, 1 skipped` when FFmpeg/FFprobe are
+not installed. The gated video integration test runs when those tools are
+available.
 
 ## Dependency Review
 
@@ -70,14 +72,14 @@ patch/minor updates: `coverage`, `idna`, and `requests`.
   `pyproject.toml` before publishing to PyPI or creating a GitHub release.
 - The legacy `MetadataProcessor.process_batch()` API now preserves one result
   slot per input file, returning `None` for failed files.
-- Several stale remote feature, maintenance, and Dependabot branch refs are
-  visible locally even though no PRs are open. Prune local remote-tracking refs
-  and delete obsolete GitHub branches only after confirming they are no longer
-  active.
+- Stale local remote-tracking refs from completed roadmap stages were pruned;
+  the actual remote now only advertises `main`.
+- FFmpeg/FFprobe-gated video integration coverage verifies metadata removal,
+  original preservation, and stream-property preservation for a generated MP4
+  fixture.
 
 ## Next Recommended Work
 
-1. Clean up stale remote branches left by completed roadmap stages.
-2. Add FFmpeg/FFprobe-gated video integration fixture coverage.
-3. Add another generated audio-container fixture only if it can be created
+1. Add another generated audio-container fixture only if it can be created
    without fragile external tooling.
+2. Re-run dependency/security review when Dependabot opens the next update.

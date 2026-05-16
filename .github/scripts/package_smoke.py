@@ -101,6 +101,9 @@ def assert_view_payloads():
 
 
 def assert_delete_summary():
+    source_video_payload = read_json_output("view", str(ROOT / "video.mp4"))
+    source_video_stream = source_video_payload["metadata"]["streams"][0]
+
     dry_run = run_cli("delete", str(ROOT), "--dry-run", "--json-summary")
     dry_run_payload = json.loads(dry_run.stdout)
     assert dry_run_payload["status"] == "success", dry_run_payload
@@ -126,10 +129,21 @@ def assert_delete_summary():
     cleaned_video = CLEANED / "video.mp4"
     assert cleaned_video.exists(), report
     cleaned_video_payload = read_json_output("view", str(cleaned_video))
+    cleaned_video_stream = cleaned_video_payload["metadata"]["streams"][0]
     cleaned_title = cleaned_video_payload["metadata"]["format"].get("tags", {}).get(
         "title"
     )
     assert cleaned_title != "Smoke Video", cleaned_video_payload
+    assert source_video_stream["codec_type"] == "video", source_video_payload
+    assert source_video_stream["codec_name"] == cleaned_video_stream["codec_name"], (
+        cleaned_video_payload
+    )
+    assert source_video_stream["width"] == cleaned_video_stream["width"], (
+        cleaned_video_payload
+    )
+    assert source_video_stream["height"] == cleaned_video_stream["height"], (
+        cleaned_video_payload
+    )
 
 
 def main():
