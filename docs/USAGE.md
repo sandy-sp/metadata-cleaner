@@ -177,7 +177,8 @@ metadata-cleaner edit song.mp3 --changes '{"artist": "Unknown"}'
 
 - `0`: command completed successfully.
 - `1`: command ran but all processing failed.
-- `2`: invalid input, usage issue, or no supported files were found.
+- `2`: invalid input, unsupported single-file input, usage issue, or no
+  supported files were found.
 - `3`: batch processing completed with partial failures.
 
 ## Supported Formats

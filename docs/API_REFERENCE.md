@@ -60,7 +60,8 @@ Use `metadata-cleaner view FILE --json` to get a stable JSON envelope with
 `status`, `file`, `metadata_count`, and `metadata` fields. Invalid file input
 returns exit code `2` with `status` set to `invalid_input`. Use
 `metadata-cleaner view FILE --json-output report.json` to write that envelope
-to a file.
+to a file. Existing files with unsupported extensions return exit code `2` with
+`status` set to `unsupported_file_type`.
 
 Use `metadata-cleaner delete PATH --json-summary` to print a machine-readable
 summary to stdout, or `metadata-cleaner delete PATH --summary-file report.json`
@@ -70,6 +71,10 @@ counts plus a `files` list with each input path, per-file status, output path,
 format-specific processing notes, and failure reason when available. Processing
 notes describe copy, rewrite, re-save, ExifTool, tag deletion, or stream-copy
 remux behavior when applicable.
+
+Existing single-file delete inputs with unsupported extensions return exit code
+`2`, top-level `status` set to `unsupported_input`, and a per-file status of
+`unsupported`.
 
 Pass `--checksums` with `delete` to include hashes in each per-file result.
 SHA-256 is the default. Use `--checksum-algorithm sha256|sha512|blake2b` to

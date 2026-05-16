@@ -12,6 +12,7 @@ from m_c.core.file_utils import (
     get_file_checksum,
     get_safe_output_path,
     get_supported_files,
+    is_supported_file,
 )
 from m_c.core.logger import configure_logging, logger
 from m_c.core.metadata_processor import MetadataProcessor
@@ -36,6 +37,8 @@ class BatchSummary:
 def _summary_status(summary: BatchSummary, dry_run: bool) -> str:
     if summary.total == 0:
         return "no_supported_files"
+    if summary.skipped == summary.total:
+        return "unsupported_input"
     if dry_run:
         return "success" if summary.failed == 0 else "partial_failure"
     if summary.succeeded == summary.total:
@@ -324,6 +327,18 @@ def view(ctx, file, json_output, json_output_file):
             ctx.exit(EXIT_FAILURE)
         ctx.exit(EXIT_USAGE)
 
+    if not is_supported_file(file):
+        message = "unsupported file type"
+        payload = _metadata_payload(file, {}, "unsupported_file_type")
+        payload["error"] = message
+        if json_output:
+            _echo_json(payload)
+        else:
+            click.echo(f"Error: {message}.")
+        if not _write_json_output_file(json_output_file, payload):
+            ctx.exit(EXIT_FAILURE)
+        ctx.exit(EXIT_USAGE)
+
     metadata = MetadataProcessor().view_metadata(file)
     status = "success" if metadata else "no_metadata"
     payload = _metadata_payload(file, metadata, status)
@@ -396,6 +411,38 @@ def delete(
     quiet,
 ):
     """Remove metadata from a file or supported files in a directory."""
+    if os.path.isfile(path) and not is_supported_file(path):
+        summary = BatchSummary(total=1, skipped=1)
+        _record_file_result(
+            summary,
+            path,
+            "unsupported",
+            None,
+            "unsupported_file_type",
+            include_checksums=checksums,
+            checksum_algorithm=checksum_algorithm,
+        )
+        if json_summary:
+            _echo_batch_summary(
+                summary,
+                dry_run,
+                json_summary=True,
+                report_detail=report_detail,
+                report_filter=report_filter,
+            )
+        elif not quiet:
+            click.echo("Unsupported file type.")
+        if not _write_summary_file(
+            summary_file,
+            summary,
+            dry_run,
+            report_detail=report_detail,
+            report_filter=report_filter,
+            quiet=quiet,
+        ):
+            ctx.exit(EXIT_FAILURE)
+        ctx.exit(EXIT_USAGE)
+
     files_to_process = get_supported_files(path)
     if not files_to_process:
         summary = BatchSummary(total=0)

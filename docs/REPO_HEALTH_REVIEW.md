@@ -65,11 +65,8 @@ review.
 
 ## Next Recommended Work
 
-1. Add explicit CLI handling for unsupported single-file inputs so `view` and
-   `delete` return an unsupported-input status instead of treating the file as
-   no metadata or a processing failure.
-2. Add timeouts to ExifTool subprocess calls, matching the FFmpeg timeout
+1. Add timeouts to ExifTool subprocess calls, matching the FFmpeg timeout
    posture.
-3. Add archive safety limits for EPUB/ODT package reads to reduce zip-bomb style
+2. Add archive safety limits for EPUB/ODT package reads to reduce zip-bomb style
    denial-of-service risk.
-4. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.
+3. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.

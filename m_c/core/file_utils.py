@@ -98,19 +98,24 @@ ALL_SUPPORTED_EXTENSIONS = {
 }
 
 
+def is_supported_file(file_path: str) -> bool:
+    """Return whether a path has an extension supported by Metadata Cleaner."""
+    ext = os.path.splitext(file_path)[1].lower()
+    return ext in ALL_SUPPORTED_EXTENSIONS
+
+
 def get_supported_files(path: str) -> list[str]:
     """
     Get all supported files from a directory recursively, or return the file itself.
     """
     if os.path.isfile(path):
-        return [path]
+        return [path] if is_supported_file(path) else []
 
     files_list = []
     if os.path.isdir(path):
         for root, _, files in os.walk(path):
             for file in files:
-                ext = os.path.splitext(file)[1].lower()
-                if ext in ALL_SUPPORTED_EXTENSIONS:
+                if is_supported_file(file):
                     files_list.append(os.path.join(root, file))
 
     return sorted(files_list)
