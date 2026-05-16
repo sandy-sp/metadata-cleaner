@@ -65,6 +65,4 @@ review.
 
 ## Next Recommended Work
 
-1. Add archive safety limits for EPUB/ODT package reads to reduce zip-bomb style
-   denial-of-service risk.
-2. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.
+1. Evaluate `pikepdf` v10 in a dedicated compatibility branch with PDF fixtures.

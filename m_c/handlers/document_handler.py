@@ -22,6 +22,10 @@ class DocumentHandler(BaseHandler):
     """
 
     SUPPORTED_FORMATS = {"pdf", "docx", "epub", "odt", "txt"}
+    MAX_ZIP_ENTRIES = 4096
+    MAX_ZIP_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
+    MAX_ZIP_MEMBER_BYTES = 128 * 1024 * 1024
+    MAX_METADATA_XML_BYTES = 16 * 1024 * 1024
     ODT_NAMESPACES = {
         "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
         "dc": "http://purl.org/dc/elements/1.1/",
@@ -180,12 +184,61 @@ class DocumentHandler(BaseHandler):
                 return child
         return None
 
+    def _validate_zip_archive(
+        self,
+        archive: zipfile.ZipFile,
+        file_path: str,
+    ) -> list[zipfile.ZipInfo]:
+        """Validate basic ZIP limits before reading archive members."""
+        infos = archive.infolist()
+        if len(infos) > self.MAX_ZIP_ENTRIES:
+            raise ValueError(
+                f"Archive has too many entries: {len(infos)} "
+                f"(max {self.MAX_ZIP_ENTRIES})"
+            )
+
+        total_uncompressed = 0
+        for info in infos:
+            if info.file_size > self.MAX_ZIP_MEMBER_BYTES:
+                raise ValueError(
+                    f"Archive member is too large: {info.filename} "
+                    f"({info.file_size} bytes)"
+                )
+            total_uncompressed += info.file_size
+            if total_uncompressed > self.MAX_ZIP_UNCOMPRESSED_BYTES:
+                raise ValueError(
+                    "Archive uncompressed size exceeds limit: "
+                    f"{file_path} ({total_uncompressed} bytes)"
+                )
+        return infos
+
+    def _read_zip_member(
+        self,
+        archive: zipfile.ZipFile,
+        member_name: str,
+        max_bytes: Optional[int] = None,
+    ) -> bytes:
+        """Read a ZIP member only after checking its declared uncompressed size."""
+        info = archive.getinfo(member_name)
+        limit = max_bytes or self.MAX_ZIP_MEMBER_BYTES
+        if info.file_size > limit:
+            raise ValueError(
+                f"Archive member is too large: {member_name} "
+                f"({info.file_size} bytes)"
+            )
+        return archive.read(member_name)
+
     def _extract_metadata_odt(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Extract common OpenDocument metadata from meta.xml."""
         try:
             with zipfile.ZipFile(file_path, "r") as archive:
+                self._validate_zip_archive(archive, file_path)
                 try:
-                    metadata_xml = archive.read("meta.xml")
+                    metadata_xml = self._read_zip_member(
+                        archive,
+                        "meta.xml",
+                        max_bytes=self.MAX_METADATA_XML_BYTES,
+                    )
                 except KeyError:
                     return {}
 
@@ -220,9 +273,10 @@ class DocumentHandler(BaseHandler):
             wrote_metadata = False
 
             with zipfile.ZipFile(file_path, "r") as source:
+                self._validate_zip_archive(source, file_path)
                 with zipfile.ZipFile(output_path, "w") as target:
                     for info in source.infolist():
-                        data = source.read(info.filename)
+                        data = self._read_zip_member(source, info.filename)
                         if info.filename == "meta.xml":
                             data = empty_metadata
                             wrote_metadata = True
@@ -242,11 +296,15 @@ class DocumentHandler(BaseHandler):
     def _epub_package_path(self, archive: zipfile.ZipFile) -> str:
         """Return the package document path from an EPUB archive."""
         try:
-            container_xml = archive.read("META-INF/container.xml")
+            container_xml = self._read_zip_member(
+                archive,
+                "META-INF/container.xml",
+                max_bytes=self.MAX_METADATA_XML_BYTES,
+            )
         except KeyError:
-            for name in archive.namelist():
-                if name.lower().endswith(".opf"):
-                    return name
+            for info in archive.infolist():
+                if info.filename.lower().endswith(".opf"):
+                    return info.filename
             raise ValueError("EPUB package document not found")
 
         root = ET.fromstring(container_xml)
@@ -262,8 +320,13 @@ class DocumentHandler(BaseHandler):
         """Extract EPUB package metadata from the OPF document."""
         try:
             with zipfile.ZipFile(file_path, "r") as archive:
+                self._validate_zip_archive(archive, file_path)
                 package_path = self._epub_package_path(archive)
-                package_xml = archive.read(package_path)
+                package_xml = self._read_zip_member(
+                    archive,
+                    package_path,
+                    max_bytes=self.MAX_METADATA_XML_BYTES,
+                )
 
             root = ET.fromstring(package_xml)
             metadata_element = self._find_child_by_local_name(root, "metadata")
@@ -322,15 +385,20 @@ class DocumentHandler(BaseHandler):
         """Neutralize EPUB package metadata while preserving book contents."""
         try:
             with zipfile.ZipFile(file_path, "r") as source:
+                self._validate_zip_archive(source, file_path)
                 package_path = self._epub_package_path(source)
-                package_xml = source.read(package_path)
+                package_xml = self._read_zip_member(
+                    source,
+                    package_path,
+                    max_bytes=self.MAX_METADATA_XML_BYTES,
+                )
                 cleaned_package_xml = self._neutralize_epub_package_metadata(
                     package_xml
                 )
 
                 with zipfile.ZipFile(output_path, "w") as target:
                     for info in source.infolist():
-                        data = source.read(info.filename)
+                        data = self._read_zip_member(source, info.filename)
                         if info.filename == package_path:
                             data = cleaned_package_xml
                         target.writestr(info, data)
