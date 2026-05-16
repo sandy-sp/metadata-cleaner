@@ -1,5 +1,14 @@
 # Release Notes
 
+## v3.18.3
+**Release Date**: 2026-05-16
+
+### Maintenance
+- Added generated FLAC fixture coverage for Mutagen-backed audio metadata
+  extraction and cleanup.
+- Verified FLAC cleanup strips Vorbis comments on a copied file while
+  preserving the original file metadata and basic stream properties.
+
 ## v3.18.2
 **Release Date**: 2026-05-16
 

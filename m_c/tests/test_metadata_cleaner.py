@@ -13,6 +13,7 @@ from unittest.mock import patch
 from click.testing import CliRunner
 import docx
 from mutagen import File as MutagenFile
+from mutagen.flac import FLAC
 from mutagen.id3 import TIT2, TPE1
 from mutagen.wave import WAVE
 from PIL import Image
@@ -49,6 +50,25 @@ class TestMetadataCleaner(unittest.TestCase):
         audio.add_tags()
         audio.tags.add(TIT2(encoding=3, text="Fixture Title"))
         audio.tags.add(TPE1(encoding=3, text="Fixture Artist"))
+        audio.save()
+
+    @staticmethod
+    def _write_tagged_flac(file_path):
+        streaminfo = bytearray(34)
+        streaminfo[0:2] = (16).to_bytes(2, "big")
+        streaminfo[2:4] = (16).to_bytes(2, "big")
+        audio_shape = (8000 << 44) | (0 << 41) | (15 << 36)
+        streaminfo[10:18] = audio_shape.to_bytes(8, "big")
+
+        with open(file_path, "wb") as audio_file:
+            audio_file.write(b"fLaC")
+            audio_file.write(bytes([0x80]))
+            audio_file.write((34).to_bytes(3, "big"))
+            audio_file.write(streaminfo)
+
+        audio = FLAC(file_path)
+        audio["title"] = "Fixture Title"
+        audio["artist"] = "Fixture Artist"
         audio.save()
 
     @staticmethod
@@ -1248,6 +1268,35 @@ class TestMetadataCleaner(unittest.TestCase):
             self.assertEqual(original.getsampwidth(), cleaned.getsampwidth())
             self.assertEqual(original.getframerate(), cleaned.getframerate())
             self.assertEqual(original.getnframes(), cleaned.getnframes())
+
+    def test_generated_flac_metadata_removal_preserves_original(self):
+        """Audio cleanup should strip FLAC Vorbis comments on a copied file."""
+        source_flac = os.path.join(self.test_dir, "generated.flac")
+        cleaned_flac = os.path.join(self.cleaned_dir, "generated_cleaned.flac")
+
+        self._write_tagged_flac(source_flac)
+        source_metadata = self.processor.view_metadata(source_flac)
+        self.assertEqual(source_metadata["title"], ["Fixture Title"])
+        self.assertEqual(source_metadata["artist"], ["Fixture Artist"])
+
+        output_file = self.processor.delete_metadata(source_flac, cleaned_flac)
+
+        self.assertEqual(output_file, cleaned_flac)
+        self.assertTrue(os.path.exists(source_flac))
+        self.assertTrue(os.path.exists(cleaned_flac))
+        self.assertEqual(
+            self.processor.view_metadata(source_flac)["title"],
+            ["Fixture Title"],
+        )
+        self.assertEqual(dict(MutagenFile(cleaned_flac, easy=True)), {})
+        self.assertEqual(
+            FLAC(source_flac).info.sample_rate,
+            FLAC(cleaned_flac).info.sample_rate,
+        )
+        self.assertEqual(
+            FLAC(source_flac).info.channels,
+            FLAC(cleaned_flac).info.channels,
+        )
 
     @unittest.skipUnless(
         shutil.which("ffmpeg") and shutil.which("ffprobe"),
